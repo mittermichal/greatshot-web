@@ -1,0 +1,10 @@
+<h2>Hit count</h2>
+<table id="navigation">
+{% for player in hits %}
+    <tr><td>{{ player.num }}</td></tr>
+{% endfor %}
+</table>
+<h2>Raw output</h2>
+<pre>
+{{ out }}
+</pre>

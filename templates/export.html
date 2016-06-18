@@ -1,0 +1,21 @@
+<!doctype html>
+<title>Upload new File</title>
+<h1>Export demo</h1>
+<style>
+.col2 {
+	border: 1px solid green;
+}
+</style>
+<form style="width:800px;" action="" method="post" enctype="multipart/form-data">
+  <p class="col2"><input type="file" name="file">
+  </p>
+  <p>OR</p>
+  <p class="col2">
+  	gamestv match link: <input type="text" name="matchId"> ( http://www.gamestv.org/event/56051-tag-vs-elysium/ )<br/>
+  	map number: <input type="text" name="map" value="1"> ( 1 )</p>
+  </p>
+  <p>
+    If you dont dont fill anything, last uploaded demo will be used
+  </p>
+  <input type="submit" value="Export">
+</form>

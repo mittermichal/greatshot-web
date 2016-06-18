@@ -1,0 +1,7 @@
+*.tv_84
+*.dm_84
+download/*.dm_84
+upload/*.tv_84
+config.py
+config.cfg
+__pycache__/*

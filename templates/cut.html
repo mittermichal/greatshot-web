@@ -1,0 +1,15 @@
+<!doctype html>
+<title>Demo cut</title>
+<h1>Cut</h1>
+<form action="" method="post" enctype="multipart/form-data">
+  <p><input type="file" name="file"> OR gamestv match link: <input type="text" name="matchId"> map number: <input type="text" name="map" value="1"></p>
+  <p>Start <input type="text" name="start" value="0"></p>
+  <p>End <input type="text" name="end" value="2147483647"></p>
+  <p>Cut type <select name="cuttype">
+  <option value="0">SNAPNUMBER</option>
+  <option value="1">SNAPTIME</option>
+  <option value="2">SNAPCOUNT</option>
+</select></p>
+  <p>Client number (required for ETTV demo) <input type="text" name="clientnum" value=""></p>
+  <p><input type="submit" value="Cut"></p>
+</form>
