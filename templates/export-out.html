@@ -1,7 +1,12 @@
 <h2>Hit count</h2>
 <table id="navigation">
-{% for player in hits %}
-    <tr><td>{{ player.num }}</td></tr>
+	<tr><td>Player</td><td>Hitregion</td><td>Count</td></tr>
+{% for row in hits %}
+    <tr>
+    	{% for column in row %}
+    	<td>{{ column }}</td>
+		{% endfor %}
+    </tr>
 {% endfor %}
 </table>
 <h2>Raw output</h2>
