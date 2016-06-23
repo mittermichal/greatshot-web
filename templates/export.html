@@ -1,10 +1,18 @@
-<!doctype html>
-<title>Upload new File</title>
+{% extends "layout.html" %}
+{% block title %}Export demo{% endblock %}
+{% block head %}
+    {{ super() }}
+    <style type="text/css">
+        .col2 {
+          border: 1px solid green;
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
 <h1>Export demo</h1>
 <style>
-.col2 {
-	border: 1px solid green;
-}
+
 </style>
 <form style="width:800px;" action="" method="post" enctype="multipart/form-data">
   <p class="col2"><input type="file" name="file">
@@ -17,5 +25,7 @@
   <p>
     If you dont dont fill anything, last uploaded demo will be used
   </p>
+  <p>Client number (for eventexport) <input type="text" name="clientnum" value=""></p>
   <input type="submit" value="Export">
 </form>
+{% endblock %}

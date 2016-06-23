@@ -1,4 +1,8 @@
-<h2>Hit count</h2>
+{% extends "layout.html" %}
+{% block title %}Export output{% endblock %}
+
+{% block content %}
+<h2>Export output</h2>
 <table id="navigation">
 	<tr><td>Player</td><td>Hitregion</td><td>Count</td></tr>
 {% for row in hits %}
@@ -13,3 +17,4 @@
 <pre>
 {{ out }}
 </pre>
+{% endblock %}

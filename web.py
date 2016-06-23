@@ -6,31 +6,42 @@ import gamestv
 import re
 import json
 from pydblite.sqlite import Database, Table
+import eventexport
 
 
 
 app = Flask(__name__)
 app.config.from_pyfile('config.cfg')
 
-#http://flask.pocoo.org/docs/0.11/patterns/fileuploads/
 
-def count_hits(lines):
-  players=set()
+# 131 - body or dead body(gibbing)
+# 130 - head 
+# 0 - target has spawnshield
+# 132 teammate hit
+def count_hits(lines,player):
+  players=[]
   out=[]
   db = Database(":memory:")
   table = db.create('hits', ("player",'INTEGER'), ("region",'INTEGER'))
   table.create_index("player")
   table.create_index("region")
+  #exporter=eventexport.EventExport()
   for line in lines:
     j=json.loads(line)
+    #if 'szType' in j and j['szType']=='player':
+    #  players.append(j)
     if 'szType' in j and j['szType']=='bulletevent':
-      table.insert(int(j['bAttacker']),int(j['bRegion']))
+      table.insert(int(j['bAttacker']),j['bRegion'])
+      #if j['bAttacker']==int(player) and j['bRegion']!=130 and j['bRegion']!=131 and j['bRegion']!=0:
+        #filter(lambda p: p['bClientNum'] == j['bTarget'], players)
+        #exporter.add_event(j['dwTime'],'^2BULLETEVENT               ' +str(j['bRegion']) + '^7 ' + players[j['bTarget']]['szName'])
+  #exporter.export()
   table.cursor.execute('SELECT player,region,count(*) FROM hits group by player,region')
   ret = []
   result = db.cursor.fetchall()
   for row in result:
     ret.append(list(row))
-  print(ret)
+  #print(ret)
   return ret
   #[(0, 0, 14), (0, 130, 18), (0, 131, 177), (0, 132, 1), (1, 0, 5), (1, 130, 34),...
   return [{'num':2}]
@@ -40,6 +51,7 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1] in set(['tv_84','dm_84'])
 
+#http://flask.pocoo.org/docs/0.11/patterns/fileuploads/
 def upload(request):
   if 'uselast' in request.form:
     print('uselast')
@@ -77,8 +89,17 @@ def export():
     if request.method == 'POST':
         upload(request)
         #subprocess.call([ app.config['PARSERPATH'], 'indexer', app.config['INDEXER']])
-        return render_template('export-out.html',out=open('download/out.json', 'r').read(),hits=count_hits(open('download/out.json', 'r').readlines()))
+        return render_template('export-out.html',out=open('download/out.json', 'r').read(),hits=count_hits(open('download/out.json', 'r').readlines(), request.form['clientnum']))
     return render_template('export.html')
+
+
+@app.route('/matches', methods=['GET', 'POST'])
+def matches(): 
+    return "soonish..."
+
+@app.route('/players', methods=['GET', 'POST'])
+def players(): 
+    return "soonish..."
 
 if __name__ == "__main__":
     app.run(port=5111,host='0.0.0.0')

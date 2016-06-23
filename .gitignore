@@ -6,3 +6,4 @@ config.py
 config.cfg
 __pycache__/*
 download/out.json
+events/*

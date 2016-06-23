@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    {% block head %}
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+    {#<link rel="stylesheet" href="style.css" />#}
+    <title>{% block title %}{% endblock %}</title>
+    {% endblock %}
+</head>
+<body>
+    <nav>
+        <ul class="nav nav-pills">
+            <li><a href="/cut"><span class="glyphicon glyphicon-scissors"></span> Cut</a></li>
+            <li><a href="/export"><span class="glyphicon glyphicon-export"></span> Export</a></li>
+            <li><a href="/matches"><span class="glyphicon glyphicon glyphicon-list-alt"></span> Matches</a></li>
+            <li><a href="/players"><span class="glyphicon glyphicon glyphicon-list-alt"></span> Players</a></li>
+        </ul>
+    </div>
+    </nav>
+    <div id="content">{% block content %}{% endblock %}</div>
+    <div id="footer">
+        {% block footer %}
+        &copy; Copyright 2016 by <a href="https://github.com/mittermichal">Mitter Michal</a>.
+        {% endblock %}
+    </div>
+</body>
+</html>
