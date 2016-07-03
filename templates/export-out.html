@@ -3,9 +3,22 @@
 
 {% block content %}
 <h2>Export output</h2>
-<table id="navigation">
+
+<h2>Sprees</h2>
+
+
+{% for player in parser_out.players %}
+	{% for spree in player.sprees %}
+	    {% for kill in spree %}
+	    	{{ kill.bAttacker }} {{ kill.bTarget }} {{ kill.szTimeString }} {{ kill.szMessage }} {{ kill.dwTime }}<br/>
+		{% endfor %}
+		<br/>{{ spree.interval }}<br/>
+	{% endfor %}
+{% endfor %}
+
+<table>
 	<tr><td>Player</td><td>Hitregion</td><td>Count</td></tr>
-{% for row in hits %}
+{% for row in parser_out.hits %}
     <tr>
     	{% for column in row %}
     	<td>{{ column }}</td>
@@ -13,6 +26,8 @@
     </tr>
 {% endfor %}
 </table>
+
+
 <h2>Raw output</h2>
 <pre>
 {{ out }}

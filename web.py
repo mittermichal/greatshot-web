@@ -13,12 +13,24 @@ import eventexport
 app = Flask(__name__)
 app.config.from_pyfile('config.cfg')
 
+def spree_time_interval(spree):
+  return {'start':spree[0]['dwTime'], 'end':spree[len(spree)-1]['dwTime'] }
+
+@app.route('/render')
+def render():
+  #subprocess.Popen([app.config['ETPATH']+'et.exe', '+set fs_game etpro +demo gtv/demo-out +wait 150 +timescale 1 +cl_avidemo 60 +set nextdemo', "exec gtvsound" ], cwd=os.path.realpath(app.config['ETPATH']))
+  #subprocess.Popen('ffmpeg -y -framerate 60 -i etpro\screenshots\shot%04d.tga -i etpro/wav/synctest.wav -c:a libvorbis -shortest render.mp4', cwd=os.path.realpath(app.config['ETPATH']))
+  p=subprocess.Popen(
+	  app.config['ETPATH']+'screenshots.bat',
+	  cwd=os.path.realpath(app.config['ETPATH']))
+  p.communicate()
+  return "rendered"
 
 # 131 - body or dead body(gibbing)
 # 130 - head 
 # 0 - target has spawnshield
 # 132 teammate hit
-def count_hits(lines,player):
+def parse_output(lines,player):
   players=[]
   out=[]
   db = Database(":memory:")
@@ -28,8 +40,27 @@ def count_hits(lines,player):
   #exporter=eventexport.EventExport()
   for line in lines:
     j=json.loads(line)
-    #if 'szType' in j and j['szType']=='player':
-    #  players.append(j)
+    if 'szType' in j and j['szType']=='player':
+      j['sprees']=[]
+      j['spree']=[]
+      players.append(j)
+    if 'szType' in j and j['szType']=='obituary' and j['bAttacker']!=254 and j['bAttacker']!=j['bTarget']:
+    # and j['bAttacker']!=j['bTarget']:
+      #if j['bAttacker']>=len(players):
+      #print(j['bAttacker'])
+      #print(players[j['bAttacker']])
+      spree=players[j['bAttacker']]['spree']
+      sprees=players[j['bAttacker']]['sprees']
+      if (not len(spree)) or (j['dwTime']-spree[len(spree)-1]['dwTime']<=4000):
+        spree.append(j)
+      else:
+        if len(spree)>=3:
+          sprees.append(spree)
+        spree=[]
+        spree.append(j)
+      players[j['bAttacker']]['spree']=spree
+      players[j['bAttacker']]['sprees']=sprees
+
     if 'szType' in j and j['szType']=='bulletevent':
       table.insert(int(j['bAttacker']),j['bRegion'])
       #if j['bAttacker']==int(player) and j['bRegion']!=130 and j['bRegion']!=131 and j['bRegion']!=0:
@@ -42,9 +73,7 @@ def count_hits(lines,player):
   for row in result:
     ret.append(list(row))
   #print(ret)
-  return ret
-  #[(0, 0, 14), (0, 130, 18), (0, 131, 177), (0, 132, 1), (1, 0, 5), (1, 130, 34),...
-  return [{'num':2}]
+  return {'hits':ret,'players':players}
 
 
 def allowed_file(filename):
@@ -69,36 +98,35 @@ def upload(request):
         return 'bad extension'
     filename = 'demo.'+file.filename.rsplit('.', 1)[1]
     file.save(os.path.join('upload', filename))
-
+    return filename
+  return 'demo.tv_84'
 @app.route('/cut', methods=['GET', 'POST'])
-def cut():	
+def cut():
     if request.method == 'POST':
-        upload(request)
+        filename=upload(request)
         #CutDemo( PCHAR demoPath, PCHAR outFilePath, int start, int end, cutInfo_t type, int clientNum )
-        subprocess.call([app.config['PARSERPATH'], 'cut', 'upload/demo.tv_84', 'download/demo-out.dm_84', request.form['start'], request.form['end'], request.form['cuttype'], request.form['clientnum']])
+        subprocess.call([app.config['PARSERPATH'], 'cut', 'upload/'+filename, 'download/demo-out.dm_84', request.form['start'], request.form['end'], request.form['cuttype'], request.form['clientnum']])
         #F:\Hry\et\hannes_ettv_demo_parser_tech3\Debug\Anders.Gaming.LibTech3.exe cut demo01-10-31.tv_84 demo01-10-31.dm_84 56621000 56632000 0
-        return send_from_directory(directory='download', filename='demo-out.dm_84', as_attachment=True, attachment_filename='demo-out.dm_84')
-        return 'ok'
-        #return redirect(url_for('cut',filename='demo-out.dm_84'))
-        #return 'upload ok'
+        #return send_from_directory(directory='download', filename='demo-out.dm_84', as_attachment=True, attachment_filename='demo-out.dm_84')
+    render()
 
     return render_template('cut.html')
 
 @app.route('/export', methods=['GET', 'POST'])
-def export():	
+def export():
     if request.method == 'POST':
-        upload(request)
-        #subprocess.call([ app.config['PARSERPATH'], 'indexer', app.config['INDEXER']])
-        return render_template('export-out.html',out=open('download/out.json', 'r').read(),hits=count_hits(open('download/out.json', 'r').readlines(), request.form['clientnum']))
+        filename=upload(request)
+        subprocess.call([app.config['PARSERPATH'], 'indexer', 'indexTarget/upload\\'+filename+app.config['INDEXER']])
+        return render_template('export-out.html',out=open('download/out.json', 'r').read(),parser_out=parse_output(open('download/out.json', 'r').readlines(), request.form['clientnum']))
     return render_template('export.html')
 
 
 @app.route('/matches', methods=['GET', 'POST'])
-def matches(): 
+def matches():
     return "soonish..."
 
 @app.route('/players', methods=['GET', 'POST'])
-def players(): 
+def players():
     return "soonish..."
 
 if __name__ == "__main__":

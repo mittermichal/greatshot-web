@@ -19,7 +19,7 @@ def getMatchDemosId(matchId):
   if (demosId):
     return demosId.group(1)
   else: 
-  	return 0
+    return 0
 
 #requests demos for match and return their links in list
 def getDemosLinks(demoId):
