@@ -130,6 +130,10 @@ def export():
 		                                               request.form['clientnum']))
 	return render_template('export.html')
 
+@app.route('/')
+def index():
+	return render_template('index.html')
+
 
 @app.route('/matches', methods=['GET', 'POST'])
 def matches():
@@ -142,4 +146,4 @@ def players():
 
 
 if __name__ == "__main__":
-	app.run(port=5111, host='0.0.0.0')
+	app.run(port=5111, host='localhost')
