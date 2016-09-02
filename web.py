@@ -18,6 +18,8 @@ def spree_time_interval(spree):
 
 @app.route('/render')
 def render():
+	if '127.0.0.1'!=request.remote_addr:
+		return 'rendering only available on localhost'
 	# subprocess.Popen([app.config['ETPATH']+'et.exe', '+set fs_game etpro +demo gtv/demo-out +wait 150 +timescale 1 +cl_avidemo 60 +set nextdemo', "exec gtvsound" ], cwd=os.path.realpath(app.config['ETPATH']))
 	# subprocess.Popen('ffmpeg -y -framerate 60 -i etpro\screenshots\shot%04d.tga -i etpro/wav/synctest.wav -c:a libvorbis -shortest render.mp4', cwd=os.path.realpath(app.config['ETPATH']))
 	p = subprocess.Popen(
