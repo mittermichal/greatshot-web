@@ -10,21 +10,23 @@
     {% endblock %}
 </head>
 <body>
-    <nav>
-        <ul class="nav nav-pills">
-            <li><a href="/cut"><span class="glyphicon glyphicon-scissors"></span> Cut</a></li>
-            <li><a href="/export"><span class="glyphicon glyphicon-export"></span> Export</a></li>
-            <li><a href="/matches"><span class="glyphicon glyphicon glyphicon-list-alt"></span> Matches</a></li>
-            <li><a href="/players"><span class="glyphicon glyphicon glyphicon-list-alt"></span> Players</a></li>
-            <li><a href="/render"><span class="glyphicon glyphicon-facetime-videoglyphicon"></span> Players</a></li>
-        </ul>
-    </div>
-    </nav>
-    <div id="content">{% block content %}{% endblock %}</div>
-    <div id="footer">
-        {% block footer %}
-        &copy; Copyright 2016 by <a href="https://github.com/mittermichal">Mitter Michal</a>.
-        {% endblock %}
+    <div class="container">
+        <nav>
+            <ul class="nav nav-pills">
+                <li><a href="/cut"><span class="glyphicon glyphicon-scissors"></span> Cut</a></li>
+                <li><a href="/export"><span class="glyphicon glyphicon-export"></span> Export</a></li>
+                <li><a href="/matches"><span class="glyphicon glyphicon glyphicon-list-alt"></span> Matches</a></li>
+                <li><a href="/players"><span class="glyphicon glyphicon glyphicon-list-alt"></span> Players</a></li>
+                <li><a href="/render"><span class="glyphicon glyphicon glyphicon-film"></span> Render</a></li>
+            </ul>
+
+        </nav>
+        <div id="content">{% block content %}{{ msg }}{% endblock %}</div>
+        <div id="footer">
+            {% block footer %}
+            &copy; Copyright 2016 by <a href="https://github.com/mittermichal">Mitter Michal</a>.
+            {% endblock %}
+        </div>
     </div>
 </body>
 </html>

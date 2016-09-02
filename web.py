@@ -19,14 +19,14 @@ def spree_time_interval(spree):
 @app.route('/render')
 def render():
 	if '127.0.0.1'!=request.remote_addr:
-		return 'rendering only available on localhost'
+		return render_template('render.html',msg='rendering only available on localhost')
 	# subprocess.Popen([app.config['ETPATH']+'et.exe', '+set fs_game etpro +demo gtv/demo-out +wait 150 +timescale 1 +cl_avidemo 60 +set nextdemo', "exec gtvsound" ], cwd=os.path.realpath(app.config['ETPATH']))
 	# subprocess.Popen('ffmpeg -y -framerate 60 -i etpro\screenshots\shot%04d.tga -i etpro/wav/synctest.wav -c:a libvorbis -shortest render.mp4', cwd=os.path.realpath(app.config['ETPATH']))
-	p = subprocess.Popen(
+	'''p = subprocess.Popen(
 		app.config['ETPATH'] + 'screenshots.bat',
 		cwd=os.path.realpath(app.config['ETPATH']))
-	p.communicate()
-	return "rendered"
+	p.communicate()'''
+	return render_template('render.html')
 
 
 # 131 - body or dead body(gibbing)
@@ -134,17 +134,17 @@ def export():
 
 @app.route('/')
 def index():
-	return render_template('index.html')
+	return render_template('layout.html', msg='hello')
 
 
 @app.route('/matches', methods=['GET', 'POST'])
 def matches():
-	return "soonish..."
+	return render_template('layout.html', msg='soon™')
 
 
 @app.route('/players', methods=['GET', 'POST'])
 def players():
-	return "soonish..."
+	return render_template('layout.html', msg='soon™')
 
 
 if __name__ == "__main__":

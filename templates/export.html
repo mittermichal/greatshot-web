@@ -11,21 +11,31 @@
 
 {% block content %}
 <h1>Export demo</h1>
-<style>
-
-</style>
-<form style="width:800px;" action="" method="post" enctype="multipart/form-data">
-  <p class="col2"><input type="file" name="file">
-  </p>
-  <p>OR</p>
-  <p class="col2">
-  	gamestv match link: <input type="text" name="matchId"> ( http://www.gamestv.org/event/56051-tag-vs-elysium/ )<br/>
-  	map number: <input type="text" name="map" value="1"> ( 1 )</p>
-  </p>
-  <p>
-    If you dont dont fill anything, last uploaded demo will be used
-  </p>
-  <p>Client number (for eventexport) <input type="text" name="clientnum" value=""></p>
-  <input type="submit" value="Export">
+<p>
+    Parses demo file into json.
+</p>
+<form action="" method="post" enctype="multipart/form-data">
+  <label class="control-label col-sm-2">Demo:</label>
+  <div class="col-sm-4">
+    <input class="form-control" type="file" name="file"/>
+  </div>
+  <label class="control-label col-sm-2">or match link:</label>
+  <div class="col-sm-4">
+    <input class="form-control" placeholder="http://www.gamestv.org/event/56051-tag-vs-elysium/" type="text" name="matchId"/>
+  </div>
+    <label class="control-label col-sm-2">map number:</label>
+  <div class="col-sm-10">
+    <input class="form-control" type="text" name="map" value="1">
+  </div>
+  <label class="col-sm-12">
+    If you don't fill anything, last uploaded demo will be used
+  </label>
+  {#
+  <label class="control-label col-sm-2">Client number (for eventexport)</label>
+  <div class="col-sm-10">
+    <input class="form-control" type="text" name="clientnum" value=""/>
+  </div>
+  #}
+  <input type="submit" class="btn btn-default" value="Export"/>
 </form>
 {% endblock %}
