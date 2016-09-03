@@ -45,7 +45,7 @@ def parse_output(lines):
 	table.create_index("region")
 	# exporter=eventexport.EventExport()
 	for line in lines:
-		j = json.loads(line)
+		j = json.loads(line.replace('\1', ''))
 		if 'szType' in j and j['szType'] == 'player':
 			j['sprees'] = []
 			j['spree'] = []
