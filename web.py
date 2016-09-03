@@ -96,7 +96,7 @@ def upload(request):
 				int(request.form['map']) - 1], 'upload/demo.tv_84')
 	else:
 		if 'file' not in request.files:
-			return 'No file part'
+			return 'demo.tv_84'
 		file = request.files['file']
 		# if user does not select file, browser also
 		# submit a empty part without filename
@@ -111,7 +111,7 @@ def upload(request):
 
 
 # TODO exclude POV playerstate/entity
-@app.route('/cut')
+@app.route('/cut', methods=['GET', 'POST'])
 def cut():
 	form1, form2 = ExportFileForm(), ExportMatchLinkForm()
 	cut_form = CutForm()
@@ -122,8 +122,7 @@ def cut():
 			[app.config['PARSERPATH'], 'cut', 'upload/' + filename, 'download/demo-out.dm_84', request.form['start'],
 			 request.form['end'], request.form['cut_type'], request.form['client_num']])
 		# F:\Hry\et\hannes_ettv_demo_parser_tech3\Debug\Anders.Gaming.LibTech3.exe cut demo01-10-31.tv_84 demo01-10-31.dm_84 56621000 56632000 0
-		# return send_from_directory(directory='download', filename='demo-out.dm_84', as_attachment=True, attachment_filename='demo-out.dm_84')
-		return render()
+		return send_from_directory(directory='download', filename='demo-out.dm_84', as_attachment=True, attachment_filename='demo-out.dm_84')
 	else:
 		return render_template('cut.html', cut_form=cut_form, form1=form1, form2=form2)
 

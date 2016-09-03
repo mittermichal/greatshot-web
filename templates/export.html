@@ -16,7 +16,7 @@
 </p>
 
 {% from "form.html" import render_form, render_btn %}
-<form method="post" action="" enctype="multipart/form-data" class="form-horizontal">
+<form method="post" action="/export" enctype="multipart/form-data" class="form-horizontal">
     <h3>Export by uploading demofile</h3>
     {{ render_form(form1) }}{{ render_btn() }}
     <h3>Export gamestv match</h3>
