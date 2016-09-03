@@ -159,4 +159,4 @@ def players():
 
 
 if __name__ == "__main__":
-	app.run(port=5111, host='localhost')
+	app.run(port=5111, host='0.0.0.0')

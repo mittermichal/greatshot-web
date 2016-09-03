@@ -6,4 +6,4 @@ __pycache__/*
 download/out.json
 events*
 .idea
-static/render.mp4
+*.mp4
