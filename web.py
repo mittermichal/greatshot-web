@@ -132,7 +132,8 @@ def export():
 	form1, form2 = ExportFileForm(),ExportMatchLinkForm()
 	if request.method == 'POST':
 		filename = upload(request)
-		subprocess.call([app.config['PARSERPATH'], 'indexer', 'indexTarget/upload\\' + filename + app.config['INDEXER']])
+		arg = app.config['INDEXER'] % (filename)
+		subprocess.call([app.config['PARSERPATH'], 'indexer', arg ])
 		return render_template('export-out.html', out=open('download/out.json', 'r').read(),
 		                       parser_out=parse_output(open('download/out.json', 'r').readlines()))
 	return render_template('export.html',form1=form1, form2=form2)
