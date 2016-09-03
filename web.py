@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
 from flask import Flask, request, redirect, url_for, render_template, send_from_directory
 import os
 import subprocess
