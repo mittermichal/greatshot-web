@@ -145,7 +145,7 @@ def export_last():
 
 @app.route('/')
 def index():
-	return render_template('layout.html', msg=markdown.markdown(open('README', 'r').read()))
+	return render_template('layout.html', msg=markdown.markdown(open('README.md', 'r').read()))
 
 
 @app.route('/matches', methods=['GET', 'POST'])
