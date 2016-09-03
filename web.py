@@ -6,6 +6,7 @@ import gamestv
 import re
 import json
 from pydblite.sqlite import Database, Table
+from app.forms import ExportFileForm,ExportMatchLinkForm, CutForm
 import eventexport
 
 app = Flask(__name__)
@@ -33,7 +34,7 @@ def render():
 # 130 - head 
 # 0 - target has spawnshield
 # 132 teammate hit
-def parse_output(lines, player):
+def parse_output(lines):
 	players = []
 	db = Database(":memory:")
 	table = db.create('hits', ("player", 'INTEGER'), ("region", 'INTEGER'))
@@ -97,9 +98,9 @@ def upload(request):
 		# if user does not select file, browser also
 		# submit a empty part without filename
 		if file.filename == '':
-			return 'No selected file'
+			return 'demo.tv_84'
 		if not file or not allowed_file(file.filename):
-			return 'bad extension'
+			return 'demo.tv_84'
 		filename = 'demo.' + file.filename.rsplit('.', 1)[1]
 		file.save(os.path.join('upload', filename))
 		return filename
@@ -109,28 +110,35 @@ def upload(request):
 # TODO exclude POV playerstate/entity
 @app.route('/cut')
 def cut():
+	form1, form2 = ExportFileForm(), ExportMatchLinkForm()
+	cut_form = CutForm()
 	if request.form.__contains__('start'):
 		filename = upload(request)
 		# CutDemo( PCHAR demoPath, PCHAR outFilePath, int start, int end, cutInfo_t type, int clientNum )
 		subprocess.call(
 			[app.config['PARSERPATH'], 'cut', 'upload/' + filename, 'download/demo-out.dm_84', request.form['start'],
-			 request.form['end'], request.form['cuttype'], request.form['clientnum']])
+			 request.form['end'], request.form['cut_type'], request.form['client_num']])
 		# F:\Hry\et\hannes_ettv_demo_parser_tech3\Debug\Anders.Gaming.LibTech3.exe cut demo01-10-31.tv_84 demo01-10-31.dm_84 56621000 56632000 0
 		# return send_from_directory(directory='download', filename='demo-out.dm_84', as_attachment=True, attachment_filename='demo-out.dm_84')
 		return render()
 	else:
-		return render_template('cut.html')
+		return render_template('cut.html', cut_form=cut_form, form1=form1, form2=form2)
 
 
 @app.route('/export', methods=['GET', 'POST'])
 def export():
+	form1, form2 = ExportFileForm(),ExportMatchLinkForm()
 	if request.method == 'POST':
 		filename = upload(request)
 		subprocess.call([app.config['PARSERPATH'], 'indexer', 'indexTarget/upload\\' + filename + app.config['INDEXER']])
 		return render_template('export-out.html', out=open('download/out.json', 'r').read(),
-		                       parser_out=parse_output(open('download/out.json', 'r').readlines(),
-		                                               request.form['clientnum']))
-	return render_template('export.html')
+		                       parser_out=parse_output(open('download/out.json', 'r').readlines()))
+	return render_template('export.html',form1=form1, form2=form2)
+
+@app.route('/export/last')
+def export_last():
+	return render_template('export-out.html', out=open('download/out.json', 'r').read(),
+		                       parser_out=parse_output(open('download/out.json', 'r').readlines()))
 
 @app.route('/')
 def index():

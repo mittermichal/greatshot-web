@@ -3,16 +3,23 @@
 
 {% block content %}
 <h1>Cut</h1>
-<form action="" method="post" enctype="multipart/form-data">
-  <p><input type="file" name="file"> OR gamestv match link: <input type="text" name="matchId"> map number: <input type="text" name="map" value="1"></p>
-  <p>Start <input type="text" name="start" value="0"></p>
-  <p>End <input type="text" name="end" value="2147483647"></p>
-  <p>Cut type <select name="cuttype">
-  <option value="0">SNAPNUMBER</option>
-  <option value="1" selected="selected">SNAPTIME</option>
-  <option value="2">SNAPCOUNT</option>
-</select></p>
-  <p>Client number (required for ETTV demo) <input type="text" name="clientnum" value=""></p>
-  <p><input type="submit" value="Cut"></p>
+<p>
+    Cuts demo file.
+</p>
+{% from "form.html" import render_form, render_btn %}
+<form method="post" action="" enctype="multipart/form-data" class="form-horizontal">
+    <h3>Cut by uploading demofile</h3>
+    {{ render_form(form1) }}
+    <h3>Cut gamestv match</h3>
+    {{ render_form(form2) }}
+    <hr/>
+    <h3>Cut parameters</h3>
+    {{ render_form(cut_form) }}
+    {{ render_btn("Cut") }}
+    <hr/>
+    <label class="col-sm-offset-2">
+        <sup>*</sup> Client number required to choose POV for ETTV demo
+    </label>
 </form>
+
 {% endblock %}

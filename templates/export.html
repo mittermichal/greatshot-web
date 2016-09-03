@@ -14,28 +14,24 @@
 <p>
     Parses demo file into json.
 </p>
-<form action="" method="post" enctype="multipart/form-data">
-  <label class="control-label col-sm-2">Demo:</label>
-  <div class="col-sm-4">
-    <input class="form-control" type="file" name="file"/>
-  </div>
-  <label class="control-label col-sm-2">or match link:</label>
-  <div class="col-sm-4">
-    <input class="form-control" placeholder="http://www.gamestv.org/event/56051-tag-vs-elysium/" type="text" name="matchId"/>
-  </div>
-    <label class="control-label col-sm-2">map number:</label>
-  <div class="col-sm-10">
-    <input class="form-control" type="text" name="map" value="1">
-  </div>
-  <label class="col-sm-12">
-    If you don't fill anything, last uploaded demo will be used
-  </label>
-  {#
+
+{% from "form.html" import render_form, render_btn %}
+<form method="post" action="" enctype="multipart/form-data" class="form-horizontal">
+    <h3>Export by uploading demofile</h3>
+    {{ render_form(form1) }}{{ render_btn() }}
+    <h3>Export gamestv match</h3>
+    {{ render_form(form2) }}{{ render_btn() }}
+</form>
+
+<h2>Export last used demo</h2>
+<a class="col-sm-offset-2 btn btn-default" href="/export/last">Last</a>
+
+{% endblock %}
+
+
+{#
   <label class="control-label col-sm-2">Client number (for eventexport)</label>
   <div class="col-sm-10">
     <input class="form-control" type="text" name="clientnum" value=""/>
   </div>
-  #}
-  <input type="submit" class="btn btn-default" value="Export"/>
-</form>
-{% endblock %}
+#}
