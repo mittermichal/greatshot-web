@@ -1,5 +1,5 @@
 {% extends "layout.html" %}
-{% block title %}Export output{% endblock %}
+{% block title %} - Export output{% endblock %}
 
 {% block content %}
 <h2>Export output</h2>
@@ -15,7 +15,13 @@
 		<br/>{{ spree.interval }}<br/>
 	{% endfor %}
 {% endfor %}
-
+<p>
+	Hitregions:
+	131 - body or dead body(gibbing)
+	130 - head
+	0 - target has spawnshield
+	132 teammate hit
+</p>
 <table>
 	<tr><td>Player</td><td>Hitregion</td><td>Count</td></tr>
 {% for row in parser_out.hits %}

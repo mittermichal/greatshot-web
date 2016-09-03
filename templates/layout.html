@@ -2,17 +2,19 @@
 <html lang="en">
 <head>
     {% block head %}
+    <link rel="shortcut icon" href="/static/favicon.ico">
     <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
     <script src="https://code.jquery.com/jquery-2.2.4.js"></script>
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
     {#<link rel="stylesheet" href="style.css" />#}
-    <title>{% block title %}{% endblock %}</title>
+    <title>W:ET demo tools {% block title %}{% endblock %}</title>
     {% endblock %}
 </head>
 <body>
     <div class="container">
         <nav>
             <ul class="nav nav-pills">
+                <li><a href="/"><span class="glyphicon glyphicon-info-sign"></span> README</a></li>
                 <li><a href="/cut"><span class="glyphicon glyphicon-scissors"></span> Cut</a></li>
                 <li><a href="/export"><span class="glyphicon glyphicon-export"></span> Export</a></li>
                 <li><a href="/matches"><span class="glyphicon glyphicon glyphicon-list-alt"></span> Matches</a></li>
@@ -21,10 +23,12 @@
             </ul>
 
         </nav>
-        <div id="content">{% block content %}{{ msg }}{% endblock %}</div>
+        <div id="content">{% block content %}{{ msg|safe }}{% endblock %}</div>
         <div id="footer">
+            <hr/>
             {% block footer %}
             &copy; Copyright 2016 by <a href="https://github.com/mittermichal">Mitter Michal</a>.
+            <a class="btn btn-default" href="https://github.com/mittermichal/advanced-gamestv-stats"><object data="/static/mark-github.svg" type="image/svg+xml"></object> View on Github</a>
             {% endblock %}
         </div>
     </div>

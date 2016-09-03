@@ -9,6 +9,7 @@ import re
 import json
 from pydblite.sqlite import Database, Table
 from app.forms import ExportFileForm,ExportMatchLinkForm, CutForm
+import markdown
 import eventexport
 
 app = Flask(__name__)
@@ -144,7 +145,7 @@ def export_last():
 
 @app.route('/')
 def index():
-	return render_template('layout.html', msg='hello')
+	return render_template('layout.html', msg=markdown.markdown(open('README', 'r').read()))
 
 
 @app.route('/matches', methods=['GET', 'POST'])
