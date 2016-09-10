@@ -11,11 +11,9 @@ from app.forms import ExportFileForm,ExportMatchLinkForm, CutForm
 import markdown
 import eventexport
 import tasks
-from celery.events.state import Task
 from app.db import db_session
 from app.models import Render
 from sqlalchemy import desc
-from flask_restful import reqparse, abort, Api, Resource
 from app.export import parse_output
 
 flask_app = Flask(__name__)
