@@ -3,83 +3,71 @@
 from flask import Flask, request, redirect, url_for, render_template, send_from_directory
 import os
 import subprocess
+import app.Libtech3
 import urllib.request
 import gamestv
 import re
-import json
-from pydblite.sqlite import Database, Table
 from app.forms import ExportFileForm,ExportMatchLinkForm, CutForm
 import markdown
 import eventexport
+import tasks
+from celery.events.state import Task
+from app.db import db_session
+from app.models import Render
+from sqlalchemy import desc
+from flask_restful import reqparse, abort, Api, Resource
+from app.export import parse_output
 
-app = Flask(__name__)
-app.config.from_pyfile('config.cfg')
+flask_app = Flask(__name__)
+flask_app.config.from_pyfile('config.cfg')
+
+
+@flask_app.route('/renders/<render_id>')
+def render_get(render_id):
+	r = Render.query.filter(Render.id == render_id).first()
+	return render_template('render.html', render = r)
+
+@flask_app.route('/renders', methods=['GET', 'POST'])
+def renders_list():
+	if request.method == 'GET':
+		renders = Render.query.order_by(desc(Render.id)).all()
+		# print(result.id)
+		for render in renders:
+			result = tasks.render.AsyncResult(render.celery_id)
+			if result.successful():
+				render.streamable_short = result.get()
+		return render_template('render_list.html', renders = renders)
+
+	if request.method == 'POST':
+		filename = 'demo.tv_84'
+		app.Libtech3.cut(
+			flask_app.config['PARSERPATH'], 'upload/' + filename, 'download/demo-out.dm_84', request.form['start'],
+			request.form['end'], request.form['cut_type'], request.form['client_num'])
+		result = tasks.render.delay(flask_app.config['APPHOST']+'/download/demo-out.dm_84')
+		r = Render(result.id)
+		db_session.add(r)
+		db_session.flush()
+		return redirect(url_for('render_get', render_id=r.id))
 
 
 def spree_time_interval(spree):
 	return {'start': spree[0]['dwTime'], 'end': spree[len(spree) - 1]['dwTime']}
 
 
-@app.route('/render')
+@flask_app.teardown_appcontext
+def shutdown_session(exception=None):
+	db_session.remove()
+
+
+'''
+@flask_app.route('/render')
 def render():
 	if '127.0.0.1'!=request.remote_addr:
 		return render_template('render.html',msg='rendering only available on localhost')
 	# subprocess.Popen([app.config['ETPATH']+'et.exe', '+set fs_game etpro +demo gtv/demo-out +wait 150 +timescale 1 +cl_avidemo 60 +set nextdemo', "exec gtvsound" ], cwd=os.path.realpath(app.config['ETPATH']))
 	# subprocess.Popen('ffmpeg -y -framerate 60 -i etpro\screenshots\shot%04d.tga -i etpro/wav/synctest.wav -c:a libvorbis -shortest render.mp4', cwd=os.path.realpath(app.config['ETPATH']))
-	'''p = subprocess.Popen(
-		app.config['ETPATH'] + 'screenshots.bat',
-		cwd=os.path.realpath(app.config['ETPATH']))
-	p.communicate()'''
-	return render_template('render.html')
-
-
-# 131 - body or dead body(gibbing)
-# 130 - head 
-# 0 - target has spawnshield
-# 132 teammate hit
-def parse_output(lines):
-	players = []
-	db = Database(":memory:")
-	table = db.create('hits', ("player", 'INTEGER'), ("region", 'INTEGER'))
-	table.create_index("player")
-	table.create_index("region")
-	# exporter=eventexport.EventExport()
-	for line in lines:
-		j = json.loads(line.replace('\1', ''))
-		if 'szType' in j and j['szType'] == 'player':
-			j['sprees'] = []
-			j['spree'] = []
-			players.append(j)
-		if 'szType' in j and j['szType'] == 'obituary' and j['bAttacker'] != 254 and j['bAttacker'] != j['bTarget']:
-			# and j['bAttacker']!=j['bTarget']:
-			# if j['bAttacker']>=len(players):
-			# print(j['bAttacker'])
-			# print(players[j['bAttacker']])
-			spree = players[j['bAttacker']]['spree']
-			sprees = players[j['bAttacker']]['sprees']
-			if (not len(spree)) or (j['dwTime'] - spree[len(spree) - 1]['dwTime'] <= 4000):
-				spree.append(j)
-			else:
-				if len(spree) >= 3:
-					sprees.append(spree)
-				spree = [j]
-			players[j['bAttacker']]['spree'] = spree
-			players[j['bAttacker']]['sprees'] = sprees
-
-		if 'szType' in j and j['szType'] == 'bulletevent':
-			table.insert(int(j['bAttacker']), j['bRegion'])
-		# if j['bAttacker']==int(player) and j['bRegion']!=130 and j['bRegion']!=131 and j['bRegion']!=0:
-		# filter(lambda p: p['bClientNum'] == j['bTarget'], players)
-		# exporter.add_event(j['dwTime'],'^2BULLETEVENT      ' +str(j['bRegion']) + '^7 ' + players[j['bTarget']]['szName'])
-	# exporter.export()
-	table.cursor.execute('SELECT player,region,count(*) FROM hits group by player,region')
-	ret = []
-	result = db.cursor.fetchall()
-	for row in result:
-		ret.append(list(row))
-	# print(ret)
-	return {'hits': ret, 'players': players}
-
+	return render_template('render.html', renders = renders)
+'''
 
 def allowed_file(filename):
 	return '.' in filename and \
@@ -109,54 +97,58 @@ def upload(request):
 		return filename
 	return 'demo.tv_84'
 
+@flask_app.route('/download/<path:filename>')
+def download_static(filename):
+	return send_from_directory(directory='download', filename=filename)
 
 # TODO exclude POV playerstate/entity
-@app.route('/cut', methods=['GET', 'POST'])
+@flask_app.route('/cut', methods=['GET', 'POST'])
 def cut():
 	form1, form2 = ExportFileForm(), ExportMatchLinkForm()
 	cut_form = CutForm()
 	if request.form.__contains__('start'):
 		filename = upload(request)
 		# CutDemo( PCHAR demoPath, PCHAR outFilePath, int start, int end, cutInfo_t type, int clientNum )
-		subprocess.call(
-			[app.config['PARSERPATH'], 'cut', 'upload/' + filename, 'download/demo-out.dm_84', request.form['start'],
-			 request.form['end'], request.form['cut_type'], request.form['client_num']])
+		app.Libtech3.cut(
+			flask_app.config['PARSERPATH'], 'upload/' + filename, 'download/demo-out.dm_84', request.form['start'],
+			 request.form['end'], request.form['cut_type'], request.form['client_num'])
 		# F:\Hry\et\hannes_ettv_demo_parser_tech3\Debug\Anders.Gaming.LibTech3.exe cut demo01-10-31.tv_84 demo01-10-31.dm_84 56621000 56632000 0
 		return send_from_directory(directory='download', filename='demo-out.dm_84', as_attachment=True, attachment_filename='demo-out.dm_84')
 	else:
 		return render_template('cut.html', cut_form=cut_form, form1=form1, form2=form2)
 
 
-@app.route('/export', methods=['GET', 'POST'])
+@flask_app.route('/export', methods=['GET', 'POST'])
 def export():
 	form1, form2 = ExportFileForm(),ExportMatchLinkForm()
 	if request.method == 'POST':
+		cut_form = CutForm()
 		filename = upload(request)
-		arg = app.config['INDEXER'] % (filename)
-		subprocess.call([app.config['PARSERPATH'], 'indexer', arg ])
-		return render_template('export-out.html', out=open('download/out.json', 'r').read(),
+		arg = flask_app.config['INDEXER'] % (filename)
+		subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg ])
+		return render_template('export-out.html', filename=filename, cut_form=cut_form, out=open('download/out.json', 'r').read(),
 		                       parser_out=parse_output(open('download/out.json', 'r').readlines()))
 	return render_template('export.html',form1=form1, form2=form2)
 
-@app.route('/export/last')
+@flask_app.route('/export/last')
 def export_last():
-	return render_template('export-out.html', out=open('download/out.json', 'r').read(),
+	cut_form = CutForm()
+	return render_template('export-out.html', cut_form=cut_form, out=open('download/out.json', 'r').read(),
 		                       parser_out=parse_output(open('download/out.json', 'r').readlines()))
 
-@app.route('/')
+@flask_app.route('/')
 def index():
 	return render_template('layout.html', msg=markdown.markdown(open('README.md', 'r').read()))
 
 
-@app.route('/matches', methods=['GET', 'POST'])
+@flask_app.route('/matches', methods=['GET', 'POST'])
 def matches():
 	return render_template('layout.html', msg='soon™')
 
 
-@app.route('/players', methods=['GET', 'POST'])
+@flask_app.route('/players', methods=['GET', 'POST'])
 def players():
 	return render_template('layout.html', msg='soon™')
 
-
 if __name__ == "__main__":
-	app.run(port=5111, host='0.0.0.0')
+	flask_app.run(port=5111, host='0.0.0.0')

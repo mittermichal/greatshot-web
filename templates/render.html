@@ -3,9 +3,13 @@
 
 {% block content %}
 
-<video controls>
-  <source src="/static/render.mp4" type="video/mp4">
-</video>
-<a href="/static/render.mp4">Download render</a>
 
+  {{ render.celery_id }} {{ render.streamable_short }} <br/>
+
+{#
+  <video controls>
+    <source src="/static/render.mp4" type="video/mp4">
+  </video>
+  <a href="/static/render.mp4">Download render</a>
+#}
 {% endblock %}

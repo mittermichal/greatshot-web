@@ -1,0 +1,6 @@
+ETPATH='C:\image-et\\'
+CELERY_IMPORTS = ("tasks", )
+REDIS='redis://:localhost'
+CELERY_RESULT_BACKEND=REDIS
+STREAMABLE_NAME='name'
+STREAMABLE_PW='pw'
