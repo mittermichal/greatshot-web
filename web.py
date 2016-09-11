@@ -22,8 +22,11 @@ flask_app.config.from_pyfile('config.cfg')
 
 @flask_app.route('/renders/<render_id>')
 def render_get(render_id):
-	r = Render.query.filter(Render.id == render_id).first()
-	return render_template('render.html', render = r)
+	render = Render.query.filter(Render.id == render_id).first()
+	result = tasks.render.AsyncResult(render.celery_id)
+	if result.successful():
+		render.streamable_short = result.get()
+	return render_template('render.html', render = render)
 
 @flask_app.route('/renders', methods=['GET', 'POST'])
 def renders_list():
