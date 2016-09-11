@@ -12,6 +12,7 @@ def parse_output(lines):
 	table.create_index("player")
 	table.create_index("region")
 	# exporter=eventexport.EventExport()
+  #TODO: fix players[j['bAttacker']] out of bound
 	for line in lines:
 		j = json.loads(line.replace('\1', ''))
 		if 'szType' in j and j['szType'] == 'player':

@@ -149,5 +149,11 @@ def matches():
 def players():
   return render_template('layout.html', msg='soon™')
 
+#TODO: upload raw video from worker
+'''
+@flask_app.route('/raw')
+def raw():
+  return send_from_directory(directory='.', filename='render.mp4', as_attachment=True, attachment_filename='render.mp4')
+'''
 if __name__ == "__main__":
   flask_app.run(port=5111, host='0.0.0.0')

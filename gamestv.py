@@ -29,7 +29,8 @@ def getDemosLinks(demoId):
   url = urllib.request.Request("http://www.gamestv.org/demos/"+str(demoId), params)
   
   html=opener.open(url).read().decode('iso-8859-1')
-  time.sleep(1)
+  #TODO pool in loop
+  time.sleep(3)
   print(html)
   pollId=json.loads(html)['pollID']
   print('pollid: '+str(pollId))
