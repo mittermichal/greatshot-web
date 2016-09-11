@@ -27,25 +27,23 @@ def render_get(render_id):
 
 @flask_app.route('/renders', methods=['GET', 'POST'])
 def renders_list():
-	if request.method == 'GET':
-		renders = Render.query.order_by(desc(Render.id)).all()
-		# print(result.id)
-		for render in renders:
-			result = tasks.render.AsyncResult(render.celery_id)
-			if result.successful():
-				render.streamable_short = result.get()
-		return render_template('render_list.html', renders = renders)
-
-	if request.method == 'POST':
-		filename = 'demo.tv_84'
-		app.Libtech3.cut(
-			flask_app.config['PARSERPATH'], 'upload/' + filename, 'download/demo-out.dm_84', request.form['start'],
-			request.form['end'], request.form['cut_type'], request.form['client_num'])
-		result = tasks.render.delay(flask_app.config['APPHOST']+'/download/demo-out.dm_84')
-		r = Render(result.id)
-		db_session.add(r)
-		db_session.flush()
-		return redirect(url_for('render_get', render_id=r.id))
+  if request.method == 'GET':
+    renders = Render.query.order_by(desc(Render.id)).all()
+    # print(result.id)
+    for render in renders:
+      result = tasks.render.AsyncResult(render.celery_id)
+      if result.successful():
+        render.streamable_short = result.get()
+    return render_template('render_list.html', renders = renders)
+  if request.method == 'POST':
+    filename = 'demo.tv_84'
+    app.Libtech3.cut(flask_app.config['PARSERPATH'], 'upload/' + filename, 'download/demo-out.dm_84', request.form['start'],request.form['end'], request.form['cut_type'], request.form['client_num'])
+    result = tasks.render.delay(flask_app.config['APPHOST']+'/download/demo-out.dm_84')
+    r = Render(result.id)
+    db_session.add(r)
+    db_session.flush()
+    db_session.commit()
+    return redirect(url_for('render_get', render_id=r.id))
 
 
 def spree_time_interval(spree):
