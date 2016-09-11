@@ -1,10 +1,50 @@
 {% extends "layout.html" %}
 {% block title %}Render output{% endblock %}
 
+{% macro render_streamable(shortcode) %}
+<div class="wrap" {% if shortcode|length==0 %}style="display:none;"{% endif %}">
+    <a href="https://streamable.com/{{ shortcode }}">streamable.com</a>
+    <div class="streamable-embed-container" style="width: 100%; height: 0px; position: relative; padding-bottom: 56.338%;"><iframe class="streamable-embed" src="https://streamable.com/e/{{ shortcode }}" frameborder="0" scrolling="no" style="width: 100%; height: 100%; position: absolute;" allowfullscreen webkitallowfullscreen mozallowfullscreen></iframe></div>
+    <div class="col-sm-offset-11">HD<span class="glyphicon glyphicon-arrow-up"></span></div>
+</div>
+{% endmacro %}
+
 {% block content %}
 
+{% if render.streamable_short %}
+  {{ render_streamable(render.streamable_short) }}
+{% else %}
+<script>
 
-  <a href="https://streamable.com/{{ render.streamable_short }}">https://streamable.com/{{ render.streamable_short }}</a>
+function doPoll(){
+
+  $.ajax({url: "/renders/{{ render.id }}", dataType: "json", success: function(task){
+        if (task.stage) {
+          $('.progress-bar').css({'width': task.i + '%'});
+          $('.progress-bar').html(task.stage);
+          setTimeout(doPoll,2000);
+         } else {
+          $('.progress').hide();
+          $('.wrap iframe').attr('src',$('.wrap iframe').attr('src')+task);
+          $('.wrap a').attr('href',$('.wrap a').attr('href')+task);
+          $('.wrap').show();
+        }
+    }});
+}
+
+$(function() {
+  doPoll();
+});
+</script>
+
+<div class="progress">
+  <div class="progress-bar progress-bar-striped active" style="color:#333" role="progressbar" style="width:0%">
+    polling status...
+  </div>
+</div>
+{{ render_streamable("") }}
+{% endif %}
+
 
 {#
   <video controls>
@@ -13,3 +53,4 @@
   <a href="/static/render.mp4">Download render</a>
 #}
 {% endblock %}
+

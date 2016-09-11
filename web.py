@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from flask import Flask, request, redirect, url_for, render_template, send_from_directory
+from flask import Flask, request, redirect, url_for, render_template, send_from_directory, jsonify
 import os
 import subprocess
 import app.Libtech3
@@ -20,10 +20,21 @@ flask_app = Flask(__name__)
 flask_app.config.from_pyfile('config.cfg')
 
 
+def request_wants_json():
+  best = request.accept_mimetypes \
+    .best_match(['application/json', 'text/html'])
+  return best == 'application/json' and \
+         request.accept_mimetypes[best] > \
+         request.accept_mimetypes['text/html']
+
 @flask_app.route('/renders/<render_id>')
 def render_get(render_id):
   render = Render.query.filter(Render.id == render_id).first()
   result = tasks.render.AsyncResult(render.celery_id)
+  if request_wants_json():
+    data = result.result or result.state
+    #print(data)
+    return jsonify(data)
   if result.successful():
     render.streamable_short = result.get()
   return render_template('render.html', render = render)
