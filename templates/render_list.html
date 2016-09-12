@@ -2,10 +2,24 @@
 {% block title %}Renders list{% endblock %}
 
 {% block content %}
-
+<table class="table">
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>Title</th>
+      <th>streamable_short</th>
+    </tr>
+  </thead>
+  <tbody>
 {% for render in renders %}
-  <a href="{{ url_for('render_get',render_id=render.id) }}">{{ render.celery_id }} {{ render.streamable_short }}</a><br/>
+    <tr>
+        <td><a href="{{ url_for('render_get',render_id=render.id) }}">{{ render.id }} </a></td>
+        <td><a href="{{ url_for('render_get',render_id=render.id) }}">{{ render.title }} </a></td>
+        <td> {{ render.streamable_short }}</td>
+    <tr/>
 {% endfor %}
+  </tbody>
+</table>
 {#
   <video controls>
     <source src="/static/render.mp4" type="video/mp4">
