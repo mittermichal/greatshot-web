@@ -34,7 +34,7 @@ def render(demoUrl,start):
 
   #https://api.streamable.com
   current_task.update_state(state='PROGRESS', meta={'stage': 'uploading clip...', 'i':50})
-  return 'aaaa'
+  #return 'aaaa'
   r=requests.post('https://api.streamable.com/upload', auth=(tasks_config.STREAMABLE_NAME, tasks_config.STREAMABLE_PW), files={'render.mp4': open(tasks_config.ETPATH+'render.mp4', 'rb')})
 
   return json.loads(r.text)["shortcode"]
