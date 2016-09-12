@@ -51,8 +51,8 @@ def renders_list():
     return render_template('render_list.html', renders = renders)
   if request.method == 'POST':
     filename = 'demo.tv_84'
-    app.Libtech3.cut(flask_app.config['PARSERPATH'], 'upload/' + filename, 'download/demo-out.dm_84', request.form['start'],request.form['end'], request.form['cut_type'], request.form['client_num'])
-    result = tasks.render.delay(flask_app.config['APPHOST']+'/download/demo-out.dm_84')
+    app.Libtech3.cut(flask_app.config['PARSERPATH'], 'upload/' + filename, 'download/demo-out.dm_84', str(int(request.form['start'])-2000),request.form['end'], request.form['cut_type'], request.form['client_num'])
+    result = tasks.render.delay(flask_app.config['APPHOST']+'/download/demo-out.dm_84',request.form['start'])
     r = Render(result.id)
     db_session.add(r)
     db_session.flush()
