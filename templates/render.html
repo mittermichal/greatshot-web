@@ -10,7 +10,7 @@
 {% endmacro %}
 
 {% block content %}
-
+<h1>{{ render.title }}</h1>
 {% if render.streamable_short %}
   {{ render_streamable(render.streamable_short) }}
 {% else %}

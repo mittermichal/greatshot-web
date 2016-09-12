@@ -1,10 +1,14 @@
+{% macro render_field(field) %}
+    <div class="form-group">
+        {{ field.label(class_="control-label col-sm-2") }}
+        <div class="col-sm-10">{{ field(class_="form-control",**kwargs)|safe }}</div>
+    </div>
+{% endmacro %}
+
 {% macro render_form(form) %}
     {% for field in form %}
         {% if field.type!="CSRFTokenField" %}
-            <div class="form-group">
-                {{ field.label(class_="control-label col-sm-2") }}
-                <div class="col-sm-10">{{ field(class_="form-control",**kwargs)|safe }}</div>
-            </div>
+            {{ render_field(field) }}
         {% endif %}
     {% endfor %}
 {% endmacro %}

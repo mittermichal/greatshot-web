@@ -7,7 +7,7 @@ import app.Libtech3
 import urllib.request
 import gamestv
 import re
-from app.forms import ExportFileForm,ExportMatchLinkForm, CutForm
+from app.forms import ExportFileForm,ExportMatchLinkForm, CutForm, RenderForm
 import markdown
 import eventexport
 import tasks
@@ -50,10 +50,11 @@ def renders_list():
         render.streamable_short = result.get()
     return render_template('render_list.html', renders = renders)
   if request.method == 'POST':
+    form = RenderForm(request.form)
     filename = 'demo.tv_84'
     app.Libtech3.cut(flask_app.config['PARSERPATH'], 'upload/' + filename, 'download/demo-out.dm_84', str(int(request.form['start'])-2000),request.form['end'], request.form['cut_type'], request.form['client_num'])
-    result = tasks.render.delay(flask_app.config['APPHOST']+'/download/demo-out.dm_84',request.form['start'])
-    r = Render(result.id)
+    result = tasks.render.delay(flask_app.config['APPHOST']+'/download/demo-out.dm_84',request.form['start'],form.data['title'])
+    r = Render(result.id,form.data['title'])
     db_session.add(r)
     db_session.flush()
     db_session.commit()
@@ -137,21 +138,23 @@ def export():
   form1, form2 = ExportFileForm(),ExportMatchLinkForm()
   if request.method == 'POST':
     cut_form = CutForm()
+    rndr_form = RenderForm()
     try:
       filename = upload(request)
-    except Exception as e:
+    except Exception:
       flash("Didn't select map number.")
       return render_template('export.html', form1=form1, form2=form2)
     arg = flask_app.config['INDEXER'] % (filename)
     subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg ])
-    return render_template('export-out.html', filename=filename, cut_form=cut_form, out=open('download/out.json', 'r').read(),
+    return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form, out=open('download/out.json', 'r').read(),
                            parser_out=parse_output(open('download/out.json', 'r').readlines()))
   return render_template('export.html',form1=form1, form2=form2)
 
 @flask_app.route('/export/last')
 def export_last():
   cut_form = CutForm()
-  return render_template('export-out.html', cut_form=cut_form, out=open('download/out.json', 'r').read(),
+  rndr_form = RenderForm()
+  return render_template('export-out.html', cut_form=cut_form, rndr_form=rndr_form, out=open('download/out.json', 'r').read(),
                            parser_out=parse_output(open('download/out.json', 'r').readlines()))
 
 @flask_app.route('/')

@@ -13,3 +13,7 @@ class CutForm(Form):
     end = StringField('End', render_kw={"value": "2147483647"})
     cut_type = SelectField('Cut type', choices=[(0, 'SNAPNUMBER'), (1, 'SNAPTIME'), (2, 'SNAPCOUNT')], default=1)
     client_num = StringField('Client number<sup>*</sup>', render_kw={"placeholder": "0"})
+
+
+class RenderForm(Form):
+    title = StringField('Title')

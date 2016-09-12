@@ -8,7 +8,7 @@
 
 <script type="text/javascript">
 function fillForm(e) {
-	parameters=["start","end","client_num"];
+	parameters=["title","start","end","client_num"];
 	for (i=0;i<parameters.length;i++) {
 		$('form #'+parameters[i]).val($(e).parent().attr('data-'+parameters[i]));
 	}
@@ -18,7 +18,7 @@ function fillForm(e) {
 
 {% for player in parser_out.players %}
 	{% for spree in player.sprees %}
-		<div data-client_num="{{ spree[0]['bAttacker'] }}" data-start="{{ spree[0]['dwTime'] }}" data-end="{{ spree[spree|length - 1]['dwTime'] }}">
+		<div data-title="{{ player['szCleanName'] }}'s {{ spree|length }}-man kill" data-client_num="{{ player['bClientNum'] }}" data-start="{{ spree[0]['dwTime'] }}" data-end="{{ spree[spree|length - 1]['dwTime'] }}">
 			{% for kill in spree %}
 				{{ kill.bAttacker }} {{ kill.bTarget }} {{ kill.szTimeString }} {{ kill.szMessage }} {{ kill.dwTime }}<br/>
 			{% endfor %}
@@ -33,6 +33,7 @@ function fillForm(e) {
 {% from "form.html" import render_form, render_btn %}
 <form method="post" id="render-form" action="/renders" enctype="multipart/form-data" class="form-horizontal panel panel-default">
     <div class="panel-heading" style="margin-bottom:10px">Render parameters</div>
+	{{ render_form(rndr_form) }}
     {{ render_form(cut_form) }}
     {{ render_btn("Render") }}
     <hr/>
