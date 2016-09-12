@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from flask import Flask, request, redirect, url_for, render_template, send_from_directory, jsonify
+from flask import Flask, request, redirect, url_for, render_template, send_from_directory, jsonify, flash
 import os
 import subprocess
 import app.Libtech3
@@ -88,9 +88,13 @@ def allowed_file(filename):
 def upload(request):
   if 'uselast' in request.form:
     print('uselast')
-  elif request.form['matchId'] != '' and request.form['map'] != '':
-    urllib.request.urlretrieve(
-      gamestv.getDemosLinks(gamestv.getMatchDemosId(int(re.findall('(\d+)', request.form['matchId'])[0])))[
+  elif request.form['matchId'] != '':
+    if request.form['map'] == '':
+      raise Exception()
+      return
+    else:
+      urllib.request.urlretrieve(
+        gamestv.getDemosLinks(gamestv.getMatchDemosId(int(re.findall('(\d+)', request.form['matchId'])[0])))[
         int(request.form['map']) - 1], 'upload/demo.tv_84')
   else:
     if 'file' not in request.files:
@@ -127,13 +131,17 @@ def cut():
   else:
     return render_template('cut.html', cut_form=cut_form, form1=form1, form2=form2)
 
-
+#TODO export only POV events for dm_84 demo
 @flask_app.route('/export', methods=['GET', 'POST'])
 def export():
   form1, form2 = ExportFileForm(),ExportMatchLinkForm()
   if request.method == 'POST':
     cut_form = CutForm()
-    filename = upload(request)
+    try:
+      filename = upload(request)
+    except Exception as e:
+      flash("Didn't select map number.")
+      return render_template('export.html', form1=form1, form2=form2)
     arg = flask_app.config['INDEXER'] % (filename)
     subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg ])
     return render_template('export-out.html', filename=filename, cut_form=cut_form, out=open('download/out.json', 'r').read(),
