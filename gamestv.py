@@ -27,16 +27,20 @@ def getDemosLinks(demoId):
   opener.addheaders = [('Cookie', config.gtvcookie)]
   params = urllib.parse.urlencode({'jsAction': 'rpcCall','dldemo': 'true'}).encode('UTF-8')
   url = urllib.request.Request("http://www.gamestv.org/demos/"+str(demoId), params)
-  
-  html=opener.open(url).read().decode('iso-8859-1')
-  #TODO pool in loop
-  time.sleep(3)
-  print(html)
-  pollId=json.loads(html)['pollID']
+
+  response=opener.open(url).read().decode('iso-8859-1')
+  print(response)
+  pollId=json.loads(response)['pollID']
   print('pollid: '+str(pollId))
   params = urllib.parse.urlencode({'jsAction': 'rpcPoll','pollID': str(pollId)}).encode('UTF-8')
   url = urllib.request.Request("http://www.gamestv.org/demos/"+str(demoId), params)
-  links=re.findall('\/download\/demos\/'+str(demoId)+'\/demo\d+.tv_84',json.loads(opener.open(url).read().decode('iso-8859-1'))['parm'])
+  parm = None
+  while parm==None:
+    response = opener.open(url).read().decode('iso-8859-1')
+    j = json.loads(response)
+    print(j)
+    parm=j['parm']
+  links=re.findall('\/download\/demos\/'+str(demoId)+'\/demo\d+.tv_84',j['parm'])
   links=list(map(lambda x: 'http://www.gamestv.org'+x,links))
   return links
 
