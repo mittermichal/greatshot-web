@@ -45,9 +45,11 @@ def renders_list():
     renders = Render.query.order_by(desc(Render.id)).all()
     # print(result.id)
     for render in renders:
-      result = tasks.render.AsyncResult(render.celery_id)
-      if result.successful():
-        render.streamable_short = result.get()
+      if render.streamable_short==None:
+        result = tasks.render.AsyncResult(render.celery_id)
+        if result.successful():
+          render.streamable_short = result.get()
+    db_session.commit()
     return render_template('render_list.html', renders = renders)
   if request.method == 'POST':
     form = RenderForm(request.form)
@@ -91,8 +93,7 @@ def upload(request):
     print('uselast')
   elif request.form['matchId'] != '':
     if request.form['map'] == '':
-      raise Exception()
-      return
+      raise Exception("map number")
     else:
       urllib.request.urlretrieve(
         gamestv.getDemosLinks(gamestv.getMatchDemosId(int(re.findall('(\d+)', request.form['matchId'])[0])))[
@@ -141,12 +142,13 @@ def export():
     rndr_form = RenderForm()
     try:
       filename = upload(request)
-    except Exception:
+    except Exception as e:
       flash("Didn't select map number.")
       return render_template('export.html', form1=form1, form2=form2)
-    arg = flask_app.config['INDEXER'] % (filename)
-    subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg ])
-    return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form, out=open('download/out.json', 'r').read(),
+    else:
+      arg = flask_app.config['INDEXER'] % (filename)
+      subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg ])
+      return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form, out=open('download/out.json', 'r').read(),
                            parser_out=parse_output(open('download/out.json', 'r').readlines()))
   return render_template('export.html',form1=form1, form2=form2)
 

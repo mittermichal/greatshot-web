@@ -17,3 +17,25 @@ class Render(Base):
 
     def __repr__(self):
         return '<Render %r>' % (self.celery_id)
+
+
+class Match(Base):
+    __tablename__ = 'matches'
+    id = Column(Integer, primary_key=True)
+    gamestv_id = Column(Integer, unique=True, index=True)
+    title = Column(String(255))
+
+    def __init__(self, gamestv_id=None, title=None):
+        self.gamestv_id = gamestv_id
+        self.title = title
+
+
+class MatchMap(Base):
+    __tablename__ = 'maps'
+    id = Column(Integer, primary_key=True)
+    match_id = Column(Integer, index=True)
+    map_name = Column(String(50))
+
+    def __init__(self, match_id=None, map_name=None):
+        self.match_id = match_id
+        self.map_name = map_name
