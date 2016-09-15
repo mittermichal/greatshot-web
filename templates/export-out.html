@@ -2,7 +2,8 @@
 {% block title %} - Export output{% endblock %}
 
 {% block content %}
-<h2>Export output</h2>
+<h1>Export output</h1>
+
 
 <h2>Sprees</h2>
 
@@ -21,7 +22,7 @@ function fillForm(e) {
 	{% for spree in player.sprees %}
 		<div data-title="{{ player['szCleanName'] }}'s {{ spree|length }}-man kill" data-client_num="{{ player['bClientNum'] }}" data-start="{{ spree[0]['dwTime'] }}" data-end="{{ spree[spree|length - 1]['dwTime'] }}">
 			{% for kill in spree %}
-				{{ kill.bAttacker }} {{ kill.bTarget }} {{ kill.szTimeString }} {{ kill.szMessage }} {{ kill.dwTime }}<br/>
+				<span{% if kill.bIsTeamkill %} style="color:red;"{% endif %}>{{ kill.bAttacker }} {{ kill.bTarget }} {{ kill.szTimeString }} {{ kill.szMessage }} {{ kill.dwTime }}</span><br/>
 			{% endfor %}
 			<a class="btn btn-default btn-lg" href="#render-form" onclick="fillForm(this);">
 				<span style="width:20px" class="glyphicon glyphicon glyphicon-film"></span> Render
@@ -65,10 +66,11 @@ function fillForm(e) {
 	</table>
 </div>
 #}
-
+<h2>Hit regions</h2>
 <table class="table">
 	<thead>
 		<tr>
+			<th>clientNum</th>
 			<th>Player</th>
 			<th>Bodyshots<sup>*</sup></th>
 			<th>Headshots</th>
@@ -80,6 +82,9 @@ function fillForm(e) {
 {% for player in parser_out.players %}
 
 <tr>
+	<td>
+		{{ player.bClientNum }}
+	</td>
 	<td>
 		{{ player.szCleanName }}
 	</td>
