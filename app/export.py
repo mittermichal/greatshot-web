@@ -24,6 +24,8 @@ def parse_infostring(str):
 # 132 teammate hit
 def parse_output(lines):
   players = []
+  rounds = []
+  demo = {}
   db = Database(":memory:")
   table = db.create('hits', ("player", 'INTEGER'), ("region", 'INTEGER'))
   table.create_index("player")
@@ -31,13 +33,21 @@ def parse_output(lines):
   # exporter=eventexport.EventExport()
   #TODO: fix players[j['bAttacker']] out of bound
   for line in lines:
-    j = json.loads(line.replace('\1', ''))
-    if 'szType' in j and j['szType'] == 'player' and j['bTeam']<3:
+    j = json.loads(line.replace('\1', ''),strict=False)
+    if 'szType' in j and j['szType'] == 'demo':
+      demo = j
+
+    elif 'szType' in j and j['szType'] == 'round':
+      j['szEndRoundStats']=j['szEndRoundStats'].replace('%n','\n')
+      rounds.append(j)
+
+    elif 'szType' in j and j['szType'] == 'player' and j['bTeam']<3:
       j['sprees'] = []
       j['spree'] = []
       j['hits'] = [0,0,0,0] #0,130,131,132
       players.append(j)
-    if 'szType' in j and j['szType'] == 'obituary' and j['bAttacker'] != 254 and j['bAttacker'] != j['bTarget']:
+
+    elif 'szType' in j and j['szType'] == 'obituary' and j['bAttacker'] != 254 and j['bAttacker'] != j['bTarget']:
       # and j['bAttacker']!=j['bTarget']:
       # if j['bAttacker']>=len(players):
       # print(j['bAttacker'])
@@ -54,7 +64,7 @@ def parse_output(lines):
       attacker['spree'] = spree
       attacker['sprees'] = sprees
 
-    if 'szType' in j and j['szType'] == 'bulletevent':
+    elif 'szType' in j and j['szType'] == 'bulletevent':
       attacker = get_player(players, j['bAttacker'])
       table.insert(int(j['bAttacker']), j['bRegion'])
       if j['bRegion']>0:
@@ -72,4 +82,4 @@ def parse_output(lines):
   for row in result:
     ret.append(list(row))
   # print(ret)
-  return {'hits': ret, 'players': players}
+  return {'hits': ret, 'players': players, 'demo': demo, 'rounds' : rounds}

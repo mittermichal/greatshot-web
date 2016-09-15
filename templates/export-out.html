@@ -4,6 +4,21 @@
 {% block content %}
 <h1>Export output</h1>
 
+<h2>Demo info</h2>
+{% for data in parser_out.demo %}
+	<b>{{ data }}</b>  {{ parser_out.demo[data] }} <br/>
+{% endfor %}
+
+<h2>Round info</h2>
+{% for round in parser_out.rounds %}
+	{% for data in round %}
+		{% if data=='szEndRoundStats' %}
+			<b>{{ data }}</b> <pre>{{ round[data] }} </pre>
+		{% else %}
+			<b>{{ data }}</b> {{ round[data] }} <br/>
+		{% endif %}
+	{% endfor %}
+{% endfor %}
 
 <h2>Sprees</h2>
 
@@ -108,6 +123,11 @@ function fillForm(e) {
 
 </table>
 <sup>*</sup> with gibbing hits
+
+<div class="timeline">
+
+</div>
+
 
 <h2>Raw output</h2>
 <pre>

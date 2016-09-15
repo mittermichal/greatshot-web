@@ -1,0 +1,16 @@
+.timeline {
+    position: relative;
+    overflow: auto;
+}
+
+.timeline:before {
+    left: 50%;
+}
+
+.timeline:before {
+    content: '';
+    position: absolute;
+    height: 100%;
+    width: 5px;
+    background: #dddddd;
+}
