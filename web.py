@@ -30,6 +30,8 @@ def request_wants_json():
 @flask_app.route('/renders/<render_id>')
 def render_get(render_id):
   render = Render.query.filter(Render.id == render_id).first()
+  if render.streamable_short!=None:
+    return render_template('render.html', render=render)
   result = tasks.render.AsyncResult(render.celery_id)
   if request_wants_json():
     data = result.result or result.state
@@ -37,6 +39,7 @@ def render_get(render_id):
     return jsonify(data)
   if result.successful():
     render.streamable_short = result.get()
+    db_session.commit()
   return render_template('render.html', render = render)
 
 @flask_app.route('/renders', methods=['GET', 'POST'])

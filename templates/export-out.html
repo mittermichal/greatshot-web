@@ -8,6 +8,7 @@
 
 <script type="text/javascript">
 function fillForm(e) {
+	$('form').show();
 	parameters=["title","start","end","client_num"];
 	for (i=0;i<parameters.length;i++) {
 		$('form #'+parameters[i]).val($(e).parent().attr('data-'+parameters[i]));
@@ -31,7 +32,7 @@ function fillForm(e) {
 {% endfor %}
 
 {% from "form.html" import render_form, render_btn %}
-<form method="post" id="render-form" action="/renders" enctype="multipart/form-data" class="form-horizontal panel panel-default">
+<form method="post" style="display:none;" id="render-form" action="/renders" enctype="multipart/form-data" class="form-horizontal panel panel-default">
     <div class="panel-heading" style="margin-bottom:10px">Render parameters</div>
 	{{ render_form(rndr_form) }}
     {{ render_form(cut_form) }}
@@ -42,6 +43,7 @@ function fillForm(e) {
     </label>
 </form>
 
+{#
 <div style="">
 	<h3>Hit regions</h3>
 	<p>
@@ -62,6 +64,45 @@ function fillForm(e) {
 	{% endfor %}
 	</table>
 </div>
+#}
+
+<table class="table">
+	<thead>
+		<tr>
+			<th>Player</th>
+			<th>Bodyshots<sup>*</sup></th>
+			<th>Headshots</th>
+			<th>Team-hits</th>
+			<th>Shield-hits</th>
+		</tr>
+	</thead>
+
+{% for player in parser_out.players %}
+
+<tr>
+	<td>
+		{{ player.szCleanName }}
+	</td>
+
+	<td>
+		{{ player.hits[2] }}
+	</td>
+	<td>
+		{{ player.hits[1] }}
+	</td>
+	<td>
+		{{ player.hits[3] }}
+	</td>
+	<td>
+		{{ player.hits[0] }}
+	</td>
+
+</tr>
+
+{% endfor %}
+
+</table>
+<sup>*</sup> with gibbing hits
 
 <h2>Raw output</h2>
 <pre>
