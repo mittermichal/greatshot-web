@@ -5,6 +5,7 @@ import os
 import subprocess
 import app.Libtech3
 import urllib.request
+from urllib.request import urlopen
 import gamestv
 import re
 from app.forms import ExportFileForm,ExportMatchLinkForm, CutForm, RenderForm
@@ -15,6 +16,7 @@ from app.db import db_session
 from app.models import Render
 from sqlalchemy import desc
 from app.export import parse_output
+from ftplib import FTP
 
 flask_app = Flask(__name__)
 flask_app.config.from_pyfile('config.cfg')
@@ -161,6 +163,15 @@ def export_last():
   rndr_form = RenderForm()
   return render_template('export-out.html', cut_form=cut_form, rndr_form=rndr_form, out=open('download/out.json', 'r').read(),
                            parser_out=parse_output(open('download/out.json', 'r').readlines()))
+
+@flask_app.route('/export/<export_id>')
+def export_get(export_id):
+  cut_form = CutForm()
+  rndr_form = RenderForm()
+  out=list(map(lambda x: x.decode('utf-8','replace'), urlopen(FTP+'/exports/'+export_id+'.json').readlines()))
+  return render_template('export-out.html', cut_form=cut_form, rndr_form=rndr_form, out="".join(out),
+                           parser_out=parse_output(out))
+
 
 @flask_app.route('/')
 def index():

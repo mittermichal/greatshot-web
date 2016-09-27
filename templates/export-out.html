@@ -47,8 +47,24 @@ function fillForm(e) {
 	{% endfor %}
 {% endfor %}
 
+<h2>Headshot Sprees</h2>
+
+{% for player in parser_out.players %}
+	{% for hs_spree in player.hs_sprees %}
+		<div class="hs-spree" data-title="{{ player['szCleanName'] }}'s {{ hs_spree|length }}-headshots spree" data-client_num="{{ player['bClientNum'] }}" data-start="{{ hs_spree[0]['dwTime'] }}" data-end="{{ hs_spree[hs_spree|length - 1]['dwTime'] }}">
+			{{ player.szCleanName }} HS Count: {{ hs_spree|length }} Length:{{ hs_spree[hs_spree|length - 1]['dwTime']-hs_spree[0]['dwTime'] }}<br/>
+			{% for hs in hs_spree %}
+				{{ hs.bAttacker }} {{ hs.bTarget }} {{ hs.dwTime }} {{ hs.eventNum }}<br/>
+			{% endfor %}
+			<a class="btn btn-default btn-lg" href="#render-form" onclick="fillForm(this);">
+				<span style="width:20px" class="glyphicon glyphicon glyphicon-film"></span> Render
+			</a>
+		</div>
+	{% endfor %}
+{% endfor %}
+
 {% from "form.html" import render_form, render_btn %}
-<form method="post" style="display:none;" id="render-form" action="/renders" enctype="multipart/form-data" class="form-horizontal panel panel-default">
+<form method="post" id="render-form" action="/renders" enctype="multipart/form-data" class="form-horizontal panel panel-default">
     <div class="panel-heading" style="margin-bottom:10px">Render parameters</div>
 	{{ render_form(rndr_form) }}
     {{ render_form(cut_form) }}

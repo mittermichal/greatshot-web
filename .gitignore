@@ -7,3 +7,4 @@ download/out.json
 events*
 .idea
 *.mp4
+tasks_config.py

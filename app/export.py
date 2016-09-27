@@ -33,6 +33,9 @@ def parse_output(lines):
   # exporter=eventexport.EventExport()
   #TODO: fix players[j['bAttacker']] out of bound
   for line in lines:
+    #print(line.decode('utf-8'))
+    if type(line) is bytes:
+      line=line.decode('utf-8','replace')
     j = json.loads(line.replace('\1', ''),strict=False)
     if 'szType' in j and j['szType'] == 'demo':
       demo = j
@@ -45,6 +48,10 @@ def parse_output(lines):
       j['sprees'] = []
       j['spree'] = []
       j['hits'] = [0,0,0,0] #0,130,131,132
+
+      j['hs_sprees'] = []
+      j['hs_spree'] = []
+
       players.append(j)
 
     elif 'szType' in j and j['szType'] == 'obituary' and j['bAttacker'] != 254 and j['bAttacker'] != j['bTarget']:
@@ -66,6 +73,18 @@ def parse_output(lines):
 
     elif 'szType' in j and j['szType'] == 'bulletevent':
       attacker = get_player(players, j['bAttacker'])
+      if j['bRegion']==130:
+        hs_spree = attacker['hs_spree']
+        hs_sprees = attacker['hs_sprees']
+        if (not len(hs_spree)) or (j['dwTime'] - hs_spree[len(hs_spree) - 1]['dwTime'] <= 4000):
+          hs_spree.append(j)
+        else:
+          if len(hs_spree) >= 3:
+            hs_sprees.append(hs_spree)
+          hs_spree = [j]
+        attacker['hs_spree'] = hs_spree
+        attacker['hs_sprees'] = hs_sprees
+
       table.insert(int(j['bAttacker']), j['bRegion'])
       if j['bRegion']>0:
         reg=j['bRegion']-129
