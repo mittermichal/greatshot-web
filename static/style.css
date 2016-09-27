@@ -19,3 +19,9 @@
     /*float:left;*/
     margin: 10px;
 }
+
+@media (min-width: 1400px) {
+    .container {
+        width: 1310px;
+    }
+}

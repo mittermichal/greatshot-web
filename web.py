@@ -168,7 +168,7 @@ def export_last():
 def export_get(export_id):
   cut_form = CutForm()
   rndr_form = RenderForm()
-  out=list(map(lambda x: x.decode('utf-8','replace'), urlopen(FTP+'/exports/'+export_id+'.json').readlines()))
+  out=list(map(lambda x: x.decode('utf-8','replace'), urlopen(flask_app.config['FTP']+'/exports/'+export_id+'.json').readlines()))
   return render_template('export-out.html', cut_form=cut_form, rndr_form=rndr_form, out="".join(out),
                            parser_out=parse_output(out))
 
