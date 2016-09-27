@@ -20,4 +20,4 @@
 
 
 This project uses  [hannes's](http://www.crossfire.nu/user/view/id/6710) modified [Tech3 Demo API - 0.1](http://www.crossfire.nu/news/4632/tech3-demo-api-01) to cut and export demos.
-It was modified to be able to cut ettv demo with selected player's POV.
+It was modified to be able to cut ettv demo with selected player's POV. My modification: [Tech3 Demo API](https://github.com/mittermichal/Anders.Gaming.LibTech3)
