@@ -10,3 +10,4 @@ events*
 .idea
 *.mp4
 tasks_config.py
+tmp/test.db
