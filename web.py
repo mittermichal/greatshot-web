@@ -6,7 +6,9 @@ import subprocess
 import app.Libtech3
 import urllib.request
 from urllib.request import urlopen
+import ftplib
 import app.gamestv
+import app.ftp
 import re
 from app.forms import ExportFileForm,ExportMatchLinkForm, CutForm, RenderForm
 import markdown
@@ -100,8 +102,9 @@ def upload(request):
     if request.form['map'] == '':
       raise Exception("map number")
     else:
+      #return 'demo.tv_84'
       urllib.request.urlretrieve(
-        gamestv.getDemosLinks(gamestv.getMatchDemosId(int(re.findall('(\d+)', request.form['matchId'])[0])))[
+        app.gamestv.getDemosLinks(app.gamestv.getMatchDemosId(int(re.findall('(\d+)', request.form['matchId'])[0])))[
         int(request.form['map']) - 1], 'upload/demo.tv_84')
   else:
     if 'file' not in request.files:
@@ -145,6 +148,11 @@ def export():
   if request.method == 'POST':
     cut_form = CutForm()
     rndr_form = RenderForm()
+    if request.form['matchId'] != '' and request.form['map'] != '':
+      try:
+        return export_get(re.findall('(\d+)', request.form['matchId'])[0],request.form['map'])
+      except Exception:
+        print('404',request.form['map'])
     try:
       filename = upload(request)
     except Exception as e:
@@ -153,6 +161,7 @@ def export():
     else:
       arg = flask_app.config['INDEXER'] % (filename)
       subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg ])
+      export_save(re.findall('(\d+)', request.form['matchId'])[0], request.form['map'])
       return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form, out=open('download/out.json', 'r').read(),
                            parser_out=parse_output(open('download/out.json', 'r').readlines()))
   return render_template('export.html',form1=form1, form2=form2)
@@ -164,14 +173,30 @@ def export_last():
   return render_template('export-out.html', cut_form=cut_form, rndr_form=rndr_form, out=open('download/out.json', 'r').read(),
                            parser_out=parse_output(open('download/out.json', 'r').readlines()))
 
-@flask_app.route('/export/<export_id>')
-def export_get(export_id):
+def generate_ftp_path(export_id):
+  path=''
+  folder = ''
+  for c in export_id:
+    path = path + c + '/'
+  return path
+
+@flask_app.route('/export/<export_id>/<map_num>')
+def export_get(export_id,map_num):
   cut_form = CutForm()
   rndr_form = RenderForm()
-  out=list(map(lambda x: x.decode('utf-8','replace'), urlopen(flask_app.config['FTP']+'/exports/'+export_id+'.json').readlines()))
+  ftp_url='ftp://'+flask_app.config['FTP_USER']+':'+flask_app.config['FTP_PW']+'@'+flask_app.config['FTP_HOST']+'/exports/'+generate_ftp_path(export_id)+map_num+'.json'
+  out=list(map(lambda x: x.decode('utf-8','replace'), urlopen(ftp_url).readlines()))
   return render_template('export-out.html', cut_form=cut_form, rndr_form=rndr_form, out="".join(out),
                            parser_out=parse_output(out))
 
+def export_save(export_id,map):
+  path='exports/'+generate_ftp_path(export_id)
+  session = ftplib.FTP(flask_app.config['FTP_HOST'], flask_app.config['FTP_USER'], flask_app.config['FTP_PW'])
+  app.ftp.chdir(session,path[:-1])
+  file = open('download/out.json', 'rb')  # file to send
+  session.storbinary('STOR '+str(map)+'.json', file)  # send the file
+  file.close()  # close file and FTP
+  session.quit()
 
 @flask_app.route('/')
 def index():
