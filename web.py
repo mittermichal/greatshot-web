@@ -6,7 +6,7 @@ import subprocess
 import app.Libtech3
 import urllib.request
 from urllib.request import urlopen
-import gamestv
+import app.gamestv
 import re
 from app.forms import ExportFileForm,ExportMatchLinkForm, CutForm, RenderForm
 import markdown
