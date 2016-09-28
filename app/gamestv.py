@@ -5,9 +5,38 @@ import json
 import time
 import config
 
-#def getCookies(user,pass):
-#  return
 
+def commentExists(matchId):
+  opener = urllib.request.build_opener()
+  opener.addheaders = [('Cookie', config.gtvcookie)]
+  html=opener.open("http://www.gamestv.org/event/"+str(matchId)).read().decode('iso-8859-1')
+  commentId = re.search('comment(\d+)">demotoolsbot', html)
+  if (commentId):
+    return commentId.group(1)
+  else:
+    return 0
+
+def postComment(comment,matchId):
+  comment_id=commentExists(matchId)
+  print(comment_id)
+  if comment_id:
+    editComment(comment, matchId, comment_id)
+  else:
+    opener = urllib.request.build_opener()
+    opener.addheaders = [('Cookie', config.gtvcookie)]
+    params = urllib.parse.urlencode(
+      {'comm_text': comment, 'comm_replyto': 0, 'comm_id': '', 'comm_add': 'Submit'}).encode('UTF-8')
+    url = urllib.request.Request("http://www.gamestv.org/event/" + str(matchId) + '/?id=' + str(matchId), params)
+    opener.open(url).read()
+  return
+
+def editComment(comment,matchId,comm_id):
+  opener = urllib.request.build_opener()
+  opener.addheaders = [('Cookie', config.gtvcookie)]
+  params = urllib.parse.urlencode({'comm_text': comment, 'comm_replyto': 0, 'comm_id': comm_id, 'comm_add':'Edit'}).encode('UTF-8')
+  url = urllib.request.Request("http://www.gamestv.org/event/" + str(matchId)+ '/?id=' + str(matchId), params)
+  opener.open(url).read()
+  return
 
 #http://www.gamestv.org/event/56437-turbot-vs-teriphendi/ => http://www.gamestv.org/demos/37488/
 def getMatchDemosId(matchId):
@@ -49,3 +78,5 @@ def getDemosLinks(demoId):
 #downloadLinks(getDemosLinks(37408))
 
 #getDemosLinks(1322)
+
+postComment('test4',57100)
