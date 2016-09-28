@@ -18,7 +18,6 @@ from app.db import db_session
 from app.models import Render
 from sqlalchemy import desc
 from app.export import parse_output
-from ftplib import FTP
 
 flask_app = Flask(__name__)
 flask_app.config.from_pyfile('config.cfg')
@@ -50,7 +49,6 @@ def render_get(render_id):
 def renders_list():
   if request.method == 'GET':
     renders = Render.query.order_by(desc(Render.id)).all()
-    # print(result.id)
     for render in renders:
       if render.streamable_short==None:
         result = tasks.render.AsyncResult(render.celery_id)
@@ -77,17 +75,6 @@ def spree_time_interval(spree):
 @flask_app.teardown_appcontext
 def shutdown_session(exception=None):
   db_session.remove()
-
-
-'''
-@flask_app.route('/render')
-def render():
-  if '127.0.0.1'!=request.remote_addr:
-    return render_template('render.html',msg='rendering only available on localhost')
-  # subprocess.Popen([app.config['ETPATH']+'et.exe', '+set fs_game etpro +demo gtv/demo-out +wait 150 +timescale 1 +cl_avidemo 60 +set nextdemo', "exec gtvsound" ], cwd=os.path.realpath(app.config['ETPATH']))
-  # subprocess.Popen('ffmpeg -y -framerate 60 -i etpro\screenshots\shot%04d.tga -i etpro/wav/synctest.wav -c:a libvorbis -shortest render.mp4', cwd=os.path.realpath(app.config['ETPATH']))
-  return render_template('render.html', renders = renders)
-'''
 
 def allowed_file(filename):
   return '.' in filename and \
@@ -132,11 +119,9 @@ def cut():
   cut_form = CutForm()
   if request.form.__contains__('start'):
     filename = upload(request)
-    # CutDemo( PCHAR demoPath, PCHAR outFilePath, int start, int end, cutInfo_t type, int clientNum )
     app.Libtech3.cut(
       flask_app.config['PARSERPATH'], 'upload/' + filename, 'download/demo-out.dm_84', request.form['start'],
        request.form['end'], request.form['cut_type'], request.form['client_num'])
-    # F:\Hry\et\hannes_ettv_demo_parser_tech3\Debug\Anders.Gaming.LibTech3.exe cut demo01-10-31.tv_84 demo01-10-31.dm_84 56621000 56632000 0
     return send_from_directory(directory='download', filename='demo-out.dm_84', as_attachment=True, attachment_filename='demo-out.dm_84')
   else:
     return render_template('cut.html', cut_form=cut_form, form1=form1, form2=form2)
@@ -175,7 +160,6 @@ def export_last():
 
 def generate_ftp_path(export_id):
   path=''
-  folder = ''
   for c in export_id:
     path = path + c + '/'
   return path
@@ -193,9 +177,9 @@ def export_save(export_id,map):
   path='exports/'+generate_ftp_path(export_id)
   session = ftplib.FTP(flask_app.config['FTP_HOST'], flask_app.config['FTP_USER'], flask_app.config['FTP_PW'])
   app.ftp.chdir(session,path[:-1])
-  file = open('download/out.json', 'rb')  # file to send
-  session.storbinary('STOR '+str(map)+'.json', file)  # send the file
-  file.close()  # close file and FTP
+  file = open('download/out.json', 'rb')
+  session.storbinary('STOR '+str(map)+'.json', file)
+  file.close()
   session.quit()
 
 @flask_app.route('/')
