@@ -147,7 +147,10 @@ def export():
       arg = flask_app.config['INDEXER'] % (filename)
       subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg ])
       if request.form['matchId'] != '' and request.form['map'] != '':
-        export_save(re.findall('(\d+)', request.form['matchId'])[0], request.form['map'])
+        try:
+          export_save(re.findall('(\d+)', request.form['matchId'])[0], request.form['map'])
+        except TimeoutError:
+          print("ftp timeout")
       return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form, out=open('download/out.json', 'r').read(),
                            parser_out=parse_output(open('download/out.json', 'r').readlines()))
   return render_template('export.html',form1=form1, form2=form2)
