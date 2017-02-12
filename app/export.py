@@ -44,7 +44,7 @@ def parse_output(lines):
       j['szEndRoundStats']=j['szEndRoundStats'].replace('%n','\n')
       rounds.append(j)
 
-    elif 'szType' in j and j['szType'] == 'player' and j['bTeam']<3:
+    elif 'szType' in j and j['szType'] == 'player':
       j['sprees'] = []
       j['spree'] = []
       j['hits'] = [0,0,0,0] #0,130,131,132
