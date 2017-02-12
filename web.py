@@ -5,7 +5,7 @@ import os
 import subprocess
 import app.Libtech3
 import urllib.request
-from urllib.request import urlopen
+from urllib.request import urlopen,HTTPError
 import ftplib
 import app.gamestv
 import app.ftp
@@ -90,9 +90,13 @@ def upload(request):
       raise Exception("map number")
     else:
       #return 'demo.tv_84'
-      urllib.request.urlretrieve(
-        app.gamestv.getDemosLinks(app.gamestv.getMatchDemosId(int(re.findall('(\d+)', request.form['matchId'])[0])))[
-        int(request.form['map']) - 1], 'upload/demo.tv_84')
+      demo_ids=app.gamestv.getMatchDemosId(int(re.findall('(\d+)', request.form['matchId'])[0]))
+      try:
+        demo_links=app.gamestv.getDemosLinks(demo_ids)[int(request.form['map']) - 1]
+      except IndexError:
+        raise Exception("demo not found")
+      urllib.request.urlretrieve(demo_links, 'upload/demo.tv_84')
+
   else:
     if 'file' not in request.files:
       return 'demo.tv_84'
@@ -140,8 +144,11 @@ def export():
         print('404',request.form['map'])
     try:
       filename = upload(request)
+    except HTTPError:
+      flash("Probably no demos available for this match")
+      return render_template('export.html', form1=form1, form2=form2)
     except Exception as e:
-      flash("Didn't select map number.")
+      flash(e)
       return render_template('export.html', form1=form1, form2=form2)
     else:
       arg = flask_app.config['INDEXER'] % (filename)
@@ -151,8 +158,11 @@ def export():
           export_save(re.findall('(\d+)', request.form['matchId'])[0], request.form['map'])
         except TimeoutError:
           print("ftp timeout")
+      parsed_output=parse_output(open('download/out.json', 'r').readlines())
+      #make gtv comment
+      #retrieve clips that are from this demo
       return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form, out=open('download/out.json', 'r').read(),
-                           parser_out=parse_output(open('download/out.json', 'r').readlines()))
+                           parser_out=parsed_output)
   return render_template('export.html',form1=form1, form2=form2)
 
 @flask_app.route('/export/last')
