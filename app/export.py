@@ -54,7 +54,7 @@ def parse_output(lines):
 
       players.append(j)
 
-    elif 'szType' in j and j['szType'] == 'obituary' and j['bAttacker'] != 254 and j['bAttacker'] != j['bTarget']:
+    elif 'szType' in j and j['szType'] == 'obituary' and j['bAttacker'] != 254 and j['bAttacker'] != j['bTarget'] and j['bIsTeamkill']==0:
       # and j['bAttacker']!=j['bTarget']:
       # if j['bAttacker']>=len(players):
       # print(j['bAttacker'])
