@@ -61,7 +61,7 @@ def renders_list():
     filename = 'demo.tv_84'
     app.Libtech3.cut(flask_app.config['PARSERPATH'], 'upload/' + filename, 'download/demo-out.dm_84', str(int(request.form['start'])-2000),request.form['end'], request.form['cut_type'], request.form['client_num'])
     result = tasks.render.delay(flask_app.config['APPHOST']+'/download/demo-out.dm_84',request.form['start'],form.data['title'])
-    r = Render(result.id,form.data['title'])
+    r = Render(result.id,form.data['title'],form.data['gtv_match_id'],form.data['map_number'],request.form['client_num'])
     db_session.add(r)
     db_session.flush()
     db_session.commit()
@@ -182,9 +182,12 @@ def generate_ftp_path(export_id):
 def export_get(export_id,map_num):
   cut_form = CutForm()
   rndr_form = RenderForm()
+  rndr_form.gtv_match_id.data = export_id
+  rndr_form.map_number.data = map_num
+  renders = Render.query.order_by(desc(Render.id)).filter(Render.gtv_match_id==export_id)
   ftp_url='ftp://'+flask_app.config['FTP_USER']+':'+flask_app.config['FTP_PW']+'@'+flask_app.config['FTP_HOST']+'/exports/'+generate_ftp_path(export_id)+map_num+'.json'
   out=list(map(lambda x: x.decode('utf-8','replace'), urlopen(ftp_url).readlines()))
-  return render_template('export-out.html', cut_form=cut_form, rndr_form=rndr_form, out="".join(out),
+  return render_template('export-out.html', renders=renders, cut_form=cut_form, rndr_form=rndr_form, out="".join(out),
                            parser_out=parse_output(out))
 
 def export_save(export_id,map):

@@ -1,4 +1,4 @@
-from wtforms import StringField, FileField, SelectField
+from wtforms import StringField, FileField, SelectField, HiddenField
 from flask_wtf import Form
 
 class ExportFileForm(Form):
@@ -17,3 +17,5 @@ class CutForm(Form):
 
 class RenderForm(Form):
     title = StringField('Title')
+    gtv_match_id = HiddenField('gtv_match_id')
+    map_number = HiddenField('map_number')

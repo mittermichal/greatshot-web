@@ -4,21 +4,51 @@
 {% block content %}
 <h1>Export output</h1>
 
-<h2>Demo info</h2>
-{% for data in parser_out.demo %}
-	<b>{{ data }}</b>  {{ parser_out.demo[data] }} <br/>
+<h2>Highlights</h2>
+{% include 'render_list.html' %}
+
+<h2>Hit regions</h2>
+<table class="table">
+	<thead>
+		<tr>
+			<th>clientNum</th>
+			<th>Player</th>
+			<th>Bodyshots<sup>*</sup></th>
+			<th>Headshots</th>
+			<th>Team-hits</th>
+			<th>Shield-hits</th>
+		</tr>
+	</thead>
+
+{% for player in parser_out.players %}
+
+<tr>
+	<td>
+		{{ player.bClientNum }}
+	</td>
+	<td>
+		{{ player.szCleanName }}
+	</td>
+
+	<td>
+		{{ player.hits[2] }}
+	</td>
+	<td>
+		{{ player.hits[1] }}
+	</td>
+	<td>
+		{{ player.hits[3] }}
+	</td>
+	<td>
+		{{ player.hits[0] }}
+	</td>
+
+</tr>
+
 {% endfor %}
 
-<h2>Round info</h2>
-{% for round in parser_out.rounds %}
-	{% for data in round %}
-		{% if data=='szEndRoundStats' %}
-			<b>{{ data }}</b> <pre>{{ round[data] }} </pre>
-		{% else %}
-			<b>{{ data }}</b> {{ round[data] }} <br/>
-		{% endif %}
-	{% endfor %}
-{% endfor %}
+</table>
+<sup>*</sup> with gibbing hits
 
 <h2>Sprees</h2>
 
@@ -97,48 +127,22 @@ function fillForm(e) {
 	</table>
 </div>
 #}
-<h2>Hit regions</h2>
-<table class="table">
-	<thead>
-		<tr>
-			<th>clientNum</th>
-			<th>Player</th>
-			<th>Bodyshots<sup>*</sup></th>
-			<th>Headshots</th>
-			<th>Team-hits</th>
-			<th>Shield-hits</th>
-		</tr>
-	</thead>
 
-{% for player in parser_out.players %}
-
-<tr>
-	<td>
-		{{ player.bClientNum }}
-	</td>
-	<td>
-		{{ player.szCleanName }}
-	</td>
-
-	<td>
-		{{ player.hits[2] }}
-	</td>
-	<td>
-		{{ player.hits[1] }}
-	</td>
-	<td>
-		{{ player.hits[3] }}
-	</td>
-	<td>
-		{{ player.hits[0] }}
-	</td>
-
-</tr>
-
+<h2>Demo info</h2>
+{% for data in parser_out.demo %}
+	<b>{{ data }}</b>  {{ parser_out.demo[data] }} <br/>
 {% endfor %}
 
-</table>
-<sup>*</sup> with gibbing hits
+<h2>Round info</h2>
+{% for round in parser_out.rounds %}
+	{% for data in round %}
+		{% if data=='szEndRoundStats' %}
+			<b>{{ data }}</b> <pre>{{ round[data] }} </pre>
+		{% else %}
+			<b>{{ data }}</b> {{ round[data] }} <br/>
+		{% endif %}
+	{% endfor %}
+{% endfor %}
 
 <div class="timeline">
 

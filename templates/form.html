@@ -1,15 +1,17 @@
 {% macro render_field(field) %}
-    <div class="form-group">
-        {{ field.label(class_="control-label col-sm-2") }}
-        <div class="col-sm-10">{{ field(class_="form-control",**kwargs)|safe }}</div>
-    </div>
+    {% if field.type!="CSRFTokenField" and field.type!="HiddenField" %}
+        <div class="form-group">
+            {{ field.label(class_="control-label col-sm-2") }}
+            <div class="col-sm-10">{{ field(class_="form-control",**kwargs)|safe }}</div>
+        </div>
+    {% else %}
+        {{ field(class_="form-control",**kwargs)|safe }}
+    {% endif %}
 {% endmacro %}
 
 {% macro render_form(form) %}
     {% for field in form %}
-        {% if field.type!="CSRFTokenField" %}
             {{ render_field(field) }}
-        {% endif %}
     {% endfor %}
 {% endmacro %}
 

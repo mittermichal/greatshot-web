@@ -10,11 +10,16 @@ class Render(Base):
     celery_id = Column(String(50), unique=True, index=True)
     streamable_short = Column(String(8))
     title = Column(String(255))
-    def __init__(self, celery_id=None, title=None):
+    gtv_match_id = Column(Integer())
+    map_number = Column(Integer())
+    client_num = Column(Integer())
+    def __init__(self, celery_id=None, title=None, gtv_match_id=None, map_number=None , client_num=None):
         self.celery_id = celery_id
         self.streamable_short = None
         self.title = title
-
+        self.gtv_match_id = gtv_match_id
+        self.map_number = map_number
+        self.client_num = client_num
     def __repr__(self):
         return '<Render %r>' % (self.celery_id)
 

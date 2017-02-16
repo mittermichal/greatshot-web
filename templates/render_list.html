@@ -1,13 +1,11 @@
-{% extends "layout.html" %}
-{% block title %}Renders list{% endblock %}
-
-{% block content %}
 <table class="table">
   <thead>
     <tr>
       <th>#</th>
       <th>Title</th>
-      <th>streamable_short</th>
+      <th>gtv_match_id</th>
+      <th>map number</th>
+
     </tr>
   </thead>
   <tbody>
@@ -15,7 +13,8 @@
     <tr>
         <td><a href="{{ url_for('render_get',render_id=render.id) }}">{{ render.id }} </a></td>
         <td><a href="{{ url_for('render_get',render_id=render.id) }}">{{ render.title }} </a></td>
-        <td> {{ render.streamable_short }}</td>
+        <td> {{ render.gtv_match_id }}</td>
+        <td> {{ render.map_number }}</td>
     <tr/>
 {% endfor %}
   </tbody>
@@ -26,4 +25,3 @@
   </video>
   <a href="/static/render.mp4">Download render</a>
 #}
-{% endblock %}
