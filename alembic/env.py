@@ -16,7 +16,9 @@ fileConfig(config.config_file_name)
 # add your model's MetaData object here
 # for 'autogenerate' support
 
-#SET PYTHONPATH=C:\Users\admin\Documents\et\gtv
+#1. SET PYTHONPATH=C:\Users\admin\Documents\et\gtv
+#2. alembic revision --autogenerate
+#3. alembic upgrade head
 from app.models import Render
 
 target_metadata = Render.metadata
