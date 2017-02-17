@@ -107,8 +107,8 @@ def upload(request):
         demo_links=app.gamestv.getDemosLinks(demo_ids)[int(request.form['map']) - 1]
       except IndexError:
         raise Exception("demo not found")
-      filename='upload/'+str(match_id)+'_'+str(int(request.form['map']) - 1)+'.tv_84'
-      urllib.request.urlretrieve(demo_links, filename)
+      filename=str(match_id)+'_'+str(int(request.form['map']) - 1)+'.tv_84'
+      urllib.request.urlretrieve(demo_links, 'upload/'+filename)
       return filename
   else:
     if 'file' not in request.files:
@@ -153,9 +153,11 @@ def export():
     rndr_form = RenderForm()
     if request.form['matchId'] != '' and request.form['map'] != '':
       try:
-        return export_get(re.findall('(\d+)', request.form['matchId'])[0],request.form['map'])
-      except Exception:
-        print('404',request.form['map'])
+        response=export_get(re.findall('(\d+)', request.form['matchId'])[0],str(int(request.form['map'])-1))
+      except Exception as e:
+        print('404',e)
+      else:
+        return response
     try:
       filename = upload(request)
     except HTTPError:
@@ -168,8 +170,10 @@ def export():
       arg = flask_app.config['INDEXER'] % (filename)
       subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg ])
       if request.form['matchId'] != '' and request.form['map'] != '':
+        rndr_form.gtv_match_id.data = re.findall('(\d+)', request.form['matchId'])[0]
+        rndr_form.map_number.data = request.form['map']
         try:
-          export_save(re.findall('(\d+)', request.form['matchId'])[0], request.form['map'])
+          export_save(re.findall('(\d+)', request.form['matchId'])[0], str(int(request.form['map'])-1))
         except TimeoutError:
           print("ftp timeout")
       parsed_output=parse_output(open('download/out.json', 'r').readlines())
@@ -208,7 +212,8 @@ def export_get(export_id,map_num,render=False,html=True):
   ftp_url='ftp://'+flask_app.config['FTP_USER']+':'+flask_app.config['FTP_PW']+'@'+flask_app.config['FTP_HOST']+'/exports/'+generate_ftp_path(export_id)+map_num+'.json'
   try:
     out=list(map(lambda x: x.decode('utf-8','replace'), urlopen(ftp_url).readlines()))
-  except (HTTPError,URLError):
+  except (HTTPError,URLError) as e:
+    raise e
     return "not found"
 
   parser_out=parse_output(out)
