@@ -1,6 +1,15 @@
 {% extends "layout.html" %}
-{% block title %}Renders list{% endblock %}
+{% block title %}
+{% if export_id is defined %}
+Highlights
+{% else %}
+Renders list
+{% endif %}
+{% endblock %}
 
 {% block content %}
+{% if export_id is defined %}
+Highlights from match <a href="http://gamestv.org/event/{{ export_id }}">http://gamestv.org/event/{{ export_id }}</a>
+{% endif %}
 {% include 'render_list.html' %}
 {% endblock %}

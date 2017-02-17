@@ -5,7 +5,7 @@ import os
 import subprocess
 import app.Libtech3
 import urllib.request
-from urllib.request import urlopen,HTTPError
+from urllib.request import urlopen,HTTPError,URLError
 import ftplib
 import app.gamestv
 import app.ftp
@@ -45,6 +45,23 @@ def render_get(render_id):
     db_session.commit()
   return render_template('render.html', render = render)
 
+def render_new(start,end,cut_type,client_num,title,gtv_match_id,map_number):
+  if gtv_match_id==None:
+    filename_orig = 'upload/demo.tv_84'
+  else:
+    filename_orig = 'upload/'+str(gtv_match_id)+'_'+str(map_number)+'.tv_84'
+  filename_cut = 'download/'+str(gtv_match_id)+'_'+str(map_number)+'_'+str(client_num)+'_'+str(start)+'_'+str(end)+'.dm_84'
+  if not os.path.exists(filename_orig):
+    demo_url=app.gamestv.getDemosLinks(app.gamestv.getMatchDemosId(gtv_match_id))[int(map_number)]
+    urllib.request.urlretrieve(demo_url, filename_orig)
+  app.Libtech3.cut(flask_app.config['PARSERPATH'], filename_orig,filename_cut, int(start)-2000, end,cut_type, client_num)
+  result = tasks.render.delay(flask_app.config['APPHOST'] + '/'+filename_cut,str(start),title)
+  r = Render(result.id,title,gtv_match_id,map_number,client_num)
+  db_session.add(r)
+  db_session.flush()
+  db_session.commit()
+  return r.id
+
 @flask_app.route('/renders', methods=['GET', 'POST'])
 def renders_list():
   if request.method == 'GET':
@@ -55,17 +72,11 @@ def renders_list():
         if result.successful():
           render.streamable_short = result.get()
     db_session.commit()
-    return render_template('render_list.html', renders = renders)
+    return render_template('renders.html', renders = renders)
   if request.method == 'POST':
     form = RenderForm(request.form)
-    filename = 'demo.tv_84'
-    app.Libtech3.cut(flask_app.config['PARSERPATH'], 'upload/' + filename, 'download/demo-out.dm_84', str(int(request.form['start'])-2000),request.form['end'], request.form['cut_type'], request.form['client_num'])
-    result = tasks.render.delay(flask_app.config['APPHOST']+'/download/demo-out.dm_84',request.form['start'],form.data['title'])
-    r = Render(result.id,form.data['title'],form.data['gtv_match_id'],form.data['map_number'],request.form['client_num'])
-    db_session.add(r)
-    db_session.flush()
-    db_session.commit()
-    return redirect(url_for('render_get', render_id=r.id))
+    render_id = render_new(str(int(request.form['start'])),request.form['end'],request.form['cut_type'],request.form['client_num'],form.data['title'],form.data['gtv_match_id'],form.data['map_number'])
+    return redirect(url_for('render_get', render_id=render_id))
 
 
 def spree_time_interval(spree):
@@ -90,13 +101,15 @@ def upload(request):
       raise Exception("map number")
     else:
       #return 'demo.tv_84'
-      demo_ids=app.gamestv.getMatchDemosId(int(re.findall('(\d+)', request.form['matchId'])[0]))
+      match_id = re.findall('(\d+)', request.form['matchId'])[0]
+      demo_ids=app.gamestv.getMatchDemosId(int(match_id))
       try:
         demo_links=app.gamestv.getDemosLinks(demo_ids)[int(request.form['map']) - 1]
       except IndexError:
         raise Exception("demo not found")
-      urllib.request.urlretrieve(demo_links, 'upload/demo.tv_84')
-
+      filename='upload/'+str(match_id)+'_'+str(int(request.form['map']) - 1)+'.tv_84'
+      urllib.request.urlretrieve(demo_links, filename)
+      return filename
   else:
     if 'file' not in request.files:
       return 'demo.tv_84'
@@ -114,6 +127,7 @@ def upload(request):
 
 @flask_app.route('/download/<path:filename>')
 def download_static(filename):
+  #http://stackoverflow.com/questions/24612366/flask-deleting-uploads-after-they-have-been-downloaded
   return send_from_directory(directory='download', filename=filename)
 
 # TODO exclude POV playerstate/entity
@@ -178,18 +192,35 @@ def generate_ftp_path(export_id):
     path = path + c + '/'
   return path
 
-@flask_app.route('/export/<export_id>/<map_num>')
-def export_get(export_id,map_num):
-  cut_form = CutForm()
-  rndr_form = RenderForm()
-  rndr_form.gtv_match_id.data = export_id
-  rndr_form.map_number.data = map_num
-  renders = Render.query.order_by(desc(Render.id)).filter(Render.gtv_match_id==export_id)
-  ftp_url='ftp://'+flask_app.config['FTP_USER']+':'+flask_app.config['FTP_PW']+'@'+flask_app.config['FTP_HOST']+'/exports/'+generate_ftp_path(export_id)+map_num+'.json'
-  out=list(map(lambda x: x.decode('utf-8','replace'), urlopen(ftp_url).readlines()))
-  return render_template('export-out.html', renders=renders, cut_form=cut_form, rndr_form=rndr_form, out="".join(out),
-                           parser_out=parse_output(out))
+@flask_app.route('/export/<export_id>')
+def export_get_match(export_id):
+  renders = Render.query.order_by(desc(Render.id)).filter(Render.gtv_match_id == export_id)
+  return render_template('renders.html', renders=renders, export_id=export_id)
 
+@flask_app.route('/export/<export_id>/<map_num>')
+def export_get(export_id,map_num,render=False,html=True):
+  if html:
+    cut_form = CutForm()
+    rndr_form = RenderForm()
+    rndr_form.gtv_match_id.data = export_id
+    rndr_form.map_number.data = map_num
+  renders = Render.query.order_by(desc(Render.id)).filter(Render.gtv_match_id==export_id,Render.map_number==map_num)
+  ftp_url='ftp://'+flask_app.config['FTP_USER']+':'+flask_app.config['FTP_PW']+'@'+flask_app.config['FTP_HOST']+'/exports/'+generate_ftp_path(export_id)+map_num+'.json'
+  try:
+    out=list(map(lambda x: x.decode('utf-8','replace'), urlopen(ftp_url).readlines()))
+  except (HTTPError,URLError):
+    return "not found"
+
+  parser_out=parse_output(out)
+  if render:
+    for player in parser_out['players']:
+      for spree in player['sprees']:
+        render_new(spree[0]['dwTime']-2000,2000+spree[len(spree) - 1]['dwTime'],1,player['bClientNum'],player['szCleanName']+'s '+str(len(spree))+'-man kill',export_id,map_num)
+  if html:
+    return render_template('export-out.html', renders=renders, cut_form=cut_form, rndr_form=rndr_form, out="".join(out),
+                           parser_out=parser_out)
+  else:
+    return parser_out
 def export_save(export_id,map):
   path='exports/'+generate_ftp_path(export_id)
   session = ftplib.FTP(flask_app.config['FTP_HOST'], flask_app.config['FTP_USER'], flask_app.config['FTP_PW'])
