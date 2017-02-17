@@ -34,7 +34,7 @@ def request_wants_json():
 def render_get(render_id):
   render = Render.query.filter(Render.id == render_id).first()
   if render.streamable_short!=None:
-    return render_template('render.html', render=render)
+    return redirect('http://streamable.com/' + render.streamable_short)
   result = tasks.render.AsyncResult(render.celery_id)
   if request_wants_json():
     data = result.result or result.state
