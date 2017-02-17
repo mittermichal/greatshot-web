@@ -3,7 +3,11 @@ from html.parser import HTMLParser
 import re
 import json
 import time
+
+from lxml import html
+
 import config
+from lxml import etree
 
 
 def commentExists(matchId):
@@ -73,9 +77,27 @@ def getDemosLinks(demoId):
   links=list(map(lambda x: 'http://www.gamestv.org'+x,links))
   return links
 
+def parseMatchList(html_s):
+  content_table_start=html_s.find('<table class="contentTable" cellspacing="1">')
+  content_table_end=html_s.find('</table>',content_table_start)+8
+  content_table=html_s[content_table_start:content_table_end]
+  root = html.fromstring(content_table)
+  print(root.tag)
+  return root.xpath('//tr/td[7]/a/@href')
+
+def getLeagueMatches(league_id):
+  opener = urllib.request.build_opener()
+  opener.addheaders = [('Cookie', config.gtvcookie)]
+  html = opener.open("http://www.gamestv.org/league/" + str(league_id)).read().decode('iso-8859-1')
+  matchIds = list(map(lambda x: re.findall('(\d+)', x)[0],parseMatchList(html)))
+
+  return matchIds
+
 #print(getMatchDemosId(55944))
 #print(getMatchDemosId(1322))
 #downloadLinks(getDemosLinks(37408))
 
 #getDemosLinks(1322)
 #postComment('test4',57100)
+
+print(getLeagueMatches(1461))

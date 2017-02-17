@@ -38,4 +38,9 @@ def process_match(match_id,render=True):
   print(comment)
   if flask_app.config['APPHOST']!='http://localhost:5111':
     app.gamestv.postComment(comment, match_id)
-process_match(57709,False)
+#process_match(57709,False)
+
+def process_league(league_id):
+  matches=app.gamestv.getLeagueMatches(league_id)
+  for match in matches:
+    process_match(league_id,False)
