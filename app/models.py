@@ -44,3 +44,14 @@ class MatchMap(Base):
     def __init__(self, match_id=None, map_name=None):
         self.match_id = match_id
         self.map_name = map_name
+
+
+class Player(Base):
+    __tablename__ = 'players'
+    id = Column(Integer, primary_key=True)
+    name = Column(String(255))
+    country = Column(String(5))
+
+    def __init__(self, name=None, country=None):
+        self.name = name
+        self.title = country
