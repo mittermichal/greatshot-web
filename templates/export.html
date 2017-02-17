@@ -26,6 +26,21 @@
 <h2>Export last used demo</h2>
 <a class="col-sm-offset-2 btn btn-default" href="/export/last">Last</a>
 
+<script>
+
+function getMaps(){
+
+  $.post({url: "/getMaps", data: {"gtv_link": $('#matchId').val()},dataType: "json", success: function(maps){
+        console.log(maps.count)
+    }});
+}
+
+$(function() {
+
+});
+</script>
+
+
 {% endblock %}
 
 

@@ -19,3 +19,4 @@ class RenderForm(Form):
     title = StringField('Title')
     gtv_match_id = HiddenField('gtv_match_id')
     map_number = HiddenField('map_number')
+    filename = HiddenField('filename')
