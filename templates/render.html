@@ -4,7 +4,7 @@
 {% macro render_streamable(shortcode) %}
 <div class="wrap" {% if shortcode|length==0 %}style="display:none;"{% endif %}">
     <a href="https://streamable.com/{{ shortcode }}">streamable.com</a>
-    <div class="streamable-embed-container" style="width: 100%; height: 0px; position: relative; padding-bottom: 56.338%;"><iframe class="streamable-embed" src="https://streamable.com/e/{{ shortcode }}" frameborder="0" scrolling="no" style="width: 100%; height: 100%; position: absolute;" allowfullscreen webkitallowfullscreen mozallowfullscreen></iframe></div>
+    <div class="streamable-embed-container" style="width: 100%; height: 0px; position: relative; padding-bottom: 56.338%;"><iframe class="streamable-embed" src="https://streamable.com/e/{{ shortcode }}?hd=1" frameborder="0" scrolling="no" style="width: 100%; height: 100%; position: absolute;" allowfullscreen webkitallowfullscreen mozallowfullscreen></iframe></div>
     <div class="col-sm-offset-11">HD<span class="glyphicon glyphicon-arrow-up"></span></div>
 </div>
 {% endmacro %}
