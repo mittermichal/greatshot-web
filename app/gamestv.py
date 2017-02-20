@@ -85,6 +85,7 @@ def parseMatchList(html_s):
   print(root.tag)
   return root.xpath('//tr/td[7]/a/@href')
 
+#todo: paging
 def getLeagueMatches(league_id):
   opener = urllib.request.build_opener()
   opener.addheaders = [('Cookie', config.gtvcookie)]
@@ -93,6 +94,20 @@ def getLeagueMatches(league_id):
 
   return matchIds
 
+def getPlayers(match_id):
+  opener = urllib.request.build_opener()
+  opener.addheaders = [('Cookie', config.gtvcookie)]
+  html_s = opener.open("http://www.gamestv.org/event/" + str(match_id)).read().decode('iso-8859-1')
+  root = html.fromstring(html_s)
+  players=[]
+  flags=root.xpath('//div[@class="matchlineup"]/div/img/@alt')
+  names_striped = map(lambda x: x.strip(),root.xpath('//div[@class="matchlineup"]/div/text()'))
+  names=list(filter(lambda x: x!='\n' and x!='',names_striped))
+  for idx,name in enumerate(names):
+    players.append({'name':name,'country':flags[idx]})
+  return players
+
+#getPlayers(17188)
 #print(getMatchDemosId(55944))
 #print(getMatchDemosId(1322))
 #downloadLinks(getDemosLinks(37408))
@@ -100,4 +115,4 @@ def getLeagueMatches(league_id):
 #getDemosLinks(1322)
 #postComment('test4',57100)
 
-print(getLeagueMatches(1461))
+#print(getLeagueMatches(1461))
