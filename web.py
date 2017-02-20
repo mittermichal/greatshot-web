@@ -185,7 +185,7 @@ def export():
             subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
             if request.form['matchId'] != '' and request.form['map'] != '':
                 rndr_form.gtv_match_id.data = re.findall('(\d+)', request.form['matchId'])[0]
-                rndr_form.map_number.data = request.form['map']
+                rndr_form.map_number.data = int(request.form['map'])-1
 
                 try:
                     export_save(re.findall('(\d+)', request.form['matchId'])[0], str(int(request.form['map']) - 1))
