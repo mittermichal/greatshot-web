@@ -4,6 +4,7 @@ from celery import Celery, current_task
 import tasks_config
 import requests
 import urllib.request
+import glob
 import json
 
 celery_app = Celery('tasks', broker=tasks_config.REDIS)
@@ -12,26 +13,55 @@ celery_app.conf.update(
 )
 celery_app.config_from_object("tasks_config")
 
-def capture(start):
-  open(tasks_config.ETPATH+'etpro\init-tga.cfg','w').write('exec_at_time '+start+' record-tga')
-  open(tasks_config.ETPATH+'etpro\init-wav.cfg','w').write('exec_at_time '+start+' record-wav')
-
-  p = subprocess.Popen( [ 'render.bat' , tasks_config.ETPATH ] )
+def capture(start,end,etl=False):
+  #http://stackoverflow.com/questions/5069224/handling-subprocess-crash-in-windows
+  if etl:
+    open(tasks_config.ETPATH + 'etmain\init-tga.cfg', 'w').write(
+      'exec_at_time ' + str(int(end) - 500) + ' stopvideo')
+    p = subprocess.Popen(['render-etl.bat', tasks_config.ETPATH])
+  else:
+    open(tasks_config.ETPATH+'etmain\init-tga.cfg','w').write('exec_at_time '+str(start)+' record-tga')
+    open(tasks_config.ETPATH+'etmain\init-wav.cfg','w').write('exec_at_time '+str(start)+' record-wav')
+    p = subprocess.Popen( [ 'render.bat' , tasks_config.ETPATH ] )
   p.communicate()
 
 @celery_app.task(name="render")
-def render(demoUrl,start,title):
+def render(demoUrl,start,end,title='render',name='',country='',etl=False):
   print('download '+demoUrl+' '+title)
   current_task.update_state(state='PROGRESS', meta={'stage': 'downloading demo', 'i':0})
   urllib.request.urlretrieve( demoUrl, tasks_config.ETPATH+'etpro/demos/demo-render.dm_84')
 
   print('capture '+title)
   current_task.update_state(state='PROGRESS',meta={'stage': 'capturing screenshots and sound', 'i':5 })
-  capture(start)
+  capture(start,end,etl)
 
   print('encoding '+title)
   current_task.update_state(state='PROGRESS', meta={'stage': 'encoding video', 'i':30})
-  p = subprocess.Popen(['ffmpeg', '-y', '-framerate', '60', '-i', 'etpro/screenshots/shot%04d.tga', '-i', 'etpro/wav/synctest.wav', '-c:a', 'libvorbis', '-shortest', 'render.mp4'],cwd=tasks_config.ETPATH, shell=True)
+  if etl:
+    args = ['ffmpeg', '-y', '-framerate', '60', '-i', 'C:\\Users\\admin\\Documents\\ETLegacy\\uvMovieMod\\videos\\render.avi', '-shortest', 'render.mp4']
+  else:
+    p = subprocess.check_output(['sox', 'etpro/wav/synctest.wav', '-n', 'stat', '2>&1'], cwd=tasks_config.ETPATH, shell=True).decode()
+    len_s = p.find('Length') + 22
+    audio_len=float(p[len_s:len_s + p[len_s:].find('Scaled') - 2])
+    video_len=len(glob.glob(tasks_config.ETPATH+'etpro\\screenshots\shot[0-9]*.tga'))/60
+    print(audio_len,video_len)
+    if audio_len==0 or video_len==0:
+      current_task.update_state(state='FAILURE')
+      return
+    subprocess.check_output(['sox', 'etpro/wav/synctest.wav', 'etpro/wav/sync.wav', 'tempo', str(audio_len/video_len)], cwd=tasks_config.ETPATH,shell=True)
+    args = ['ffmpeg', '-y', '-framerate', '60', '-i', 'etpro/screenshots/shot%04d.tga', '-i', 'etpro/wav/sync.wav', '-c:a', 'libvorbis', '-shortest', 'render.mp4']
+  if name!=None:
+    if etl:
+      args.insert(4,'-filter_complex')
+      args.insert(5,"[0] overlay=25:25 [b]; [b] drawtext=fontfile=courbd.ttf:text='"+name+"': fontcolor=white: fontsize=45: x=100: y=25+60/2-text_h/2")
+      args.insert(4, '-i')
+      args.insert(5, '4x3/'+country+'.png')
+    else:
+      args.insert(6,'-filter_complex')
+      args.insert(7,"[0] [1] overlay=25:25 [b]; [b] drawtext=fontfile=courbd.ttf:text='"+name+"': fontcolor=white: fontsize=45: x=100: y=25+60/2-text_h/2")
+      args.insert(6, '-i')
+      args.insert(7, '4x3/'+country+'.png')
+  p = subprocess.Popen(args,cwd=tasks_config.ETPATH, shell=True)
   p.communicate()
 
   #https://api.streamable.com
