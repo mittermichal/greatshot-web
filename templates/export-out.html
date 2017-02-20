@@ -93,6 +93,22 @@ function fillForm(e) {
 	{% endfor %}
 {% endfor %}
 
+{#
+<h2>Rifle tricks</h2>
+
+{% for player in parser_out.players %}
+	{% for trick in player.rifletricks %}
+		<div class="rifletrick" data-title="{{ player['szCleanName'] }}'s rifletrick" data-client_num="{{ player['bClientNum'] }}" data-start="{{ trick['dwTime']-6000 }}" data-end="{{ 2000+trick['dwTime'] }}">
+			{{ player.szCleanName }} From: To: Distance: {{ trick.distance }}<br/>
+				{{ trick.bAttacker }} {{ trick.bTarget }} {{ trick.szTimeString }} {{ trick.szMessage }} {{ trick.dwTime }} <br/>
+			<a class="btn btn-default btn-lg" href="#render-form" onclick="fillForm(this);">
+				<span style="width:20px" class="glyphicon glyphicon glyphicon-film"></span> Render
+			</a>
+		</div>
+	{% endfor %}
+{% endfor %}
+#}
+
 {% from "form.html" import render_form, render_btn %}
 <form method="post" id="render-form" action="/renders" enctype="multipart/form-data" class="form-horizontal panel panel-default">
     <div class="panel-heading" style="margin-bottom:10px">Render parameters</div>

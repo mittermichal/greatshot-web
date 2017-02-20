@@ -1,5 +1,6 @@
 from pydblite.sqlite import Database, Table
 import json
+from math import sqrt
 
 def get_player(players, i):
   for player in players:
@@ -17,6 +18,8 @@ def parse_infostring(str):
       key=v
   return ret
 
+def dist(x1,y1,x2,y2):
+  return sqrt( pow(x1-x2,2) + pow(y1-y2,2))
 
 # 131 - body or dead body(gibbing)
 # 130 - head
@@ -47,6 +50,7 @@ def parse_output(lines):
     elif 'szType' in j and j['szType'] == 'player':
       j['sprees'] = []
       j['spree'] = []
+      j['rifletricks'] = []
       j['hits'] = [0,0,0,0] #0,130,131,132
 
       j['hs_sprees'] = []
@@ -59,7 +63,14 @@ def parse_output(lines):
       # if j['bAttacker']>=len(players):
       # print(j['bAttacker'])
       # print(players[j['bAttacker']])
-      attacker = get_player(players,j['bAttacker'])
+
+      attacker = get_player(players, j['bAttacker'])
+      j['distance']=dist(j['kx'],j['tx'],j['ky'],j['ty'])
+
+      #riflenade
+      if (j['bWeapon']==43 or j['bWeapon']==44) and j['distance']>500:
+        attacker['rifletricks'].append(j)
+
       spree = attacker['spree']
       sprees = attacker['sprees']
       if (not len(spree)) or (j['dwTime'] - spree[len(spree) - 1]['dwTime'] <= 4000):
