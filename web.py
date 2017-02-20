@@ -47,7 +47,7 @@ def render_get(render_id):
     return render_template('render.html', render=render)
 
 
-def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, map_number):
+def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, map_number, player):
     if gtv_match_id == '':
         filename_orig = filename
     else:
@@ -59,8 +59,8 @@ def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, 
         urllib.request.urlretrieve(demo_url, filename_orig)
     app.Libtech3.cut(flask_app.config['PARSERPATH'], filename_orig, filename_cut, int(start) - 2000, end, cut_type,
                      client_num)
-    result = tasks.render.delay(flask_app.config['APPHOST'] + '/' + filename_cut, str(start), title)
-    r = Render(result.id, title, gtv_match_id, map_number, client_num)
+    result = tasks.render.delay(flask_app.config['APPHOST'] + '/' + filename_cut, start,end, title, player['name'] if (player!=None) else None, player['country'] if (player!=None) else None,etl=False)
+    r = Render(result.id, title, gtv_match_id, map_number, client_num, player['id'] if (player!=None) else None )
     db_session.add(r)
     db_session.flush()
     db_session.commit()
@@ -83,7 +83,7 @@ def renders_list():
         render_id = render_new('upload/' + request.form['filename'], str(int(request.form['start'])),
                                request.form['end'],
                                request.form['cut_type'], request.form['client_num'], form.data['title'],
-                               form.data['gtv_match_id'], form.data['map_number'])
+                               form.data['gtv_match_id'], form.data['map_number'], None)
         return redirect(url_for('render_get', render_id=render_id))
 
 
@@ -246,7 +246,7 @@ def export_get(export_id, map_num, render=False, html=True):
         for player in parser_out['players']:
             for spree in player['sprees']:
                 render_new(spree[0]['dwTime'] - 2000, 2000 + spree[len(spree) - 1]['dwTime'], 1, player['bClientNum'],
-                           player['szCleanName'] + 's ' + str(len(spree)) + '-man kill', export_id, map_num)
+                           player['szCleanName'] + 's ' + str(len(spree)) + '-man kill', export_id, map_num, None)
     if html:
         return render_template('export-out.html', renders=renders, cut_form=cut_form, rndr_form=rndr_form,
                                out="".join(out),
