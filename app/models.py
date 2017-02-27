@@ -57,3 +57,14 @@ class Player(Base):
     def __init__(self, name=None, country=None):
         self.name = name
         self.country = country
+
+class MatchPlayer(Base):
+    __tablename__ = 'match_players'
+    id = Column(Integer, primary_key=True)
+    gtv_match_id = Column(Integer())
+    client_num = Column(Integer())
+    player_id = Column(Integer, ForeignKey('players.id'))
+    def __init__(self, gtv_match_id, client_num, player_id):
+        self.gtv_match_id = gtv_match_id
+        self.player_id = player_id
+        self.client_num = client_num

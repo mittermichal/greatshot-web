@@ -12,7 +12,8 @@
 	<thead>
 		<tr>
 			<th>clientNum</th>
-			<th>Player</th>
+			<th>nick</th>
+			<th>Player profile</th>
 			<th>Bodyshots<sup>*</sup></th>
 			<th>Headshots</th>
 			<th>Team-hits</th>
@@ -28,6 +29,12 @@
 	</td>
 	<td>
 		{{ player.szCleanName }}
+	</td>
+
+	<td>
+		{% if player.name!=None and player.name!='' %}
+			<a href="{{ url_for('players',player_id=player.id) }}">{{ player.name }} </a><img src="http://www.gamestv.org/images/flags/{{ player.country }}.gif" />
+		{% endif %}
 	</td>
 
 	<td>

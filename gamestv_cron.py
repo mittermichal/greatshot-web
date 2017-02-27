@@ -42,6 +42,7 @@ def process_match(match_id,render=True,parse_players=False):
         player['db']=None
         for g_player in g_players:
           if player['szCleanName'].lower().find(g_player['name'].lower())!=-1:
+            #todo: this will not work now
             player['db']={ 'id':g_player['db'].id, 'name':g_player['db'].name,'country':g_player['db'].country}
             break
     max_hs_player=max(parser_out['players'], key=lambda x: x['hits'][1])

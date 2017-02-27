@@ -1,6 +1,7 @@
 from pydblite.sqlite import Database, Table
 import json
 from math import sqrt
+from app.models import MatchPlayer,Player
 
 def get_player(players, i):
   for player in players:
@@ -25,7 +26,7 @@ def dist(x1,y1,x2,y2):
 # 130 - head
 # 0 - target has spawnshield
 # 132 teammate hit
-def parse_output(lines):
+def parse_output(lines,gtv_match_id=None):
   players = []
   rounds = []
   demo = {}
@@ -111,5 +112,15 @@ def parse_output(lines):
   result = db.cursor.fetchall()
   for row in result:
     ret.append(list(row))
+  if gtv_match_id!=None:
+    for player in players:
+      mp = MatchPlayer.query.filter(MatchPlayer.gtv_match_id == gtv_match_id,MatchPlayer.client_num == player['bClientNum']).first()
+      if mp!=None:
+        db_player=Player.query.filter(Player.id == mp.player_id).first()
+        player['id'] = db_player.id
+        player['name']=db_player.name
+        player['country']=db_player.country
+      else:
+        player['name']=None
   # print(ret)
   return {'hits': ret, 'players': players, 'demo': demo, 'rounds' : rounds}

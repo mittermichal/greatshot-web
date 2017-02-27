@@ -15,7 +15,7 @@ def commentExists(matchId):
   opener.addheaders = [('Cookie', config.gtvcookie)]
   html=opener.open("http://www.gamestv.org/event/"+str(matchId)).read().decode('iso-8859-1')
   commentId = re.search('comment(\d+)">demotoolsbot', html)
-  if (commentId):
+  if (commentId!=None):
     return commentId.group(1)
   else:
     return 0
@@ -49,10 +49,10 @@ def getMatchDemosId(matchId):
   opener.addheaders = [('Cookie', config.gtvcookie)]
   html=opener.open("http://www.gamestv.org/match/replay/"+str(matchId)).read().decode('iso-8859-1')
   demosId=re.search('<input type="radio" name="demoid" value="(\d+)', html)
-  if (demosId):
+  if (demosId!=None):
     return demosId.group(1)
-  else: 
-    return 0
+  else:
+    raise IndexError
 
 #requests demos for match and return their links in list
 def getDemosLinks(demoId):
