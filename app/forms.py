@@ -1,4 +1,5 @@
-from wtforms import StringField, FileField, SelectField, HiddenField
+from wtforms import StringField, FileField, SelectField, HiddenField, IntegerField
+from wtforms.fields.html5 import DecimalField
 from flask_wtf import Form
 
 class ExportFileForm(Form):
@@ -9,8 +10,8 @@ class ExportMatchLinkForm(Form):
     map = StringField('Map number', render_kw={"placeholder": "1"})
 
 class CutForm(Form):
-    start = StringField('Start', render_kw={"value": "0"})
-    end = StringField('End', render_kw={"value": "2147483647"})
+    start = DecimalField('Start', render_kw={"value": "0", "step":1000})
+    end = DecimalField('End', render_kw={"value": "2147483000", "step":1000})
     cut_type = SelectField('Cut type', choices=[(0, 'SNAPNUMBER'), (1, 'SNAPTIME'), (2, 'SNAPCOUNT')], default=1)
     client_num = StringField('Client number<sup>*</sup>', render_kw={"placeholder": "0"})
 

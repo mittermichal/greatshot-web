@@ -1,3 +1,7 @@
+form#render-form {
+    width: 50%;
+}
+
 .progress {
     height: 40px;
 }

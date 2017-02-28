@@ -32,8 +32,8 @@
 	</td>
 
 	<td>
-		{% if player.name!=None and player.name!='' %}
-			<a href="{{ url_for('players',player_id=player.id) }}">{{ player.name }} </a><img src="http://www.gamestv.org/images/flags/{{ player.country }}.gif" />
+		{% if player.name is defined and player.name!=None %}
+			<a href="{{ url_for('players',player_id=player.id) }}">{{ player.name }}</a><img src="http://www.gamestv.org/images/flags/{{ player.country }}.gif" />
 		{% endif %}
 	</td>
 
@@ -64,7 +64,9 @@ function fillForm(e) {
 	$('form').show();
 	parameters=["title","start","end","client_num"];
 	for (i=0;i<parameters.length;i++) {
-		$('form #'+parameters[i]).val($(e).parent().attr('data-'+parameters[i]));
+		value=$(e).parent().attr('data-'+parameters[i]);
+		$('form #'+parameters[i]).attr('value',value)
+		$('form #'+parameters[i]).val(value);
 	}
 }
 </script>
@@ -153,7 +155,11 @@ function fillForm(e) {
 
 <h2>Demo info</h2>
 {% for data in parser_out.demo %}
-	<b>{{ data }}</b>  {{ parser_out.demo[data] }} <br/>
+	{% if data=='szServerConfig' %}
+		<b>{{ data }}</b> <pre>{{ parser_out.demo[data] }} </pre>
+	{% else %}
+		<b>{{ data }}</b> {{ parser_out.demo[data] }} <br/>
+	{% endif %}
 {% endfor %}
 
 <h2>Round info</h2>
