@@ -1,4 +1,4 @@
-form#render-form {
+form#render-form, form#cut-form {
     width: 50%;
 }
 

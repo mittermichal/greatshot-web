@@ -81,6 +81,9 @@ function fillForm(e) {
 			<a class="btn btn-default btn-lg" href="#render-form" onclick="fillForm(this);">
 				<span style="width:20px" class="glyphicon glyphicon glyphicon-film"></span> Render
 			</a>
+			<a class="btn btn-default btn-lg" href="#cut-form" onclick="fillForm(this);">
+				<span style="width:20px" class="glyphicon glyphicon glyphicon-scissors"></span> Cut
+			</a>
 		</div>
 		<br/>{{ spree.interval }}<br/>
 	{% endfor %}
@@ -97,6 +100,9 @@ function fillForm(e) {
 			{% endfor %}
 			<a class="btn btn-default btn-lg" href="#render-form" onclick="fillForm(this);">
 				<span style="width:20px" class="glyphicon glyphicon glyphicon-film"></span> Render
+			</a>
+			<a class="btn btn-default btn-lg" href="#cut-form" onclick="fillForm(this);">
+				<span style="width:20px" class="glyphicon glyphicon glyphicon-scissors"></span> Cut
 			</a>
 		</div>
 	{% endfor %}
@@ -124,6 +130,16 @@ function fillForm(e) {
 	{{ render_form(rndr_form) }}
     {{ render_form(cut_form) }}
     {{ render_btn("Render") }}
+    <hr/>
+    <label class="col-sm-offset-2">
+        <sup>*</sup> Client number only needed for ETTV demo to choose POV
+    </label>
+</form>
+
+<form method="post" id="cut-form" action="/cut" enctype="multipart/form-data" class="form-horizontal panel panel-default">
+    <div class="panel-heading" style="margin-bottom:10px">Cut parameters</div>
+    {{ render_form(cut_form) }}
+    {{ render_btn("Cut") }}
     <hr/>
     <label class="col-sm-offset-2">
         <sup>*</sup> Client number only needed for ETTV demo to choose POV

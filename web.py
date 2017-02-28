@@ -80,17 +80,18 @@ def renders_list():
         return render_template('renders.html', renders=renders)
     if request.method == 'POST':
         form = RenderForm(request.form)
+        cut_form = CutForm(request.form)
         mp = None
-        if form.data['gtv_match_id']!='' and request.form['client_num']!='':
-            mp = MatchPlayer.query.filter(MatchPlayer.gtv_match_id == int(form.data['gtv_match_id']),MatchPlayer.client_num == int(request.form['client_num'])).first()
+        if cut_form.data['gtv_match_id']!='' and cut_form.data['client_num']!='':
+            mp = MatchPlayer.query.filter(MatchPlayer.gtv_match_id == int(cut_form.data['gtv_match_id']),MatchPlayer.client_num == int(cut_form.data['client_num'])).first()
         if mp != None:
             db_player = Player.query.filter(Player.id == mp.player_id).first()
         else:
             db_player=None
-        render_id = render_new('upload/' + request.form['filename'], str(int(request.form['start'])),
-                               request.form['end'],
-                               request.form['cut_type'], request.form['client_num'], form.data['title'],
-                               form.data['gtv_match_id'], form.data['map_number'],db_player)
+        render_id = render_new('upload/' + cut_form.data['filename'], str(int(cut_form.data['start'])),
+                               cut_form.data['end'],
+                               cut_form.data['cut_type'], cut_form.data['client_num'], form.data['title'],
+                               cut_form.data['gtv_match_id'], cut_form.data['map_number'],db_player)
         return redirect(url_for('render_get', render_id=render_id))
 
 
@@ -140,7 +141,10 @@ def cut():
     form1, form2 = ExportFileForm(), ExportMatchLinkForm()
     cut_form = CutForm()
     if request.form.__contains__('start'):
-        filename = upload(request)
+        if request.form['gtv_match_id'] != '' and request.form['map_number'] != '':
+            filename = get_gtv_demo(request.form['gtv_match_id'],request.form['map_number'])
+        else:
+            filename = upload(request)
         app.Libtech3.cut(
             flask_app.config['PARSERPATH'], 'upload/' + filename, 'download/demo-out.dm_84', request.form['start'],
             request.form['end'], request.form['cut_type'], request.form['client_num'])
@@ -157,10 +161,10 @@ def export():
     if request.method == 'POST':
         cut_form = CutForm()
         rndr_form = RenderForm()
-        if request.form['matchId'] != '' and request.form['map'] != '':
+        if request.form['gtv_match_id'] != '' and request.form['map_number'] != '':
             try:
-                response = export_get(re.findall('(\d+)', request.form['matchId'])[0],
-                                      str(int(request.form['map']) - 1))
+                response = export_get(re.findall('(\d+)', request.form['gtv_match_id'])[0],
+                                      str(int(request.form['map_number']) - 1))
             #except HTTPError:
             #    flash("Probably no demos available for this match")
             except Exception as e:
@@ -171,17 +175,17 @@ def export():
         filename = upload(request)
         arg = flask_app.config['INDEXER'] % (filename)
         subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
-        if request.form['matchId'] != '' and request.form['map'] != '':
-            rndr_form.gtv_match_id.data = re.findall('(\d+)', request.form['matchId'])[0]
-            rndr_form.map_number.data = int(request.form['map'])-1
+        if request.form['gtv_match_id'] != '' and request.form['map_number'] != '':
+            cut_form.gtv_match_id.data = re.findall('(\d+)', request.form['map_number'])[0]
+            cut_form.map_number.data = int(request.form['map_number'])-1
 
             try:
-                export_save(re.findall('(\d+)', request.form['matchId'])[0], str(int(request.form['map']) - 1))
+                export_save(re.findall('(\d+)', request.form['gtv_match_id'])[0], str(int(request.form['map_number']) - 1))
             except TimeoutError:
                 print("ftp timeout")
         else:
-            rndr_form.filename.data = filename
-        parsed_output = parse_output(open('download/out.json', 'r').readlines(),rndr_form.gtv_match_id.data)
+            cut_form.filename.data = filename
+        parsed_output = parse_output(open('download/out.json', 'r').readlines(),cut_form.gtv_match_id.data)
         # make gtv comment
         # retrieve clips that are from this demo
         return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form,
@@ -211,6 +215,13 @@ def export_get_match(export_id):
     renders = Render.query.order_by(desc(Render.id)).filter(Render.gtv_match_id == export_id)
     return render_template('renders.html', renders=renders, export_id=export_id)
 
+def get_gtv_demo(gtv_match_id,map_num):
+    filename = str(gtv_match_id) + '_' + str(map_num) + '.tv_84'
+    if not os.path.exists('upload/'+filename):
+        demo_ids = app.gamestv.getMatchDemosId(int(gtv_match_id))
+        demo_links = app.gamestv.getDemosLinks(demo_ids)[map_num]
+        urllib.request.urlretrieve(demo_links, 'upload/' + filename)
+    return filename
 
 @flask_app.route('/export/<export_id>/<map_num>')
 def export_get(export_id, map_num, render=False, html=True):
@@ -219,8 +230,8 @@ def export_get(export_id, map_num, render=False, html=True):
     if html:
         cut_form = CutForm()
         rndr_form = RenderForm()
-        rndr_form.gtv_match_id.data = export_id
-        rndr_form.map_number.data = map_num
+        cut_form.gtv_match_id.data = export_id
+        cut_form.map_number.data = map_num
     renders = Render.query.order_by(desc(Render.id)).filter(Render.gtv_match_id == export_id,
                                                             Render.map_number == map_num)
     ftp_url = 'ftp://' + flask_app.config['FTP_USER'] + ':' + flask_app.config['FTP_PW'] + '@' + flask_app.config[
