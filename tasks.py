@@ -30,7 +30,9 @@ def render(demoUrl,start,end,title='render',name='',country='',etl=False):
   print('download '+demoUrl+' '+title)
   current_task.update_state(state='PROGRESS', meta={'stage': 'downloading demo', 'i':0})
   urllib.request.urlretrieve( demoUrl, tasks_config.ETPATH+'etpro/demos/demo-render.dm_84')
-
+  if os.stat(tasks_config.ETPATH+'etpro/demos/demo-render.dm_84').st_size==0:
+      current_task.update_state(state='FAILURE')
+      return
   print('capture '+title)
   current_task.update_state(state='PROGRESS',meta={'stage': 'capturing screenshots and sound', 'i':5 })
   capture(start,end,etl)
@@ -50,15 +52,15 @@ def render(demoUrl,start,end,title='render',name='',country='',etl=False):
       return
     subprocess.check_output(['sox', 'etpro/wav/synctest.wav', 'etpro/wav/sync.wav', 'tempo', str(audio_len/video_len)], cwd=tasks_config.ETPATH,shell=True)
     args = ['ffmpeg', '-y', '-framerate', '60', '-i', 'etpro/screenshots/shot%04d.tga', '-i', 'etpro/wav/sync.wav', '-c:a', 'libvorbis', '-shortest', 'render.mp4']
-  if name!=None:
+  if name!=None and country!=None:
     if etl:
       args.insert(4,'-filter_complex')
-      args.insert(5,"[0] overlay=25:25 [b]; [b] drawtext=fontfile=courbd.ttf:text='"+name+"': fontcolor=white: fontsize=45: x=100: y=25+60/2-text_h/2")
+      args.insert(5,"[0] overlay=25:25 [b]; [b] drawtext=fontfile=courbd.ttf:text='"+name+"': fontcolor=white: fontsize=50: x=100: y=25+(60-text_h)/2")
       args.insert(4, '-i')
       args.insert(5, '4x3/'+country+'.png')
     else:
       args.insert(6,'-filter_complex')
-      args.insert(7,"[0] [1] overlay=25:25 [b]; [b] drawtext=fontfile=courbd.ttf:text='"+name+"': fontcolor=white: fontsize=45: x=100: y=25+60/2-text_h/2")
+      args.insert(7,"[0] [1] overlay=25:25 [b]; [b] drawtext=fontfile=courbd.ttf:text='"+name+"': fontcolor=white: fontsize=50: x=100: y=25+45.0-text_h-5")
       args.insert(6, '-i')
       args.insert(7, '4x3/'+country+'.png')
   p = subprocess.Popen(args,cwd=tasks_config.ETPATH, shell=True)

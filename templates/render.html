@@ -22,10 +22,15 @@
 function doPoll(){
 
   $.ajax({url: "/renders/{{ render.id }}", dataType: "json", success: function(task){
-        if (task.stage) {
+        if (task=="PENDING") {
+          $('.progress-bar').css({'width': 100 + '%'});
+          $('.progress-bar').html("No renderer available, come back later");
+          setTimeout(doPoll,5000);
+        }
+        else if (task.stage) {
           $('.progress-bar').css({'width': task.i + '%'});
           $('.progress-bar').html(task.stage);
-          setTimeout(doPoll,2000);
+          setTimeout(doPoll,3000);
          } else {
           $('.progress').hide();
           $('.wrap iframe').attr('src',$('.wrap iframe').attr('src')+task+'?autoplay=1&hd=1');
@@ -41,7 +46,7 @@ $(function() {
 </script>
 
 <div class="progress">
-  <div class="progress-bar progress-bar-striped active" style="color:#333" role="progressbar" style="width:0%">
+  <div class="progress-bar progress-bar-striped active" role="progressbar" style="width:0%">
     polling status...
   </div>
 </div>

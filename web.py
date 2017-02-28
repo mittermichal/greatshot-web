@@ -80,7 +80,9 @@ def renders_list():
         return render_template('renders.html', renders=renders)
     if request.method == 'POST':
         form = RenderForm(request.form)
-        mp = MatchPlayer.query.filter(MatchPlayer.gtv_match_id == int(form.data['gtv_match_id']),MatchPlayer.client_num == int(request.form['client_num'])).first()
+        mp = None
+        if form.data['gtv_match_id']!='' and request.form['client_num']!='':
+            mp = MatchPlayer.query.filter(MatchPlayer.gtv_match_id == int(form.data['gtv_match_id']),MatchPlayer.client_num == int(request.form['client_num'])).first()
         if mp != None:
             db_player = Player.query.filter(Player.id == mp.player_id).first()
         else:
