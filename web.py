@@ -219,7 +219,7 @@ def get_gtv_demo(gtv_match_id,map_num):
     filename = str(gtv_match_id) + '_' + str(map_num) + '.tv_84'
     if not os.path.exists('upload/'+filename):
         demo_ids = app.gamestv.getMatchDemosId(int(gtv_match_id))
-        demo_links = app.gamestv.getDemosLinks(demo_ids)[map_num]
+        demo_links = app.gamestv.getDemosLinks(demo_ids)[int(map_num)]
         urllib.request.urlretrieve(demo_links, 'upload/' + filename)
     return filename
 
