@@ -88,10 +88,15 @@ def renders_list():
             db_player = Player.query.filter(Player.id == mp.player_id).first()
         else:
             db_player=None
-        render_id = render_new('upload/' + cut_form.data['filename'], str(int(cut_form.data['start'])),
+        try:
+            render_id = render_new('upload/' + cut_form.data['filename'], str(int(cut_form.data['start'])),
                                cut_form.data['end'],
                                cut_form.data['cut_type'], cut_form.data['client_num'], form.data['title'],
                                cut_form.data['gtv_match_id'], cut_form.data['map_number'],db_player)
+        except Exception as e:
+            flash(str(e))
+            #return redirect(url_for('export'))
+            return redirect(url_for('export',_anchor='render-form'), code=307)
         return redirect(url_for('render_get', render_id=render_id))
 
 
@@ -138,16 +143,20 @@ def download_static(filename):
 # TODO exclude POV playerstate/entity
 @flask_app.route('/cut', methods=['GET', 'POST'])
 def cut():
-    form1, form2 = ExportFileForm(), ExportMatchLinkForm()
-    cut_form = CutForm()
+    form1, form2 = ExportFileForm(request.form), ExportMatchLinkForm(request.form)
+    cut_form = CutForm(request.form)
     if request.form.__contains__('start'):
         if request.form['gtv_match_id'] != '' and request.form['map_number'] != '':
             filename = get_gtv_demo(request.form['gtv_match_id'],request.form['map_number'])
         else:
             filename = upload(request)
-        app.Libtech3.cut(
-            flask_app.config['PARSERPATH'], 'upload/' + filename, 'download/demo-out.dm_84', request.form['start'],
-            request.form['end'], request.form['cut_type'], request.form['client_num'])
+        try:
+            app.Libtech3.cut(
+                flask_app.config['PARSERPATH'], 'upload/' + filename, 'download/demo-out.dm_84', request.form['start'],
+                request.form['end'], request.form['cut_type'], request.form['client_num'])
+        except Exception as e:
+            flash(e)
+            return render_template('cut.html', cut_form=cut_form, form1=form1, form2=form2)
         return send_from_directory(directory='download', filename='demo-out.dm_84', as_attachment=True,
                                    attachment_filename='demo-out.dm_84')
     else:
