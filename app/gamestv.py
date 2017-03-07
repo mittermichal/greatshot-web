@@ -62,8 +62,8 @@ def getDemosLinks(demoId):
   url = urllib.request.Request("http://www.gamestv.org/demos/"+str(demoId), params)
 
   response=opener.open(url).read().decode('iso-8859-1')
-  print(response)
   pollId=json.loads(response)['pollID']
+  print(response)
   print('pollid: '+str(pollId))
   params = urllib.parse.urlencode({'jsAction': 'rpcPoll','pollID': str(pollId)}).encode('UTF-8')
   url = urllib.request.Request("http://www.gamestv.org/demos/"+str(demoId), params)

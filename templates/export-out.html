@@ -1,11 +1,27 @@
 {% extends "layout.html" %}
+
+{% from "form.html" import render_form, render_btn %}
+
 {% block title %} - Export output{% endblock %}
+{% block head %}
+{{ super() }}
+<link rel="stylesheet" href="/static/countries.css" />
+{% endblock %}
+
 
 {% block content %}
 <h1>Export output</h1>
 
-<h2>Highlights</h2>
-{% include 'render_list.html' %}
+{% if players|count %}
+	<h2>Highlights</h2>
+	{% include 'render_list.html' %}
+{% endif %}
+
+{#
+{% for g_player in parser_out.g_players %}
+	<p>{{ g_player.name }}{{ g_player.country }}</p>
+{% endfor %}
+#}
 
 <h2>Hit regions</h2>
 <table class="table">
@@ -22,36 +38,38 @@
 	</thead>
 
 {% for player in parser_out.players %}
+	{% if player.hits[0]>0 or player.hits[1]>0 or player.hits[2]>0 or player.hits[3]>0 %}
+		<tr>
+			<td>
+				{{ player.bClientNum }}
+			</td>
+			<td>
+				{{ player.szCleanName }}
+			</td>
 
-<tr>
-	<td>
-		{{ player.bClientNum }}
-	</td>
-	<td>
-		{{ player.szCleanName }}
-	</td>
+			<td>
+				{% if player.name is defined and player.name!=None %}
+					<a href="{{ url_for('players',player_id=player.id) }}">{{ player.name }}</a><img src="http://www.gamestv.org/images/flags/{{ player.country }}.gif" />
+				{% else %}
+					{{ render_form(player.form) }}
+				{% endif %}
+			</td>
 
-	<td>
-		{% if player.name is defined and player.name!=None %}
-			<a href="{{ url_for('players',player_id=player.id) }}">{{ player.name }}</a><img src="http://www.gamestv.org/images/flags/{{ player.country }}.gif" />
-		{% endif %}
-	</td>
+			<td>
+				{{ player.hits[2] }}
+			</td>
+			<td>
+				{{ player.hits[1] }}
+			</td>
+			<td>
+				{{ player.hits[3] }}
+			</td>
+			<td>
+				{{ player.hits[0] }}
+			</td>
 
-	<td>
-		{{ player.hits[2] }}
-	</td>
-	<td>
-		{{ player.hits[1] }}
-	</td>
-	<td>
-		{{ player.hits[3] }}
-	</td>
-	<td>
-		{{ player.hits[0] }}
-	</td>
-
-</tr>
-
+		</tr>
+	{% endif %}
 {% endfor %}
 
 </table>
@@ -69,6 +87,9 @@ function fillForm(e) {
 		$('form #'+parameters[i]).val(value);
 	}
 }
+
+var g_players = {{ parser_out.g_players|tojson|safe }};
+
 </script>
 
 
@@ -124,7 +145,6 @@ function fillForm(e) {
 {% endfor %}
 #}
 
-{% from "form.html" import render_form, render_btn %}
 <form method="post" id="render-form" action="/renders" enctype="multipart/form-data" class="form-horizontal panel panel-default">
     <div class="panel-heading" style="margin-bottom:10px">Render parameters</div>
 	{{ render_form(rndr_form) }}

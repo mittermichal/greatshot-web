@@ -2,6 +2,8 @@ from pydblite.sqlite import Database, Table
 import json
 from math import sqrt
 from app.models import MatchPlayer,Player
+from app.forms import PlayerForm
+import app.gamestv
 
 def get_player(players, i):
   for player in players:
@@ -34,6 +36,12 @@ def parse_output(lines,gtv_match_id=None):
   table = db.create('hits', ("player", 'INTEGER'), ("region", 'INTEGER'))
   table.create_index("player")
   table.create_index("region")
+
+  if gtv_match_id!=None and gtv_match_id!='':
+    g_players = app.gamestv.getPlayers(gtv_match_id)
+  else:
+    g_players = []
+
   # exporter=eventexport.EventExport()
   #TODO: fix players[j['bAttacker']] out of bound
   for line in lines:
@@ -57,6 +65,17 @@ def parse_output(lines,gtv_match_id=None):
       j['hs_sprees'] = []
       j['hs_spree'] = []
 
+      form = PlayerForm()
+      form.client_num.data = j['bClientNum']
+      if gtv_match_id!=None:
+
+        for g_player in g_players:
+          if j['szCleanName'].lower().find(g_player['name'].lower())!=-1:
+            form.name.data=g_player['name']
+            form.country.data = g_player['country']
+
+
+      j['form'] = form
       players.append(j)
 
     elif 'szType' in j and j['szType'] == 'obituary' and j['bAttacker'] != 254 and j['bAttacker'] != j['bTarget'] and j['bIsTeamkill']==0:
@@ -123,4 +142,4 @@ def parse_output(lines,gtv_match_id=None):
       else:
         player['name']=None
   # print(ret)
-  return {'hits': ret, 'players': players, 'demo': demo, 'rounds' : rounds}
+  return {'hits': ret, 'players': players, 'demo': demo, 'rounds' : rounds, 'g_players': g_players}
