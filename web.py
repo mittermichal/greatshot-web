@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+from json import JSONDecodeError
+
 from flask import Flask, request, redirect, url_for, render_template, send_from_directory, jsonify, flash
 import os
 import subprocess
@@ -124,10 +126,10 @@ def upload(request):
         file = request.files['file']
         # if user does not select file, browser also
         # submit a empty part without filename
-        if file.filename == '':
-            return 'demo.tv_84'
-        if not file or not allowed_file(file.filename):
-            return 'demo.tv_84'
+        #if file.filename == '':
+        #    return 'demo.tv_84'
+        #if not file or not allowed_file(file.filename):
+        #    return 'demo.tv_84'
         filename = 'demo.' + file.filename.rsplit('.', 1)[1]
         file.save(os.path.join('upload', filename))
         return filename
@@ -166,14 +168,15 @@ def cut():
 # TODO export only POV events for dm_84 demo
 @flask_app.route('/export', methods=['GET', 'POST'])
 def export():
-    form1, form2 = ExportFileForm(), ExportMatchLinkForm()
+    form1, form2 = ExportFileForm(request.form), ExportMatchLinkForm(request.form)
     if request.method == 'POST':
-        cut_form = CutForm()
-        rndr_form = RenderForm()
+        cut_form = CutForm(request.form)
+        rndr_form = RenderForm(request.form)
         if request.form['gtv_match_id'] != '' and request.form['map_number'] != '':
             try:
+                return redirect(url_for('export_get',export_id=re.findall('(\d+)', request.form['gtv_match_id'])[0],map_num=str(int(request.form['map_number']) - 1)))
                 response = export_get(re.findall('(\d+)', request.form['gtv_match_id'])[0],
-                                      str(int(request.form['map_number']) - 1))
+                                      str(int(request.form['map_number'])))
             #except HTTPError:
             #    flash("Probably no demos available for this match")
             except Exception as e:
@@ -182,19 +185,14 @@ def export():
             else:
                 return response
         filename = upload(request)
-        arg = flask_app.config['INDEXER'] % (filename)
+        arg = flask_app.config['INDEXER'] % (filename,filename)
         subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
         if request.form['gtv_match_id'] != '' and request.form['map_number'] != '':
             cut_form.gtv_match_id.data = re.findall('(\d+)', request.form['map_number'])[0]
             cut_form.map_number.data = int(request.form['map_number'])-1
-
-            try:
-                export_save(re.findall('(\d+)', request.form['gtv_match_id'])[0], str(int(request.form['map_number']) - 1))
-            except TimeoutError:
-                print("ftp timeout")
         else:
             cut_form.filename.data = filename
-        parsed_output = parse_output(open('download/out.json', 'r').readlines(),cut_form.gtv_match_id.data)
+        parsed_output = parse_output(open('download/'+filename+'.json', 'r').readlines(),cut_form.gtv_match_id.data)
         # make gtv comment
         # retrieve clips that are from this demo
         return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form,
@@ -235,7 +233,7 @@ def get_gtv_demo(gtv_match_id,map_num):
 @flask_app.route('/export/<export_id>/<map_num>')
 def export_get(export_id, map_num, render=False, html=True):
     export_id=int(export_id)
-    map_num=int(map_num)
+    map_num=int(map_num)-1
     if html:
         cut_form = CutForm()
         rndr_form = RenderForm()
@@ -269,12 +267,22 @@ def export_get(export_id, map_num, render=False, html=True):
         except HTTPError:
             flash("no demos for this match")
             return error_response
+        except (TypeError,JSONDecodeError):
+            flash("demos are probably private but possible to download")
+            return error_response
         else:
-            filename = str(match_id) + '_' + str(map_num) + '.tv_84'
-            urllib.request.urlretrieve(demo_links, 'upload/' + filename)
-            arg = flask_app.config['INDEXER'] % (filename)
+            filename = str(match_id) + '_' + str(map_num)
+            urllib.request.urlretrieve(demo_links, 'upload/' + filename + '.tv_84')
+            arg = flask_app.config['INDEXER'] % (filename+ '.tv_84',filename)
             subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
-            out=open('download/out.json', 'r').readlines()
+            try:
+                export_save(export_id, map_num)
+            except Exception as e:
+                print(str(e))
+            f=open('download/'+filename+'.json', 'r')
+            out=f.readlines()
+            f.close()
+            os.remove('download/'+filename+'.json')
             #return filename
 
     parser_out = parse_output(out,export_id)
@@ -295,7 +303,7 @@ def export_save(export_id, map):
     path = 'exports/' + generate_ftp_path(export_id)
     session = ftplib.FTP(flask_app.config['FTP_HOST'], flask_app.config['FTP_USER'], flask_app.config['FTP_PW'])
     app.ftp.chdir(session, path[:-1])
-    file = open('download/out.json', 'rb')
+    file = open('download/'+str(export_id) + '_' + str(map)+'.json', 'rb')
     session.storbinary('STOR ' + str(map) + '.json', file)
     file.close()
     session.quit()
