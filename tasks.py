@@ -32,7 +32,7 @@ def render(demoUrl,start,end,title='render',name='',country='',etl=False):
   urllib.request.urlretrieve( demoUrl, tasks_config.ETPATH+'etpro/demos/demo-render.dm_84')
   if os.stat(tasks_config.ETPATH+'etpro/demos/demo-render.dm_84').st_size==0:
       current_task.update_state(state='FAILURE')
-      return
+      return None
   print('capture '+title)
   current_task.update_state(state='PROGRESS',meta={'stage': 'capturing screenshots and sound', 'i':5 })
   capture(start,end,etl)
@@ -49,7 +49,7 @@ def render(demoUrl,start,end,title='render',name='',country='',etl=False):
     print(audio_len,video_len)
     if audio_len==0 or video_len==0:
       current_task.update_state(state='FAILURE')
-      return
+      return None
     subprocess.check_output(['sox', 'etpro/wav/synctest.wav', 'etpro/wav/sync.wav', 'tempo', str(audio_len/video_len)], cwd=tasks_config.ETPATH,shell=True)
     args = ['ffmpeg', '-y', '-framerate', '60', '-i', 'etpro/screenshots/shot%04d.tga', '-i', 'etpro/wav/sync.wav', '-c:a', 'libvorbis', '-shortest', 'render.mp4']
   if name!=None and country!=None:
@@ -72,7 +72,11 @@ def render(demoUrl,start,end,title='render',name='',country='',etl=False):
   #return 'aaaa'
   r=requests.post('https://api.streamable.com/upload', auth=(tasks_config.STREAMABLE_NAME, tasks_config.STREAMABLE_PW), files={'render.mp4': open(tasks_config.ETPATH+'render.mp4', 'rb')} , data = {'title':title})
 
-  return json.loads(r.text)["shortcode"]
+  try:
+    return json.loads(r.text)["shortcode"]
+  except Exception:
+    current_task.update_state(state='FAILURE')
+    return None
   #return demoUrl
 
 
