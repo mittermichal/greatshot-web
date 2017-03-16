@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-from json import JSONDecodeError
 
 from flask import Flask, request, redirect, url_for, render_template, send_from_directory, jsonify, flash
 import os
@@ -271,7 +270,7 @@ def export_get(export_id, map_num, render=False, html=True):
         except HTTPError:
             flash("no demos for this match")
             return error_response
-        except (TypeError,JSONDecodeError):
+        except (TypeError):
             flash("demos are probably private but possible to download")
             return error_response
         else:
