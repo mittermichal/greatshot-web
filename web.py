@@ -121,17 +121,21 @@ def upload(request):
     if 'uselast' in request.form:
         print('uselast')
     else:
-        if 'file' not in request.files:
-            return 'demo.tv_84'
-        file = request.files['file']
+        if 'file' in request.files:
+            file = request.files['file']
+            filename = 'demo.' + file.filename.rsplit('.', 1)[1]
+            file.save(os.path.join('upload', filename))
+        elif request.form['filename'] != '':
+            filename=request.form['filename']
+        else:
+            raise Exception("No filename selected for cut")
         # if user does not select file, browser also
         # submit a empty part without filename
         #if file.filename == '':
         #    return 'demo.tv_84'
         #if not file or not allowed_file(file.filename):
         #    return 'demo.tv_84'
-        filename = 'demo.' + file.filename.rsplit('.', 1)[1]
-        file.save(os.path.join('upload', filename))
+
         return filename
     return 'demo.tv_84'
 
@@ -196,7 +200,7 @@ def export():
         # make gtv comment
         # retrieve clips that are from this demo
         return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form,
-                               out=open('download/out.json', 'r').read(),
+                               out=open('download/'+filename+'.json', 'r').read(),
                                parser_out=parsed_output)
     return render_template('export.html', form1=form1, form2=form2)
 
