@@ -177,7 +177,7 @@ def export():
         rndr_form = RenderForm(request.form)
         if request.form['gtv_match_id'] != '' and request.form['map_number'] != '':
             try:
-                return redirect(url_for('export_get',export_id=re.findall('(\d+)', request.form['gtv_match_id'])[0],map_num=str(int(request.form['map_number']) - 1)))
+                return redirect(url_for('export_get',export_id=re.findall('(\d+)', request.form['gtv_match_id'])[0],map_num=str((request.form['map_number']))))
                 response = export_get(re.findall('(\d+)', request.form['gtv_match_id'])[0],
                                       str(int(request.form['map_number'])))
             #except HTTPError:
