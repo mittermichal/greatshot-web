@@ -152,7 +152,7 @@ def cut():
     cut_form = CutForm(request.form)
     if request.form.__contains__('start'):
         if request.form['gtv_match_id'] != '' and request.form['map_number'] != '':
-            filename = get_gtv_demo(request.form['gtv_match_id'],request.form['map_number'])
+            filename = get_gtv_demo(re.findall('(\d+)', request.form['gtv_match_id'])[0],request.form['map_number'])
         else:
             filename = upload(request)
         try:
