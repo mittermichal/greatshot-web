@@ -100,7 +100,7 @@ def getPlayers(match_id):
   players=[]
   flags=root.xpath('//div[@class="matchlineup"]/div/img/@alt')
   names_striped = map(lambda x: x.strip(),root.xpath('//div[@class="matchlineup"]/div/text()'))
-  names=list(filter(lambda x: x!='\n' and x!='',names_striped))
+  names=list(filter(lambda x: x!='\n' and x!='' and x!='Not Announced',names_striped))
   for idx,name in enumerate(names):
     players.append({'name':name,'country':flags[idx]})
   return players
