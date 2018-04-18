@@ -228,8 +228,11 @@ def export_get_match(export_id):
 def get_gtv_demo(gtv_match_id,map_num):
     filename = str(gtv_match_id) + '_' + str(map_num) + '.tv_84'
     if not os.path.exists('upload/'+filename):
-        demo_ids = app.gamestv.getMatchDemosId(int(gtv_match_id))
-        demo_links = app.gamestv.getDemosLinks(demo_ids)[int(map_num)]
+        try:
+            demo_ids = app.gamestv.getMatchDemosId(int(gtv_match_id))
+            demo_links = app.gamestv.getDemosLinks(demo_ids)[int(map_num)]
+        except IndexError:
+            demo_links = app.gamestv.getDemosDownloadLinks(gtv_match_id)[int(map_num)]
         urllib.request.urlretrieve(demo_links, 'upload/' + filename)
     return filename
 
@@ -254,16 +257,23 @@ def export_get(export_id, map_num, render=False, html=True):
         form1, form2 = ExportFileForm(), ExportMatchLinkForm()
         error_response=render_template('export.html', form1=form1, form2=form2)
         match_id = export_id
+        demo_links = None
         try:
             demo_ids = app.gamestv.getMatchDemosId(int(match_id))
         except HTTPError:
             flash("Match not found")
             return error_response
         except IndexError:
-            flash("Match not available for replay")
-            return error_response
+            #flash("Match not available for replay")
+            try:
+                demo_links = app.gamestv.getDemosDownloadLinks(int(match_id))[int(map_num)]
+            except IndexError:
+                flash("Match not available for replay")
+
+                return error_response
         try:
-            demo_links = app.gamestv.getDemosLinks(demo_ids)[map_num]
+            if demo_links==None:
+                demo_links = app.gamestv.getDemosLinks(demo_ids)[map_num]
         except IndexError:
             flash("demo not found")
             return error_response

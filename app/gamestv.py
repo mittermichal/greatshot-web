@@ -75,6 +75,19 @@ def getDemosLinks(demoId):
   links=list(map(lambda x: 'https://www.gamestv.org'+x,links))
   return links
 
+def getDemosDownloadLinks(matchId):
+  opener = urllib.request.build_opener()
+  opener.addheaders = [('Cookie', config.gtvcookie)]
+  html_s = opener.open("https://www.gamestv.org/event/" + str(matchId)).read().decode('iso-8859-1')
+  root = html.fromstring(html_s)
+  link = list(filter(lambda x: re.match('\/files\/\d+\-tv\-demo',x),root.xpath('//table[@class="matchDetails"]/tr/td/a/@href')))[0]
+  html_s = opener.open("https://www.gamestv.org" + link).read().decode('iso-8859-1')
+  root = html.fromstring(html_s)
+  links = root.xpath('//table[@class="contentTable"]/tr/td[1]/a/@href')
+  links = list(map(lambda x: 'https://www.gamestv.org' + x, links))
+  return links
+
+
 def parseMatchList(html_s):
   content_table_start=html_s.find('<table class="contentTable" cellspacing="1">')
   content_table_end=html_s.find('</table>',content_table_start)+8
@@ -114,3 +127,5 @@ def getPlayers(match_id):
 #postComment('test4',57828)
 
 #print(getLeagueMatches(1461))
+
+#print(getDemosDownloadLinks(618))
