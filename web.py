@@ -195,11 +195,11 @@ def export():
             cut_form.map_number.data = int(request.form['map_number'])-1
         else:
             cut_form.filename.data = filename
-        parsed_output = parse_output(open('download/'+filename+'.json', 'r').readlines(),cut_form.gtv_match_id.data)
+        parsed_output = parse_output(open('download/'+filename+'.json', 'r', encoding='utf-8', errors='ignore').readlines(),cut_form.gtv_match_id.data)
         # make gtv comment
         # retrieve clips that are from this demo
         return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form,
-                               out=open('download/'+filename+'.json', 'r').read(),
+                               out=open('download/'+filename+'.json', 'r', encoding='utf-8', errors='ignore').read(),
                                parser_out=parsed_output)
     return render_template('export.html', form1=form1, form2=form2)
 
