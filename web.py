@@ -282,7 +282,7 @@ def export_get(export_id, map_num, render=False, html=True):
                 export_save(export_id, map_num)
             except Exception as e:
                 print(str(e))
-            f=open('download/'+filename+'.json', 'r')
+            f=open('download/'+filename+'.json', 'r', encoding='utf-8', errors='ignore')
             out=f.readlines()
             f.close()
             os.remove('download/'+filename+'.json')
