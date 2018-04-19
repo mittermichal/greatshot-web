@@ -307,7 +307,10 @@ def export_get(export_id, map_num, render=False, html=True):
     if html:
         return render_template('export-out.html', renders=renders, cut_form=cut_form, rndr_form=rndr_form,
                                out="".join(out),
-                               parser_out=parser_out)
+                               parser_out=parser_out,
+                               map_num=map_num,
+                               export_id=export_id
+                               )
     else:
         return parser_out
 
