@@ -85,10 +85,10 @@ def parse_output(lines,gtv_match_id=None):
       # print(players[j['bAttacker']])
 
       attacker = get_player(players, j['bAttacker'])
-      j['distance']=dist(j['kx'],j['tx'],j['ky'],j['ty'])
+      j['distance']=dist(j['kx'],j['ky'],j['tx'],j['ty'])
 
       #riflenade
-      if (j['bWeapon']==43 or j['bWeapon']==44) and j['distance']>500:
+      if (j['bWeapon']==43 or j['bWeapon']==44) and j['distance']>2000:
         attacker['rifletricks'].append(j)
 
       spree = attacker['spree']

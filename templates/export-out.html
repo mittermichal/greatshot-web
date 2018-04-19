@@ -130,8 +130,6 @@ var g_players = {{ parser_out.g_players|tojson|safe }};
 	{% endfor %}
 {% endfor %}
 
-{#
-<h2>Rifle tricks</h2>
 
 {% for player in parser_out.players %}
 	{% for trick in player.rifletricks %}
@@ -144,7 +142,6 @@ var g_players = {{ parser_out.g_players|tojson|safe }};
 		</div>
 	{% endfor %}
 {% endfor %}
-#}
 
 <form method="post" id="render-form" action="/renders" enctype="multipart/form-data" class="form-horizontal panel panel-default">
     <div class="panel-heading" style="margin-bottom:10px">Render parameters</div>
