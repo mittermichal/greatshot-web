@@ -24,7 +24,7 @@
 {% endfor %}
 #}
 
-<h2>Hit regions</h2>
+<h2>Hit regions & revives</h2>
 <table class="table">
 	<thead>
 		<tr>
@@ -35,6 +35,8 @@
 			<th>Headshots</th>
 			<th>Team-hits</th>
 			<th>Shield-hits</th>
+			<th>Revives</th>
+			<th>Got revived</th>
 		</tr>
 	</thead>
 
@@ -67,6 +69,13 @@
 			</td>
 			<td>
 				{{ player.hits[0] }}
+			</td>
+
+			<td>
+				{{ player.revives }}
+			</td>
+			<td>
+				{{ player.revived }}
 			</td>
 
 		</tr>

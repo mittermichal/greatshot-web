@@ -59,6 +59,8 @@ def parse_output(lines,gtv_match_id=None):
     elif 'szType' in j and j['szType'] == 'player':
       j['sprees'] = []
       j['spree'] = []
+      j['revives'] = 0
+      j['revived'] = 0
       j['rifletricks'] = []
       j['hits'] = [0,0,0,0] #0,130,131,132
 
@@ -122,6 +124,11 @@ def parse_output(lines,gtv_match_id=None):
       else:
         reg=0
       attacker['hits'][reg]+=1
+    elif 'szType' in j and j['szType'] == 'revive':
+      reviver = get_player(players, j['bReviver'])
+      revived = get_player(players, j['bRevived'])
+      reviver['revives']=reviver['revives']+1
+      revived['revived']=revived['revived']+1
     # if j['bAttacker']==int(player) and j['bRegion']!=130 and j['bRegion']!=131 and j['bRegion']!=0:
     # filter(lambda p: p['bClientNum'] == j['bTarget'], players)
     # exporter.add_event(j['dwTime'],'^2BULLETEVENT      ' +str(j['bRegion']) + '^7 ' + players[j['bTarget']]['szName'])
