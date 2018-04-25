@@ -12,7 +12,9 @@
 {% block content %}
 <h1>Export output</h1>
 
+{% if ((export_id is defined) and (map_num is defined)) %}
 <a href="/export/{{ export_id }}/{{map_num+2}}">next map</a>
+{% endif %}
 {% if players|count %}
 	<h2>Highlights</h2>
 	{% include 'render_list.html' %}
