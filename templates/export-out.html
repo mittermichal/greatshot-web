@@ -56,8 +56,11 @@
 				{% if player.name is defined and player.name!=None %}
 					<a href="{{ url_for('players',player_id=player.id) }}">{{ player.name }}</a><img src="http://www.gamestv.org/images/flags/{{ player.country }}.gif" />
 				{% else %}
+				<form method="post" action="/players" enctype="multipart/form-data">
 					{{ render_form(player.form) }}
+					{{ render_btn("Save") }}
 				{% endif %}
+				</form>
 			</td>
 
 			<td>

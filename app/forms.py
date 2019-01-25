@@ -28,3 +28,4 @@ class PlayerForm(Form):
     country = SelectField('Country', choices=[(x,x) for x in countries], default='eu')
     #gtv_mame = SelectField('gtv_mame')
     client_num = HiddenField('client_num')
+    match_id = HiddenField('match_id')

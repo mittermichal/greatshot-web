@@ -11,7 +11,7 @@ import ftplib
 import app.gamestv
 import app.ftp
 import re
-from app.forms import ExportFileForm, ExportMatchLinkForm, CutForm, RenderForm
+from app.forms import ExportFileForm, ExportMatchLinkForm, CutForm, RenderForm, PlayerForm
 import markdown
 import eventexport
 import tasks
@@ -337,8 +337,26 @@ def matches():
 
 @flask_app.route('/players', methods=['GET', 'POST'])
 def players():
-    players=Player.query.all()
-    return render_template('players.html', players=players)
+    if request.method == 'POST':
+        player_form = PlayerForm(request.form)
+
+        #r = Render(result.id, title, gtv_match_id, map_number, client_num, player.id if (player != None) else None)
+        player = Player()
+        match_player = MatchPlayer()
+        player_form.populate_obj(player)
+        db_session.add(player)
+        db_session.flush()
+
+
+        player_form.populate_obj(match_player)
+        match_player.player_id=player.id
+        db_session.add(match_player)
+        db_session.flush()
+        db_session.commit()
+        return str(match_player.id)
+    else:
+        players=Player.query.all()
+        return render_template('players.html', players=players)
 
 @flask_app.route('/players/<player_id>', methods=['GET', 'POST'])
 def player_get(player_id):

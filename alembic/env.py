@@ -16,18 +16,26 @@ fileConfig(config.config_file_name)
 # add your model's MetaData object here
 # for 'autogenerate' support
 
-#1. SET PYTHONPATH=C:\Users\admin\Documents\et\gtv
-#2. alembic revision --autogenerate
-#3. alembic upgrade head
-from app.models import Render
+# 1. SET PYTHONPATH=C:\Users\admin\Documents\et\gtv
+# 2. alembic revision --autogenerate
+# 3. alembic upgrade head
+from app.models import Base
 
-target_metadata = Render.metadata
-#target_metadata = None
+target_metadata = Base.metadata
+# target_metadata = None
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
 # my_important_option = config.get_main_option("my_important_option")
 # ... etc.
+
+
+
+def include_object(object, name, type_, reflected, compare_to):
+    exclude_tables = ['bulletevent', 'chatmessage', 'demo', 'obituary', 'player', 'roundstats', 'sqlite_sequence']
+    if type_ == 'table' and name in exclude_tables:
+        return False
+    return True
 
 
 def run_migrations_offline():
@@ -44,7 +52,12 @@ def run_migrations_offline():
     """
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
-        url=url, target_metadata=target_metadata, literal_binds=True)
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True,
+        render_as_batch = True,
+        include_object=include_object
+    )
 
     with context.begin_transaction():
         context.run_migrations()
@@ -65,11 +78,14 @@ def run_migrations_online():
     with connectable.connect() as connection:
         context.configure(
             connection=connection,
-            target_metadata=target_metadata
+            target_metadata=target_metadata,
+            render_as_batch=True,
+            include_object=include_object
         )
 
         with context.begin_transaction():
             context.run_migrations()
+
 
 if context.is_offline_mode():
     run_migrations_offline()
