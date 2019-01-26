@@ -288,10 +288,10 @@ def export_get(export_id, map_num, render=False, html=True):
             urllib.request.urlretrieve(demo_links, 'upload/' + filename + '.tv_84')
             arg = flask_app.config['INDEXER'] % (filename+ '.tv_84',filename)
             subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
-            try:
-                export_save(export_id, map_num)
-            except Exception as e:
-                print(str(e))
+            # try:
+            #     export_save(export_id, map_num)
+            # except Exception as e:
+            #     print(str(e))
             f=open('download/'+filename+'.json', 'r', encoding='utf-8', errors='ignore')
             out=f.readlines()
             f.close()
