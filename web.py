@@ -250,8 +250,8 @@ def export_get(export_id, map_num, render=False, html=True):
     ftp_url = 'ftp://' + flask_app.config['FTP_USER'] + ':' + flask_app.config['FTP_PW'] + '@' + flask_app.config[
         'FTP_HOST'] + '/exports/' + generate_ftp_path(str(export_id)) + str(map_num) + '.json'
     try:
-        #raise Exception
-        out = list(map(lambda x: x.decode('utf-8', 'replace'), urlopen(ftp_url).readlines()))
+        raise Exception
+        # out = list(map(lambda x: x.decode('utf-8', 'replace'), urlopen(ftp_url).readlines()))
     except (Exception,HTTPError, URLError):
         # return 'demo.tv_84'
         form1, form2 = ExportFileForm(), ExportMatchLinkForm()
@@ -288,10 +288,10 @@ def export_get(export_id, map_num, render=False, html=True):
             urllib.request.urlretrieve(demo_links, 'upload/' + filename + '.tv_84')
             arg = flask_app.config['INDEXER'] % (filename+ '.tv_84',filename)
             subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
-            try:
-                export_save(export_id, map_num)
-            except Exception as e:
-                print(str(e))
+            # try:
+            #     export_save(export_id, map_num)
+            # except Exception as e:
+            #     print(str(e))
             f=open('download/'+filename+'.json', 'r', encoding='utf-8', errors='ignore')
             out=f.readlines()
             f.close()
