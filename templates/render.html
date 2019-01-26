@@ -24,7 +24,7 @@ function doPoll(){
   $.ajax({url: "/renders/{{ render.id }}", dataType: "json", success: function(task){
         if (task=="PENDING") {
           $('.progress-bar').css({'width': 100 + '%'});
-          $('.progress-bar').html("No renderer available, come back later");
+          $('.progress-bar').html("(im playing offi atm have to turn off, sry squid :D ) No renderer available, reload page later");
           setTimeout(doPoll,5000);
         }
         else if (task.stage) {
