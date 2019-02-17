@@ -6,3 +6,5 @@ PyDbLite==3.0.4
 requests==2.18.4
 SQLAlchemy==1.0.15
 WTForms==2.1
+lxml==3.6.4
+redis==2.10.5
