@@ -20,8 +20,19 @@ from app.models import Render,Player,MatchPlayer
 from sqlalchemy import desc
 from app.export import parse_output
 
+import tasks_config
+from celery import Celery
+
+celery_app = Celery(broker=tasks_config.REDIS)
+celery_app.conf.update(
+    CELERY_RESULT_BACKEND=tasks_config.REDIS
+)
+celery_app.config_from_object("tasks_config")
+
 flask_app = Flask(__name__)
 flask_app.config.from_pyfile('config.cfg')
+
+
 
 
 def request_wants_json():
@@ -361,6 +372,9 @@ def getMaps():
     except (HTTPError):
         return jsonify({'count': -2})
 
+@flask_app.route('/render-status', methods=['GET', 'POST'])
+def render_status():
+    return jsonify(celery_app.control.inspect().stats())
 
 # TODO: upload raw video from worker
 '''
