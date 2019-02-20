@@ -101,6 +101,8 @@ function fillForm(e) {
 }
 
 var g_players = {{ parser_out.g_players|tojson|safe }};
+var demoStartTime = {{ parser_out.demo.dwStartTime|safe }};
+var demoEndTime = {{ parser_out.demo.dwEndTime|safe }};
 
 </script>
 
