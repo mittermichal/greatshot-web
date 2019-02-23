@@ -104,6 +104,25 @@ var g_players = {{ parser_out.g_players|tojson|safe }};
 var demoStartTime = {{ parser_out.demo.dwStartTime|safe }};
 var demoEndTime = {{ parser_out.demo.dwEndTime|safe }};
 
+function validateForm() {
+  var x = document.forms["myForm"]["fname"].value;
+  if (x == "") {
+    alert("Name must be filled out");
+    return false;
+  }
+}
+
+$( "form" ).submit(function( event ) {
+  if ( $( "input:first" ).val() === "correct" ) {
+    $( "span" ).text( "Validated..." ).show();
+    return;
+  }
+
+  //$( "span" ).text( "Not valid!" ).show().fadeOut( 1000 );
+  alert(1);
+  event.preventDefault();
+});
+
 </script>
 
 
