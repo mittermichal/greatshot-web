@@ -198,6 +198,7 @@ def export():
         parsed_output = parse_output(open('download/'+filename+'.json', 'r', encoding='utf-8', errors='ignore').readlines(),cut_form.gtv_match_id.data)
         # make gtv comment
         # retrieve clips that are from this demo
+        cut_form.start.data = parsed_output['demo']['dwStartTime']
         return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form,
                                out=open('download/'+filename+'.json', 'r', encoding='utf-8', errors='ignore').read(),
                                parser_out=parsed_output)
@@ -305,6 +306,7 @@ def export_get(export_id, map_num, render=False, html=True):
                 render_new(spree[0]['dwTime'] - 2000, 2000 + spree[len(spree) - 1]['dwTime'], 1, player['bClientNum'],
                            player['szCleanName'] + 's ' + str(len(spree)) + '-man kill', export_id, map_num, None)
     if html:
+        cut_form.start.data = parser_out['demo']['dwStartTime']
         return render_template('export-out.html', renders=renders, cut_form=cut_form, rndr_form=rndr_form,
                                out="".join(out),
                                parser_out=parser_out,
