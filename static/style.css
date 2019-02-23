@@ -2,6 +2,11 @@ form#render-form, form#cut-form {
     width: 50%;
 }
 
+form#render-form .form-group.frm-cut_type,
+form#cut-form .form-group.frm-cut_type {
+    display:none;
+}
+
 .progress {
     height: 40px;
 }
