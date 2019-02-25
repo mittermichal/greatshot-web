@@ -72,11 +72,11 @@ def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, 
 def renders_list():
     if request.method == 'GET':
         renders = Render.query.order_by(desc(Render.id)).all()
-        for render in renders:
-            if render.streamable_short == None:
-                result = tasks.render.AsyncResult(render.celery_id)
-                if result.successful():
-                    render.streamable_short = result.get()
+        # for render in renders:
+        #     if render.streamable_short == None:
+        #         result = tasks.render.AsyncResult(render.celery_id)
+        #         if result.successful():
+        #             render.streamable_short = result.get()
         db_session.commit()
         return render_template('renders.html', renders=renders)
     if request.method == 'POST':
