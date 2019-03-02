@@ -11,7 +11,8 @@ os.environ.setdefault('FORKED_BY_MULTIPROCESSING', '1')
 
 celery_app = Celery('tasks', broker=tasks_config.REDIS)
 celery_app.conf.update(
-    CELERY_RESULT_BACKEND=tasks_config.REDIS
+    CELERY_RESULT_BACKEND=tasks_config.REDIS,
+    BROKER_URL=tasks_config.REDIS
 )
 celery_app.config_from_object("tasks_config")
 
