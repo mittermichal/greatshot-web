@@ -7,7 +7,7 @@ import urllib.request
 import glob
 import json
 
-os.environ.setdefault('FORKED_BY_MULTIPROCESSING', '1')
+#os.environ.setdefault('FORKED_BY_MULTIPROCESSING', '1')
 
 celery_app = Celery('tasks', broker=tasks_config.REDIS)
 celery_app.conf.update(
@@ -82,6 +82,32 @@ def render(demoUrl,start,end,title='render',name='',country='',etl=False):
     return None
   #return demoUrl
 
+# https://stackoverflow.com/a/1023269/2560239
+def lowpriority():
+  """ Set the priority of the process to below-normal."""
+
+  import sys
+  try:
+    sys.getwindowsversion()
+  except AttributeError:
+    isWindows = False
+  else:
+    isWindows = True
+
+  if isWindows:
+    # Based on:
+    #   "Recipe 496767: Set Process Priority In Windows" on ActiveState
+    #   http://code.activestate.com/recipes/496767/
+    import win32api, win32process, win32con
+
+    pid = win32api.GetCurrentProcessId()
+    handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, True, pid)
+    win32process.SetPriorityClass(handle, win32process.BELOW_NORMAL_PRIORITY_CLASS)
+  else:
+    import os
+
+    os.nice(1)
 
 if __name__ == '__main__':
   celery_app.start()
+  lowpriority()
