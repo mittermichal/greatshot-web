@@ -89,15 +89,15 @@ def renders_list():
             db_player = Player.query.filter(Player.id == mp.player_id).first()
         else:
             db_player=None
-        try:
-            render_id = render_new('upload/' + cut_form.data['filename'], str(int(cut_form.data['start'])),
+        # try:
+        render_id = render_new('upload/' + cut_form.data['filename'], str(int(cut_form.data['start'])),
                                cut_form.data['end'],
                                cut_form.data['cut_type'], cut_form.data['client_num'], form.data['title'],
                                cut_form.data['gtv_match_id'], cut_form.data['map_number'],db_player)
-        except Exception as e:
-            flash(str(e))
-            #return redirect(url_for('export'))
-            return redirect(url_for('export',_anchor='render-form'), code=307)
+        # except Exception as e:
+        #     flash(str(e))
+        #     return redirect(url_for('export'))
+        #     return redirect(url_for('export',_anchor='render-form'), code=307)
         return redirect(url_for('render_get', render_id=render_id))
 
 
