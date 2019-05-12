@@ -31,6 +31,7 @@ def dist(x1,y1,x2,y2):
 def parse_output(lines,gtv_match_id=None):
   players = []
   rounds = []
+  chat = []
   demo = {}
   db = Database(":memory:")
   table = db.create('hits', ("player", 'INTEGER'), ("region", 'INTEGER'))
@@ -133,6 +134,9 @@ def parse_output(lines,gtv_match_id=None):
         reviver['revives'] = reviver['revives'] + 1
       revived = get_player(players, j['bRevived'])
       revived['revived']=revived['revived']+1
+    elif 'szType' in j and j['szType'] == 'chat' and j["bPlayer"] != -1:
+      chat.append(j)
+
     # if j['bAttacker']==int(player) and j['bRegion']!=130 and j['bRegion']!=131 and j['bRegion']!=0:
     # filter(lambda p: p['bClientNum'] == j['bTarget'], players)
     # exporter.add_event(j['dwTime'],'^2BULLETEVENT      ' +str(j['bRegion']) + '^7 ' + players[j['bTarget']]['szName'])
@@ -153,4 +157,4 @@ def parse_output(lines,gtv_match_id=None):
       else:
         player['name']=None
   # print(ret)
-  return {'hits': ret, 'players': players, 'demo': demo, 'rounds' : rounds, 'g_players': g_players}
+  return {'hits': ret, 'players': players, 'demo': demo, 'rounds' : rounds, 'g_players': g_players, 'chat': chat}

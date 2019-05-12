@@ -218,7 +218,22 @@ var g_players = {{ parser_out.g_players|tojson|safe }};
 
 </div>
 
-
+<h2>Chat</h2>
+<table>
+{% for chat in parser_out.chat %}
+	<tr>
+		<td>
+			{% for player in parser_out.players if player.bClientNum==chat.bPlayer %}
+				{{ player.szCleanName }}
+			{% endfor %}
+			 [{{ chat.szTimeString }}]:
+		</td>
+		<td>
+			{{ chat.szMessage }}
+		</td>
+	</tr>
+{% endfor %}
+</table>
 <h2>Raw output</h2>
 <pre>
 {{ out }}
