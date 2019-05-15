@@ -1,5 +1,5 @@
-from wtforms import StringField, FileField, SelectField, HiddenField, IntegerField
-from wtforms.fields.html5 import IntegerField
+from wtforms import StringField, FileField, SelectField, HiddenField, validators, BooleanField
+from wtforms.fields.html5 import IntegerField, IntegerRangeField
 from flask_wtf import Form
 from app.countries import countries
 
@@ -22,6 +22,11 @@ class CutForm(Form):
 
 class RenderForm(Form):
     title = StringField('Title')
+    crf = IntegerField('crf (default:23)', [validators.NumberRange(min=18, max=25)], default=23)
+    name = StringField('Name')
+    country = SelectField('Country', choices=[(x, x) for x in countries], default='eu')
+    download = BooleanField('Download', default=False)
+    streamable = BooleanField('Streamable', default=True)
 
 class PlayerForm(Form):
     name = StringField('Name')

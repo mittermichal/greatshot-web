@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-from flask import Flask, request, redirect, url_for, render_template, send_from_directory, jsonify, flash
+from flask import Flask, request, redirect, url_for, render_template, send_from_directory, jsonify, flash, Response
 import os
 import subprocess
 import app.Libtech3
@@ -19,6 +19,9 @@ from app.db import db_session
 from app.models import Render,Player,MatchPlayer
 from sqlalchemy import desc
 from app.export import parse_output
+from glob import glob
+from werkzeug.utils import secure_filename
+import tasks_config
 
 flask_app = Flask(__name__)
 flask_app.config.from_pyfile('config.cfg')
@@ -48,7 +51,7 @@ def render_get(render_id):
     return render_template('render.html', render=render)
 
 
-def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, map_number, player):
+def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, map_number, player, crf = 23, dl=False, streamable=True):
     if gtv_match_id == '':
         filename_orig = filename
     else:
@@ -60,7 +63,12 @@ def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, 
         urllib.request.urlretrieve(demo_url, filename_orig)
     app.Libtech3.cut(flask_app.config['PARSERPATH'], filename_orig, filename_cut, int(start) - 2000, end, cut_type,
                      client_num)
-    result = tasks.render.delay(flask_app.config['APPHOST'] + '/' + filename_cut, start,end, title, player.name if (player!=None) else None, player.country if (player!=None) else None,etl=False)
+    result = tasks.render.delay(flask_app.config['APPHOST'] + '/' + filename_cut,
+                                start, end, title,
+                                player.name if (player!=None) else None,
+                                player.country if (player!=None) else None,
+                                etl=False,
+                                crf=crf, dl=dl, streamable=streamable)
     r = Render(result.id, title, gtv_match_id, map_number, client_num, player.id if (player!=None) else None )
     db_session.add(r)
     db_session.flush()
@@ -87,13 +95,20 @@ def renders_list():
             mp = MatchPlayer.query.filter(MatchPlayer.gtv_match_id == int(cut_form.data['gtv_match_id']),MatchPlayer.client_num == int(cut_form.data['client_num'])).first()
         if mp != None:
             db_player = Player.query.filter(Player.id == mp.player_id).first()
+        elif form.data['name']!='' and form.data['country']!='':
+             db_player = Player(form.data['name'], form.data['country'])
         else:
-            db_player=None
+            db_player = None
         # try:
+        # return 'aa'
         render_id = render_new('upload/' + cut_form.data['filename'], str(int(cut_form.data['start'])),
                                cut_form.data['end'],
                                cut_form.data['cut_type'], cut_form.data['client_num'], form.data['title'],
-                               cut_form.data['gtv_match_id'], cut_form.data['map_number'],db_player)
+                               cut_form.data['gtv_match_id'], cut_form.data['map_number'],
+                               db_player,form.data['crf'],
+                               form.data['download'],
+                               form.data['streamable']
+                               )
         # except Exception as e:
         #     flash(str(e))
         #     return redirect(url_for('export'))
@@ -116,6 +131,8 @@ def allowed_file(filename):
 
 
 # http://flask.pocoo.org/docs/0.11/patterns/fileuploads/
+# @flask_app.route('/uploads/<path:filename>')
+
 def upload(request):
     if 'uselast' in request.form:
         print('uselast')
@@ -137,6 +154,44 @@ def upload(request):
 
         return filename
     return 'demo.tv_84'
+
+def check_auth(username, password):
+    """This function is called to check if a username /
+    password combination is valid.
+    """
+    return username == tasks_config.STREAMABLE_NAME and password == tasks_config.STREAMABLE_PW
+
+def authenticate():
+    """Sends a 401 response that enables basic auth"""
+    return Response(
+    'Could not verify your access level for that URL.\n'
+    'You have to login with proper credentials', 401,
+    {'WWW-Authenticate': 'Basic realm="Login Required"'})
+
+@flask_app.route('/download', methods=['GET', 'POST', 'PUT'])
+def download():
+    if request.method == 'PUT':
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+        try:
+            for filename, file in request.files.items():
+                name = secure_filename(request.files[filename].name)
+                file.save(os.path.join('download', name))
+                return name
+            return jsonify({'error': 'no file'})
+        except Exception as e:
+            print(e)
+            return jsonify({'error':e})
+    else:
+        blob_filter = request.args.get('filter', '*.*')
+        if not re.match(r'(\*|\w|\s)+', blob_filter):
+            blob_filter = '*.*'
+            flash('bad character in blob -> reverting to *.*')
+        files = sorted([f for f in glob('download/' + blob_filter, recursive=False)],
+                       key=lambda f: os.path.getmtime(f),
+                       reverse=True)
+        return render_template('download_list.html', files=files)
 
 
 @flask_app.route('/download/<path:filename>')
