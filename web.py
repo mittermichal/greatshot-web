@@ -6,6 +6,7 @@ import os
 import subprocess
 import app.Libtech3
 import urllib.request
+import urllib.parse
 from urllib.request import urlopen, HTTPError, URLError
 import ftplib
 import app.gamestv
@@ -258,7 +259,7 @@ def export():
                                parser_out=parsed_output)
     try:
         ettv_demos_path = flask_app.config['ETTV_DEMOS_PATH']
-        ettv_demos = [ url_for('export_ettv',path=os.path.relpath(x,ettv_demos_path)) for x in sorted([f for f in iglob(ettv_demos_path + '**/*.tv_84', recursive=True)],
+        ettv_demos = [ url_for('export_ettv',path=urllib.parse.quote(os.path.relpath(x,ettv_demos_path), safe='')) for x in sorted([f for f in iglob(ettv_demos_path + '**/*.tv_84', recursive=True)],
                         key=lambda f: os.path.getmtime(f),
                         reverse=True)]
         return render_template('export.html', form1=form1, form2=form2, ettv_demos=ettv_demos)
