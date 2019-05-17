@@ -19,7 +19,7 @@ from app.db import db_session
 from app.models import Render,Player,MatchPlayer
 from sqlalchemy import desc
 from app.export import parse_output
-from glob import glob
+from glob import glob,iglob
 from werkzeug.utils import secure_filename
 import tasks_config
 
@@ -256,7 +256,41 @@ def export():
         return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form,
                                out=open('download/'+filename+'.json', 'r', encoding='utf-8', errors='ignore').read(),
                                parser_out=parsed_output)
+    try:
+        ettv_demos_path = flask_app.config['ETTV_DEMOS_PATH']
+        ettv_demos = [ url_for('export_ettv',path=os.path.relpath(x,ettv_demos_path)) for x in sorted([f for f in iglob(ettv_demos_path + '**/*.tv_84', recursive=True)],
+                        key=lambda f: os.path.getmtime(f),
+                        reverse=True)]
+        return render_template('export.html', form1=form1, form2=form2, ettv_demos=ettv_demos)
+    except IndexError:
+        print('indexerror')
+        pass
+
     return render_template('export.html', form1=form1, form2=form2)
+
+
+@flask_app.route('/export/ettv_demo/<path>')
+def export_ettv(path):
+    ettv_demos_path = flask_app.config['ETTV_DEMOS_PATH']
+    path = os.path.join(os.path.normcase(ettv_demos_path),os.path.normcase(path))
+    print(path)
+    cut_form = CutForm()
+    rndr_form = RenderForm()
+    filename = os.path.abspath(path)
+    print(filename)
+    # cut_form.filename = os.path.basename(filename)
+    cut_form.filename = filename
+    indexer = 'indexTarget/%s/exportJsonFile/%s.json/exportBulletEvents/1/exportDemo/1/exportChatMessages/1/exportRevives/1'
+    if os.name == 'posix':
+        indexer = indexer.replace('/','\\')
+    arg = indexer % (filename, filename)
+    subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
+    parsed_output = parse_output(
+        open(path + '.json', 'r', encoding='utf-8', errors='ignore').readlines(),
+        cut_form.gtv_match_id.data)
+    return render_template('export-out.html', cut_form=cut_form, rndr_form=rndr_form,
+                           out=open(path + '.json', 'r').read(),
+                           parser_out=parsed_output)
 
 
 @flask_app.route('/export/last')
