@@ -18,6 +18,7 @@ class CutForm(Form):
     gtv_match_id = HiddenField('gtv_match_id')
     map_number = HiddenField('map_number')
     filename = HiddenField('filename')
+    filepath = HiddenField('filepath')
 
 
 class RenderForm(Form):

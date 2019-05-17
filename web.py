@@ -102,7 +102,8 @@ def renders_list():
             db_player = None
         # try:
         # return 'aa'
-        render_id = render_new('upload/' + cut_form.data['filename'], str(int(cut_form.data['start'])),
+        filepath = ('upload/' + cut_form.data['filename'], request.form['filepath'])[request.form['filepath'] != '']
+        render_id = render_new(filepath, str(int(cut_form.data['start'])),
                                cut_form.data['end'],
                                cut_form.data['cut_type'], cut_form.data['client_num'], form.data['title'],
                                cut_form.data['gtv_match_id'], cut_form.data['map_number'],
@@ -143,7 +144,9 @@ def upload(request):
             filename = 'demo.' + file.filename.rsplit('.', 1)[1]
             file.save(os.path.join('upload', filename))
         elif request.form['filename'] != '':
-            filename=request.form['filename']
+            filename = request.form['filename']
+        elif request.form['filepath'] != '':
+            filename = request.form['filepath']
         else:
             raise Exception("No filename selected for cut")
         # if user does not select file, browser also
@@ -213,7 +216,7 @@ def cut():
             filename = upload(request)
         try:
             app.Libtech3.cut(
-                flask_app.config['PARSERPATH'], 'upload/' + filename, 'download/demo-out.dm_84', request.form['start'],
+                flask_app.config['PARSERPATH'], ('upload/' + filename, request.form['filepath'])[request.form['filepath'] != ''], 'download/demo-out.dm_84', request.form['start'],
                 request.form['end'], request.form['cut_type'], request.form['client_num'])
         except Exception as e:
             flash(e)
@@ -273,17 +276,17 @@ def export():
 @flask_app.route('/export/ettv_demo/<path>')
 def export_ettv(path):
     ettv_demos_path = flask_app.config['ETTV_DEMOS_PATH']
-    path = os.path.join(os.path.normcase(ettv_demos_path),os.path.normcase(path))
+    path = os.path.join(os.path.normcase(ettv_demos_path), os.path.normcase(urllib.parse.unquote(path)))
     print(path)
     cut_form = CutForm()
     rndr_form = RenderForm()
     filename = os.path.abspath(path)
     print(filename)
-    # cut_form.filename = os.path.basename(filename)
-    cut_form.filename = filename
+    cut_form.filepath.data = filename
+    # cut_form.filename = 'aaa'
     indexer = 'indexTarget/%s/exportJsonFile/%s.json/exportBulletEvents/1/exportDemo/1/exportChatMessages/1/exportRevives/1'
     if os.name == 'posix':
-        indexer = indexer.replace('/','\\')
+        indexer = indexer.replace('/', '\\')
     arg = indexer % (filename, filename)
     subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
     parsed_output = parse_output(
