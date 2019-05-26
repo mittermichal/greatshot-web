@@ -20,9 +20,10 @@ from app.db import db_session
 from app.models import Render,Player,MatchPlayer
 from sqlalchemy import desc
 from app.export import parse_output
-from glob import glob,iglob
+from glob import glob, iglob
 from werkzeug.utils import secure_filename
 import tasks_config
+import time
 
 flask_app = Flask(__name__)
 flask_app.config.from_pyfile('config.cfg')
@@ -192,8 +193,11 @@ def download():
         if not re.match(r'(\*|\w|\s)+', blob_filter):
             blob_filter = '*.*'
             flash('bad character in blob -> reverting to *.*')
-        files = sorted([f for f in glob('download/' + blob_filter, recursive=False)],
-                       key=lambda f: os.path.getmtime(f),
+        files = sorted([{'name': f,
+                         'ctime': os.path.getctime(f),
+                         'formatted_ctime':time.strftime('%c', time.gmtime(os.path.getctime(f)))}
+                        for f in glob('download/' + blob_filter, recursive=False)],
+                       key=lambda f: f['ctime'],
                        reverse=True)
         return render_template('download_list.html', files=files)
 

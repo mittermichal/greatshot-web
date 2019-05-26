@@ -9,7 +9,7 @@
 <ul>
 {% for file in files %}
     <li>
-        <a href="{{ file }}">{{ file }} </a>
+        <a href="{{ file.name }}">{{ file.name }} </a> {{ file.formatted_ctime }}
     </li>
 {% endfor %}
 </ul>
