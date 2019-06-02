@@ -204,8 +204,11 @@ def download():
 
 @flask_app.route('/download/<path:filename>')
 def download_static(filename):
+    as_attachment = False
+    if request.args.get('dl', '0') == '1':
+        as_attachment = True
     # http://stackoverflow.com/questions/24612366/flask-deleting-uploads-after-they-have-been-downloaded
-    return send_from_directory(directory='download', filename=filename)
+    return send_from_directory(directory='download', filename=filename, as_attachment=as_attachment)
 
 
 # TODO exclude POV playerstate/entity
