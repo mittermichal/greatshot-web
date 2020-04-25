@@ -19,13 +19,13 @@ celery_app.config_from_object("tasks_config")
 def capture(start,end,etl=False):
   #http://stackoverflow.com/questions/5069224/handling-subprocess-crash-in-windows
   if etl:
-    open(tasks_config.ETPATH + 'etmain\init-tga.cfg', 'w').write(
+    open(tasks_config.ETPATH + 'etmain\\init-tga.cfg', 'w').write(
       'exec_at_time ' + str(int(end) - 500) + ' stopvideo')
     p = subprocess.Popen(['render-etl.bat', tasks_config.ETPATH])
   else:
-    open(tasks_config.ETPATH+'etmain\init-tga.cfg','w').write('exec_at_time '+str(start)+' record-tga')
-    open(tasks_config.ETPATH+'etmain\init-wav.cfg','w').write('exec_at_time '+str(start)+' record-wav')
-    p = subprocess.Popen( [ 'render.bat' , tasks_config.ETPATH ] )
+    open(tasks_config.ETPATH + 'etmain\\init-tga.cfg', 'w').write('exec_at_time '+str(start)+' record-tga')
+    open(tasks_config.ETPATH + 'etmain\\init-wav.cfg', 'w').write('exec_at_time '+str(start)+' record-wav')
+    p = subprocess.Popen(['render.bat', tasks_config.ETPATH])
   p.communicate()
 
 @celery_app.task(name="render")

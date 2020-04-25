@@ -6,7 +6,8 @@ import os
 import subprocess
 import app.Libtech3
 import urllib.request
-from urllib.request import urlopen, HTTPError, URLError
+from urllib.request import urlopen
+from urllib.error import HTTPError, URLError
 import ftplib
 import app.gamestv
 import app.ftp
@@ -16,7 +17,7 @@ import markdown
 import eventexport
 import tasks
 from app.db import db_session
-from app.models import Render,Player,MatchPlayer
+from app.models import Render, Player, MatchPlayer
 from sqlalchemy import desc
 from app.export import parse_output
 
@@ -25,17 +26,14 @@ flask_app.config.from_pyfile('config.cfg')
 
 
 def request_wants_json():
-    best = request.accept_mimetypes \
-        .best_match(['application/json', 'text/html'])
-    return best == 'application/json' and \
-           request.accept_mimetypes[best] > \
-           request.accept_mimetypes['text/html']
+    best = request.accept_mimetypes.best_match(['application/json', 'text/html'])
+    return best == 'application/json' and request.accept_mimetypes[best] > request.accept_mimetypes['text/html']
 
 
 @flask_app.route('/renders/<render_id>')
 def render_get(render_id):
     render = Render.query.filter(Render.id == render_id).first()
-    if render.streamable_short != None:
+    if render.streamable_short is not None:
         return render_template('render.html', render=render)
     result = tasks.render.AsyncResult(render.celery_id)
     if request_wants_json():
@@ -60,8 +58,8 @@ def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, 
         urllib.request.urlretrieve(demo_url, filename_orig)
     app.Libtech3.cut(flask_app.config['PARSERPATH'], filename_orig, filename_cut, int(start) - 2000, end, cut_type,
                      client_num)
-    result = tasks.render.delay(flask_app.config['APPHOST'] + '/' + filename_cut, start,end, title, player.name if (player!=None) else None, player.country if (player!=None) else None,etl=False)
-    r = Render(result.id, title, gtv_match_id, map_number, client_num, player.id if (player!=None) else None )
+    result = tasks.render.delay(flask_app.config['APPHOST'] + '/' + filename_cut, start,end, title, player.name if (player is not None) else None, player.country if (player is not None) else None,etl=False)
+    r = Render(result.id, title, gtv_match_id, map_number, client_num, player.id if (player is not None) else None)
     db_session.add(r)
     db_session.flush()
     db_session.commit()
@@ -83,12 +81,12 @@ def renders_list():
         form = RenderForm(request.form)
         cut_form = CutForm(request.form)
         mp = None
-        if cut_form.data['gtv_match_id']!='' and cut_form.data['client_num']!='':
+        if cut_form.data['gtv_match_id'] != '' and cut_form.data['client_num']!='':
             mp = MatchPlayer.query.filter(MatchPlayer.gtv_match_id == int(cut_form.data['gtv_match_id']),MatchPlayer.client_num == int(cut_form.data['client_num'])).first()
-        if mp != None:
+        if mp is not None:
             db_player = Player.query.filter(Player.id == mp.player_id).first()
         else:
-            db_player=None
+            db_player = None
         # try:
         render_id = render_new('upload/' + cut_form.data['filename'], str(int(cut_form.data['start'])),
                                cut_form.data['end'],
@@ -112,7 +110,7 @@ def shutdown_session(exception=None):
 
 def allowed_file(filename):
     return '.' in filename and \
-           filename.rsplit('.', 1)[1] in set(['tv_84', 'dm_84'])
+           filename.rsplit('.', 1)[1] in {'tv_84', 'dm_84'}
 
 
 # http://flask.pocoo.org/docs/0.11/patterns/fileuploads/
@@ -125,7 +123,7 @@ def upload(request):
             filename = 'demo.' + file.filename.rsplit('.', 1)[1]
             file.save(os.path.join('upload', filename))
         elif request.form['filename'] != '':
-            filename=request.form['filename']
+            filename = request.form['filename']
         else:
             raise Exception("No filename selected for cut")
         # if user does not select file, browser also
@@ -152,7 +150,7 @@ def cut():
     cut_form = CutForm(request.form)
     if request.form.__contains__('start'):
         if request.form['gtv_match_id'] != '' and request.form['map_number'] != '':
-            filename = get_gtv_demo(re.findall('(\d+)', request.form['gtv_match_id'])[0],request.form['map_number'])
+            filename = get_gtv_demo(re.findall(r'(\d+)', request.form['gtv_match_id'])[0],request.form['map_number'])
         else:
             filename = upload(request)
         try:
@@ -177,7 +175,10 @@ def export():
         rndr_form = RenderForm(request.form)
         if request.form['gtv_match_id'] != '' and request.form['map_number'] != '':
             try:
-                return redirect(url_for('export_get',export_id=re.findall('(\d+)', request.form['gtv_match_id'])[0],map_num=str((request.form['map_number']))))
+                return redirect(url_for('export_get',
+                                        export_id=re.findall(r'(\d+)',
+                                        request.form['gtv_match_id'])[0],
+                                        map_num=str((request.form['map_number']))))
                 response = export_get(re.findall('(\d+)', request.form['gtv_match_id'])[0],
                                       str(int(request.form['map_number'])))
             #except HTTPError:
@@ -188,14 +189,16 @@ def export():
             else:
                 return response
         filename = upload(request)
-        arg = flask_app.config['INDEXER'] % (filename,filename)
+        arg = flask_app.config['INDEXER'] % (filename, filename)
         subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
         if request.form['gtv_match_id'] != '' and request.form['map_number'] != '':
-            cut_form.gtv_match_id.data = re.findall('(\d+)', request.form['map_number'])[0]
+            cut_form.gtv_match_id.data = re.findall(r'(\d+)', request.form['map_number'])[0]
             cut_form.map_number.data = int(request.form['map_number'])-1
         else:
             cut_form.filename.data = filename
-        parsed_output = parse_output(open('download/'+filename+'.json', 'r', encoding='utf-8', errors='ignore').readlines(),cut_form.gtv_match_id.data)
+        parsed_output = parse_output(open('download/'+filename+'.json', 'r',
+                                          encoding='utf-8', errors='ignore').readlines(),
+                                     cut_form.gtv_match_id.data)
         # make gtv comment
         # retrieve clips that are from this demo
         return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form,
@@ -207,8 +210,8 @@ def export():
 @flask_app.route('/export/last')
 def export_last():
     cut_form = CutForm()
-    rndr_form = RenderForm()
-    return render_template('export-out.html', cut_form=cut_form, rndr_form=rndr_form,
+    render_form = RenderForm()
+    return render_template('export-out.html', cut_form=cut_form, rndr_form=render_form,
                            out=open('download/out.json', 'r').read(),
                            parser_out=parse_output(open('download/out.json', 'r').readlines()))
 
@@ -225,6 +228,7 @@ def export_get_match(export_id):
     renders = Render.query.order_by(desc(Render.id)).filter(Render.gtv_match_id == export_id)
     return render_template('renders.html', renders=renders, export_id=export_id)
 
+
 def get_gtv_demo(gtv_match_id,map_num):
     filename = str(gtv_match_id) + '_' + str(map_num) + '.tv_84'
     if not os.path.exists('upload/'+filename):
@@ -236,10 +240,11 @@ def get_gtv_demo(gtv_match_id,map_num):
         urllib.request.urlretrieve(demo_links, 'upload/' + filename)
     return filename
 
+
 @flask_app.route('/export/<export_id>/<map_num>')
 def export_get(export_id, map_num, render=False, html=True):
-    export_id=int(export_id)
-    map_num=int(map_num)-1
+    export_id = int(export_id)
+    map_num = int(map_num)-1
     if html:
         cut_form = CutForm()
         rndr_form = RenderForm()
@@ -252,10 +257,10 @@ def export_get(export_id, map_num, render=False, html=True):
     try:
         raise Exception
         # out = list(map(lambda x: x.decode('utf-8', 'replace'), urlopen(ftp_url).readlines()))
-    except (Exception,HTTPError, URLError):
+    except (Exception, HTTPError, URLError):
         # return 'demo.tv_84'
         form1, form2 = ExportFileForm(), ExportMatchLinkForm()
-        error_response=render_template('export.html', form1=form1, form2=form2)
+        error_response = render_template('export.html', form1=form1, form2=form2)
         match_id = export_id
         demo_links = None
         try:
@@ -272,7 +277,7 @@ def export_get(export_id, map_num, render=False, html=True):
 
                 return error_response
         try:
-            if demo_links==None:
+            if demo_links is None:
                 demo_links = app.gamestv.getDemosLinks(demo_ids)[map_num]
         except IndexError:
             flash("demo not found")
@@ -280,32 +285,31 @@ def export_get(export_id, map_num, render=False, html=True):
         except HTTPError:
             flash("no demos for this match")
             return error_response
-        except (TypeError):
+        except TypeError:
             flash("demos are probably private but possible to download")
             return error_response
         else:
             filename = str(match_id) + '_' + str(map_num)
             urllib.request.urlretrieve(demo_links, 'upload/' + filename + '.tv_84')
-            arg = flask_app.config['INDEXER'] % (filename+ '.tv_84',filename)
+            arg = flask_app.config['INDEXER'] % (filename + '.tv_84', filename)
             subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
-            # try:
-            #     export_save(export_id, map_num)
-            # except Exception as e:
-            #     print(str(e))
-            f=open('download/'+filename+'.json', 'r', encoding='utf-8', errors='ignore')
-            out=f.readlines()
+            f = open('download/'+filename+'.json', 'r', encoding='utf-8', errors='ignore')
+            out = f.readlines()
             f.close()
             os.remove('download/'+filename+'.json')
             #return filename
 
-    parser_out = parse_output(out,export_id)
+    parser_out = parse_output(out, export_id)
     if render:
         for player in parser_out['players']:
             for spree in player['sprees']:
-                render_new(spree[0]['dwTime'] - 2000, 2000 + spree[len(spree) - 1]['dwTime'], 1, player['bClientNum'],
+                render_new(filename, spree[0]['dwTime'] - 2000,
+                           2000 + spree[len(spree) - 1]['dwTime'], 1,
+                           player['bClientNum'],
                            player['szCleanName'] + 's ' + str(len(spree)) + '-man kill', export_id, map_num, None)
     if html:
-        return render_template('export-out.html', renders=renders, cut_form=cut_form, rndr_form=rndr_form,
+        return render_template('export-out.html', renders=renders,
+                               cut_form=cut_form, rndr_form=rndr_form,
                                out="".join(out),
                                parser_out=parser_out,
                                map_num=map_num,
@@ -313,16 +317,6 @@ def export_get(export_id, map_num, render=False, html=True):
                                )
     else:
         return parser_out
-
-
-def export_save(export_id, map):
-    path = 'exports/' + generate_ftp_path(export_id)
-    session = ftplib.FTP(flask_app.config['FTP_HOST'], flask_app.config['FTP_USER'], flask_app.config['FTP_PW'])
-    app.ftp.chdir(session, path[:-1])
-    file = open('download/'+str(export_id) + '_' + str(map)+'.json', 'rb')
-    session.storbinary('STOR ' + str(map) + '.json', file)
-    file.close()
-    session.quit()
 
 
 @flask_app.route('/')
@@ -337,13 +331,14 @@ def matches():
 
 @flask_app.route('/players', methods=['GET', 'POST'])
 def players():
-    players=Player.query.all()
+    players = Player.query.all()
     return render_template('players.html', players=players)
+
 
 @flask_app.route('/players/<player_id>', methods=['GET', 'POST'])
 def player_get(player_id):
-    player=Player.query.filter(Player.id == player_id).first()
-    renders=Render.query.filter(Render.player_id == player_id)
+    player = Player.query.filter(Player.id == player_id).first()
+    renders = Render.query.filter(Render.player_id == player_id)
     return render_template('player.html', player=player, renders=renders)
 
 
@@ -351,14 +346,14 @@ def player_get(player_id):
 def getMaps():
     gtv_link = request.form['gtv_link']
     try:
-        demoId = app.gamestv.getMatchDemosId(re.findall('(\d+)', gtv_link)[0])
+        demo_id = app.gamestv.getMatchDemosId(re.findall(r'(\d+)', gtv_link)[0])
     except IndexError:
         return jsonify({'count': -3})
-    except (HTTPError):
+    except HTTPError:
         return jsonify({'count': -1})
     try:
-        return jsonify({'count': len(app.gamestv.getDemosLinks(demoId))})
-    except (HTTPError):
+        return jsonify({'count': len(app.gamestv.getDemosLinks(demo_id))})
+    except HTTPError:
         return jsonify({'count': -2})
 
 
