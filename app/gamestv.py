@@ -88,13 +88,18 @@ def getDemosDownloadLinks(matchId):
   return links
 
 
-def parseMatchList(html_s):
-  content_table_start=html_s.find('<table class="contentTable" cellspacing="1">')
+def parseMatchList(html_s, teamMatches=False):
+  if teamMatches:
+    content_table_start=html_s.find('<table class="contentTable">')
+  else:
+    content_table_start = html_s.find('<table class="contentTable" cellspacing="1">')
   content_table_end=html_s.find('</table>',content_table_start)+8
   content_table=html_s[content_table_start:content_table_end]
   root = html.fromstring(content_table)
-  print(root.tag)
-  return root.xpath('//tr/td[7]/a/@href')
+  if teamMatches:
+    return root.xpath('//tr/td[6]/a/@href')
+  else:
+    return root.xpath('//tr/td[7]/a/@href')
 
 #todo: paging
 def getLeagueMatches(league_id):
@@ -103,6 +108,14 @@ def getLeagueMatches(league_id):
   html = opener.open("https://www.gamestv.org/league/" + str(league_id)).read().decode('iso-8859-1')
   matchIds = list(map(lambda x: re.findall('(\d+)', x)[0],parseMatchList(html)))
 
+  return matchIds
+
+def getTeamMatches(team_id):
+  opener = urllib.request.build_opener()
+  opener.addheaders = [('Cookie', config.gtvcookie)]
+  html = opener.open("https://www.gamestv.org/team/" + str(team_id)).read().decode('iso-8859-1')
+  matchIds = list(map(lambda x: re.findall('(\d+)', x)[0], parseMatchList(html, True)))
+  print(matchIds)
   return matchIds
 
 def getPlayers(match_id):
