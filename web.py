@@ -81,8 +81,9 @@ def renders_list():
         form = RenderForm(request.form)
         cut_form = CutForm(request.form)
         mp = None
-        if cut_form.data['gtv_match_id'] != '' and cut_form.data['client_num']!='':
-            mp = MatchPlayer.query.filter(MatchPlayer.gtv_match_id == int(cut_form.data['gtv_match_id']),MatchPlayer.client_num == int(cut_form.data['client_num'])).first()
+        if cut_form.data['gtv_match_id'] != '' and cut_form.data['client_num'] != '':
+            mp = MatchPlayer.query.filter(MatchPlayer.gtv_match_id == int(cut_form.data['gtv_match_id']),
+                                          MatchPlayer.client_num == int(cut_form.data['client_num'])).first()
         if mp is not None:
             db_player = Player.query.filter(Player.id == mp.player_id).first()
         else:
@@ -91,7 +92,7 @@ def renders_list():
         render_id = render_new('upload/' + cut_form.data['filename'], str(int(cut_form.data['start'])),
                                cut_form.data['end'],
                                cut_form.data['cut_type'], cut_form.data['client_num'], form.data['title'],
-                               cut_form.data['gtv_match_id'], cut_form.data['map_number'],db_player)
+                               cut_form.data['gtv_match_id'], cut_form.data['map_number'], db_player)
         # except Exception as e:
         #     flash(str(e))
         #     return redirect(url_for('export'))

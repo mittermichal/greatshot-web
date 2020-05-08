@@ -4,16 +4,17 @@ import os
 from enum import Enum, auto
 from sqlalchemy import Column, Integer, String, ForeignKey, SmallInteger
 from sqlalchemy.ext.declarative import declarative_base
+
 Base = declarative_base()
 
 
-
-def cut(bin_path,input,out,start,end,type,pov):
-  subprocess.call(
-    [bin_path, 'cut', input, out, str(start),
-     str(end), str(type), str(pov)])
-  if os.stat(out).st_size == 0:
-      raise Exception("Cutted demo is empty, probably wrong start-end time interval")
+def cut(bin_path, input, out, start, end, type, pov):
+    subprocess.call(
+        [bin_path, 'cut', input, out, str(start),
+         str(end), str(type), str(pov)])
+    print(os.getcwd())
+    if os.stat(out).st_size == 0:
+        raise Exception("Cutted demo is empty, probably wrong start-end time interval")
 
 
 class Demo(Base):
@@ -25,6 +26,8 @@ class Demo(Base):
     szPOVName = Column(String(64))
     szTeamA = Column(String(128))
     szTeamB = Column(String(128))
+
+
 # TODO not all columns here
 
 
@@ -47,6 +50,7 @@ class Player(Base):
             return demo.szTeamA
         else:
             return 'SPECTATOR'
+
 
 class Revive(Base):
     __tablename__ = 'revive'
@@ -82,7 +86,6 @@ class BulletEvent(Base):
 
 
 class Weapon(Enum):
-
     # wolfet src bg_public.h
     # ^\s(\w+),\s*// (\d+)
     # \t\1 = \2
