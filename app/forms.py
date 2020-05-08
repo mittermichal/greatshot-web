@@ -18,7 +18,7 @@ class CutForm(FlaskForm):
     start = IntegerField('Start', render_kw={"step": 1000}, default=0)
     end = IntegerField('End', render_kw={"step": 1000}, default=2147483000)
     cut_type = SelectField('Cut type', choices=[(0, 'SNAPNUMBER'), (1, 'SNAPTIME'), (2, 'SNAPCOUNT')], default=1)
-    client_num = StringField('Client number<sup>*</sup>', render_kw={"placeholder": "0"})
+    client_num = StringField('Client number *', render_kw={"placeholder": "0"})
     gtv_match_id = HiddenField('gtv_match_id')
     map_number = HiddenField('map_number')
     filename = HiddenField('filename')
