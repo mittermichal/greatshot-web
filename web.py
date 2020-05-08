@@ -50,15 +50,17 @@ def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, 
     if gtv_match_id == '':
         filename_orig = filename
     else:
-        filename_orig = 'upload/' + str(gtv_match_id) + '_' + str(map_number) + '.tv_84'
+        filename_orig = 'upload/' + get_gtv_demo(gtv_match_id, map_number)
     filename_cut = 'download/' + str(gtv_match_id) + '_' + str(map_number) + '_' + str(client_num) + '_' + str(
         start) + '_' + str(end) + '.dm_84'
-    if gtv_match_id != '' and not os.path.exists(filename_orig):
-        demo_url = app.gamestv.getDemosLinks(app.gamestv.getMatchDemosId(gtv_match_id))[int(map_number)]
-        urllib.request.urlretrieve(demo_url, filename_orig)
+
     app.Libtech3.cut(flask_app.config['PARSERPATH'], filename_orig, filename_cut, int(start) - 2000, end, cut_type,
                      client_num)
-    result = tasks.render.delay(flask_app.config['APPHOST'] + '/' + filename_cut, start,end, title, player.name if (player is not None) else None, player.country if (player is not None) else None,etl=False)
+    result = tasks.render.delay(flask_app.config['APPHOST'] + '/' + filename_cut,
+                                start, end, title,
+                                player.name if (player is not None) else None,
+                                player.country if (player is not None) else None,
+                                etl=False)
     r = Render(result.id, title, gtv_match_id, map_number, client_num, player.id if (player is not None) else None)
     db_session.add(r)
     db_session.flush()
@@ -92,7 +94,7 @@ def renders_list():
         render_id = render_new('upload/' + cut_form.data['filename'], str(int(cut_form.data['start'])),
                                cut_form.data['end'],
                                cut_form.data['cut_type'], cut_form.data['client_num'], form.data['title'],
-                               cut_form.data['gtv_match_id'], cut_form.data['map_number'], db_player)
+                               cut_form.data['gtv_match_id'], int(cut_form.data['map_number']) - 1, db_player)
         # except Exception as e:
         #     flash(str(e))
         #     return redirect(url_for('export'))
@@ -150,11 +152,14 @@ def cut():
     form1, form2 = ExportFileForm(request.form), ExportMatchLinkForm(request.form)
     cut_form = CutForm(request.form)
     if request.form.__contains__('start'):
-        if request.form['gtv_match_id'] != '' and request.form['map_number'] != '':
-            filename = get_gtv_demo(re.findall(r'(\d+)', request.form['gtv_match_id'])[0],request.form['map_number'])
-        else:
-            filename = upload(request)
         try:
+            if request.form['gtv_match_id'] != '' and request.form['map_number'] != '':
+                filename = get_gtv_demo(
+                    re.findall(r'(\d+)', request.form['gtv_match_id'])[0],
+                    int(request.form['map_number'])-1
+                )
+            else:
+                filename = upload(request)
             app.Libtech3.cut(
                 flask_app.config['PARSERPATH'], 'upload/' + filename, 'download/demo-out.dm_84', request.form['start'],
                 request.form['end'], request.form['cut_type'], request.form['client_num'])
@@ -177,18 +182,15 @@ def export():
         if request.form['gtv_match_id'] != '' and request.form['map_number'] != '':
             try:
                 return redirect(url_for('export_get',
-                                        export_id=re.findall(r'(\d+)',
-                                        request.form['gtv_match_id'])[0],
-                                        map_num=str((request.form['map_number']))))
-                response = export_get(re.findall('(\d+)', request.form['gtv_match_id'])[0],
-                                      str(int(request.form['map_number'])))
+                                        export_id=re.findall(r'(\d+)', request.form['gtv_match_id'])[0],
+                                        map_num=str(request.form['map_number']))
+                                )
             #except HTTPError:
             #    flash("Probably no demos available for this match")
             except Exception as e:
                 flash(e)
                 return render_template('export.html', form1=form1, form2=form2)
-            else:
-                return response
+
         filename = upload(request)
         arg = flask_app.config['INDEXER'] % (filename, filename)
         subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
@@ -230,15 +232,36 @@ def export_get_match(export_id):
     return render_template('renders.html', renders=renders, export_id=export_id)
 
 
-def get_gtv_demo(gtv_match_id,map_num):
+def get_gtv_demo(gtv_match_id, map_num):
     filename = str(gtv_match_id) + '_' + str(map_num) + '.tv_84'
     if not os.path.exists('upload/'+filename):
         try:
-            demo_ids = app.gamestv.getMatchDemosId(int(gtv_match_id))
-            demo_links = app.gamestv.getDemosLinks(demo_ids)[int(map_num)]
+            demo_id = app.gamestv.getMatchDemosId(int(gtv_match_id))
+        except HTTPError:
+            error_message = "Match not found"
+            raise Exception(error_message)
         except IndexError:
-            demo_links = app.gamestv.getDemosDownloadLinks(gtv_match_id)[int(map_num)]
-        urllib.request.urlretrieve(demo_links, 'upload/' + filename)
+            try:
+                demo_links = app.gamestv.getDemosDownloadLinks(gtv_match_id)[int(map_num)]
+            except IndexError:
+                error_message = "Match not available for replay"
+                raise Exception(error_message)
+        else:
+            try:
+                demo_links = app.gamestv.getDemosLinks(demo_id)[int(map_num)]
+            except IndexError:
+                error_message = "demo not found"
+                raise Exception(error_message)
+            except HTTPError:
+                error_message = "no demos for this match"
+                raise Exception(error_message)
+            except TypeError:
+                error_message = "demos are probably private but possible to download"
+                raise Exception(error_message)
+        try:
+            urllib.request.urlretrieve(demo_links, 'upload/' + filename)
+        except urllib.error.HTTPError:
+            raise Exception("Download from gamestv.org failed - 404")
     return filename
 
 
@@ -250,55 +273,25 @@ def export_get(export_id, map_num, render=False, html=True):
         cut_form = CutForm()
         rndr_form = RenderForm()
         cut_form.gtv_match_id.data = export_id
-        cut_form.map_number.data = map_num
+        cut_form.map_number.data = map_num + 1
     renders = Render.query.order_by(desc(Render.id)).filter(Render.gtv_match_id == export_id,
                                                             Render.map_number == map_num)
-    ftp_url = 'ftp://' + flask_app.config['FTP_USER'] + ':' + flask_app.config['FTP_PW'] + '@' + flask_app.config[
-        'FTP_HOST'] + '/exports/' + generate_ftp_path(str(export_id)) + str(map_num) + '.json'
-    try:
-        raise Exception
-        # out = list(map(lambda x: x.decode('utf-8', 'replace'), urlopen(ftp_url).readlines()))
-    except (Exception, HTTPError, URLError):
-        # return 'demo.tv_84'
-        form1, form2 = ExportFileForm(), ExportMatchLinkForm()
-        error_response = render_template('export.html', form1=form1, form2=form2)
-        match_id = export_id
-        demo_links = None
-        try:
-            demo_ids = app.gamestv.getMatchDemosId(int(match_id))
-        except HTTPError:
-            flash("Match not found")
-            return error_response
-        except IndexError:
-            #flash("Match not available for replay")
-            try:
-                demo_links = app.gamestv.getDemosDownloadLinks(int(match_id))[int(map_num)]
-            except IndexError:
-                flash("Match not available for replay")
 
-                return error_response
-        try:
-            if demo_links is None:
-                demo_links = app.gamestv.getDemosLinks(demo_ids)[map_num]
-        except IndexError:
-            flash("demo not found")
-            return error_response
-        except HTTPError:
-            flash("no demos for this match")
-            return error_response
-        except TypeError:
-            flash("demos are probably private but possible to download")
-            return error_response
-        else:
-            filename = str(match_id) + '_' + str(map_num)
-            urllib.request.urlretrieve(demo_links, 'upload/' + filename + '.tv_84')
-            arg = flask_app.config['INDEXER'] % (filename + '.tv_84', filename)
-            subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
-            f = open('download/'+filename+'.json', 'r', encoding='utf-8', errors='ignore')
-            out = f.readlines()
-            f.close()
-            os.remove('download/'+filename+'.json')
-            #return filename
+    form1, form2 = ExportFileForm(), ExportMatchLinkForm()
+    error_response = render_template('export.html', form1=form1, form2=form2)
+    try:
+        filename = get_gtv_demo(export_id, map_num)
+    except Exception as e:
+        flash(str(e))
+        return error_response
+    else:
+        arg = flask_app.config['INDEXER'] % (filename, filename)
+        subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
+        f = open('download/'+filename+'.json', 'r', encoding='utf-8', errors='ignore')
+        out = f.readlines()
+        f.close()
+        os.remove('download/'+filename+'.json')
+        #return filename
 
     parser_out = parse_output(out, export_id)
     if render:
