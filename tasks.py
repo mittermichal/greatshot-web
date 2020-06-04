@@ -31,13 +31,13 @@ def capture(start, end, etl=False):
 
 
 @celery_app.task(name="test")
-def render(demo_url, start, end, title='render', name='', country='', etl=False):
+def test():
+    print('test task run')
     return 'abab'
 
 
 @celery_app.task(name="render")
 def render(demo_url, start, end, title='render', name='', country='', etl=False):
-    return 'abab'
     print('download '+demo_url+' '+title)
     current_task.update_state(state='PROGRESS', meta={'stage': 'downloading demo', 'i': 0})
     urllib.request.urlretrieve(demo_url, tasks_config.ETPATH+'etpro/demos/demo-render.dm_84')
@@ -128,6 +128,6 @@ def low_priority():
         os.nice(1)
 
 
-# if __name__ == '__main__':
-#     celery_app.start()
+if __name__ == '__main__':
+    celery_app.start()
 #     # low_priority()
