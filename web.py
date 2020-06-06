@@ -323,22 +323,42 @@ def index():
 def matches():
     return render_template('layout.html', msg='soon™')
 
+
 # TODO player db
-# @flask_app.route('/players', methods=['GET', 'POST'])
-# def players():
-#     players = Player.query.all()
-#     return render_template('players.html', players=players)
-#
-#
-# @flask_app.route('/players/<player_id>', methods=['GET', 'POST'])
-# def player_get(player_id):
-#     player = Player.query.filter(Player.id == player_id).first()
-#     renders = Render.query.filter(Render.player_id == player_id)
-#     return render_template('player.html', player=player, renders=renders)
+"""
+@flask_app.route('/players', methods=['GET', 'POST'])
+def players():
+    if request.method == 'POST':
+        player_form = PlayerForm(request.form)
+
+        #r = Render(result.id, title, gtv_match_id, map_number, client_num, player.id if (player != None) else None)
+        player = Player()
+        match_player = MatchPlayer()
+        player_form.populate_obj(player)
+        db_session.add(player)
+        db_session.flush()
 
 
-@flask_app.route('/getMaps', methods=['POST'])
-def getMaps():
+        player_form.populate_obj(match_player)
+        match_player.player_id=player.id
+        db_session.add(match_player)
+        db_session.flush()
+        db_session.commit()
+        return str(match_player.id)
+    else:
+        players=Player.query.all()
+        return render_template('players.html', players=players)
+
+@flask_app.route('/players/<player_id>', methods=['GET', 'POST'])
+def player_get(player_id):
+    player=Player.query.filter(Player.id == player_id).first()
+    renders=Render.query.filter(Render.player_id == player_id)
+    return render_template('player.html', player=player, renders=renders)
+"""
+
+
+@flask_app.route('/get_maps', methods=['POST'])
+def get_maps():
     gtv_link = request.form['gtv_link']
     try:
         demo_id = app.gamestv.getMatchDemosId(re.findall(r'(\d+)', gtv_link)[0])
