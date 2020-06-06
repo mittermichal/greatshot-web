@@ -5,6 +5,7 @@ target_metadata = Base.metadata
 
 
 class Render(Base):
+    __tablename__ = 'renders'
     id = Column(Integer, primary_key=True)
     streamable_short = Column(String(8))
     state = Column(String(50))
