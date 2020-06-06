@@ -6,18 +6,15 @@ import os
 import subprocess
 import app.Libtech3
 import urllib.request
-from urllib.request import urlopen
-from urllib.error import HTTPError, URLError
-import ftplib
+from urllib.error import HTTPError
 import app.gamestv
 import app.ftp
 import re
 from app.forms import ExportFileForm, ExportMatchLinkForm, CutForm, RenderForm
 import markdown
-import eventexport
 import tasks
 from app.db import db_session
-from app.models import Render, Player, MatchPlayer
+from app.models import Render
 from sqlalchemy import desc
 from app.export import parse_output
 
@@ -35,14 +32,13 @@ def render_get(render_id):
     render = Render.query.filter(Render.id == render_id).first()
     if render.streamable_short is not None:
         return render_template('render.html', render=render)
-    result = tasks.render.AsyncResult(render.celery_id)
     if request_wants_json():
-        data = result.result or result.state
-        # print(data)
+        # TODO get status from redis
+        data = "status progress not implemented yet"
+        data = tasks.redis_broker.client.get("render_status_{}".format(render_id))
+        if data is None:
+            data = "render_status_{} not found".format(render_id)
         return jsonify(data)
-    if result.successful():
-        render.streamable_short = result.get()
-        db_session.commit()
     return render_template('render.html', render=render)
 
 
@@ -56,15 +52,24 @@ def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, 
 
     app.Libtech3.cut(flask_app.config['PARSERPATH'], filename_orig, filename_cut, int(start) - 2000, end, cut_type,
                      client_num)
-    result = tasks.render.delay(flask_app.config['APPHOST'] + '/' + filename_cut,
-                                start, end, title,
-                                player.name if (player is not None) else None,
-                                player.country if (player is not None) else None,
-                                etl=False)
-    r = Render(result.id, title, gtv_match_id, map_number, client_num, player.id if (player is not None) else None)
+    r = Render(
+        title=title,
+        gtv_match_id=gtv_match_id,
+        map_number=map_number,
+        client_num=client_num,
+        start=start, end=end
+    )
     db_session.add(r)
     db_session.flush()
     db_session.commit()
+    tasks.render.send(
+        r.id,
+        flask_app.config['APPHOST'] + '/' + filename_cut,
+        start, end, title,
+        player.name if (player is not None) else None,
+        player.country if (player is not None) else None,
+        etl=False
+    )
     return r.id
 
 
@@ -82,14 +87,10 @@ def renders_list():
     if request.method == 'POST':
         form = RenderForm(request.form)
         cut_form = CutForm(request.form)
-        mp = None
-        if cut_form.data['gtv_match_id'] != '' and cut_form.data['client_num'] != '':
-            mp = MatchPlayer.query.filter(MatchPlayer.gtv_match_id == int(cut_form.data['gtv_match_id']),
-                                          MatchPlayer.client_num == int(cut_form.data['client_num'])).first()
-        if mp is not None:
-            db_player = Player.query.filter(Player.id == mp.player_id).first()
-        else:
-            db_player = None
+
+        # TODO: player nickname and country to pass to new render
+        db_player = None
+
         # try:
         render_id = render_new('upload/' + cut_form.data['filename'], str(int(cut_form.data['start'])),
                                cut_form.data['end'],
@@ -322,18 +323,18 @@ def index():
 def matches():
     return render_template('layout.html', msg='soon™')
 
-
-@flask_app.route('/players', methods=['GET', 'POST'])
-def players():
-    players = Player.query.all()
-    return render_template('players.html', players=players)
-
-
-@flask_app.route('/players/<player_id>', methods=['GET', 'POST'])
-def player_get(player_id):
-    player = Player.query.filter(Player.id == player_id).first()
-    renders = Render.query.filter(Render.player_id == player_id)
-    return render_template('player.html', player=player, renders=renders)
+# TODO player db
+# @flask_app.route('/players', methods=['GET', 'POST'])
+# def players():
+#     players = Player.query.all()
+#     return render_template('players.html', players=players)
+#
+#
+# @flask_app.route('/players/<player_id>', methods=['GET', 'POST'])
+# def player_get(player_id):
+#     player = Player.query.filter(Player.id == player_id).first()
+#     renders = Render.query.filter(Render.player_id == player_id)
+#     return render_template('player.html', player=player, renders=renders)
 
 
 @flask_app.route('/getMaps', methods=['POST'])

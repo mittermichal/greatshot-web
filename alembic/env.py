@@ -16,12 +16,17 @@ fileConfig(config.config_file_name)
 # add your model's MetaData object here
 # for 'autogenerate' support
 
-#1. SET PYTHONPATH=C:\Users\admin\Documents\et\gtv
-#2. alembic revision --autogenerate
-#3. alembic upgrade head
-from app.models import Render
+# 1. SET PYTHONPATH=C:\Users\admin\Documents\et\gtv
+# 2. alembic revision --autogenerate
+# 3. alembic upgrade head
+from app.models import Base
 
-target_metadata = Render.metadata
+# to include LibTech3 models
+# from app.Libtech3 import Base as BaseLibTech
+# target_metadata = [Base.metadata, BaseLibTech.metadata]
+
+target_metadata = Base.metadata
+
 #target_metadata = None
 
 # other values from the config, defined by the needs of env.py,
