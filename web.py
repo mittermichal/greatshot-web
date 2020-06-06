@@ -17,6 +17,7 @@ from app.db import db_session
 from app.models import Render
 from sqlalchemy import desc
 from app.export import parse_output
+from sqlalchemy.orm.exc import NoResultFound
 
 flask_app = Flask(__name__)
 flask_app.config.from_pyfile('config.cfg')
@@ -29,16 +30,16 @@ def request_wants_json():
 
 @flask_app.route('/renders/<render_id>')
 def render_get(render_id):
-    render = Render.query.filter(Render.id == render_id).first()
-    if render.streamable_short is not None:
-        return render_template('render.html', render=render)
+    render = Render.query.filter(Render.id == render_id).one()
     if request_wants_json():
-        # TODO get status from redis
-        data = "status progress not implemented yet"
-        data = tasks.redis_broker.client.get("render_status_{}".format(render_id))
+        data = tasks.get_render_status(render_id)
         if data is None:
-            data = "render_status_{} not found".format(render_id)
+            data = {'status_msg': "render #{} status not found".format(render_id), 'progress': 100}
         return jsonify(data)
+    if render.state is None:
+        status = tasks.get_render_status(render_id)
+        if status['status_msg'] == 'finished':
+            pass
     return render_template('render.html', render=render)
 
 
@@ -62,6 +63,7 @@ def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, 
     db_session.add(r)
     db_session.flush()
     db_session.commit()
+    tasks.set_render_status(r.id, 'render started')
     tasks.render.send(
         r.id,
         flask_app.config['APPHOST'] + '/' + filename_cut,
@@ -370,6 +372,18 @@ def get_maps():
         return jsonify({'count': len(app.gamestv.getDemosLinks(demo_id))})
     except HTTPError:
         return jsonify({'count': -2})
+
+
+@flask_app.errorhandler(NoResultFound)
+def handle_no_result_exception(error):
+    flash('Item not found')
+    return render_template('layout.html'), 404
+
+
+@flask_app.errorhandler(404)
+def page_not_found(e):
+    flash(e)
+    return render_template('layout.html'), 404
 
 
 # TODO: upload raw video from worker

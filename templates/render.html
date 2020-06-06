@@ -6,10 +6,10 @@
     <a href="https://streamable.com/{{ shortcode }}">streamable.com - HD version* </a>
     <div style="width: 100%; height: 0px; position: relative; padding-bottom: 56.250%;">
         <iframe src="https://streamable.com/e/{{ shortcode }}" frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen scrolling="no" style="width: 100%; height: 100%; position: absolute;"></iframe>
-        <script async defer src="//v.streamablemedia.com/ads.js"></script>
     </div>
+    <p>*HD doesn't work with embeded video</p>
 </div>
-<p>*HD doesn't work with embeded video</p>
+
 {% endmacro %}
 
 {% block content %}
@@ -19,20 +19,21 @@
 {% else %}
 <script>
 
-function doPoll(){
+function doPoll(firstPoll=false){
 
   $.ajax({url: "/renders/{{ render.id }}", dataType: "json", success: function(task){
-        if (task=="PENDING") {
+        if (!firstPoll && task.status_msg=='render started') {
           $('.progress-bar').css({'width': 100 + '%'});
-          $('.progress-bar').html("No renderer available, reload page later");
-          setTimeout(doPoll,5000);
+          $('.progress-bar').html("No rendering worker available, reload page later");
+          setTimeout(doPoll,30000);
+          $('#progress-info-more').html("Rendering is done on my PC. If there is no rendering worker available, that means I don't have it turned on, but your request is enqueued, so you don't have to send it again. It will get processed when I turn on the worker. You can PM me on discord if its OFF and you want to render something. Last time worker was online:" + new Date(task.worker_last_beat));
         }
-        else if (task.stage) {
-          $('.progress-bar').css({'width': task.i + '%'});
-          $('.progress-bar').html(task.stage);
+        else if (task.status_msg!='finished') {
+          $('.progress-bar').css({'width': task.progress + '%'});
+          $('.progress-bar').html(task.status_msg);
           setTimeout(doPoll,3000);
          } else {
-          $('.progress').hide();
+          $('#progress-info').hide();
           $('.wrap iframe').attr('src',$('.wrap iframe').attr('src')+task+'?autoplay=1&hd=1');
           $('.wrap a').attr('href',$('.wrap a').attr('href')+task);
           $('.wrap').show();
@@ -41,14 +42,16 @@ function doPoll(){
 }
 
 $(function() {
-  doPoll();
+  doPoll(true);
 });
 </script>
-
-<div class="progress">
-  <div class="progress-bar progress-bar-striped active" role="progressbar" style="width:0%">
-    polling status...
-  </div>
+<div id="progress-info">
+    <div class="progress">
+      <div class="progress-bar progress-bar-striped active" role="progressbar" style="width:100%">
+        polling status...
+      </div>
+    </div>
+    <div id="progress-info-more"></div>
 </div>
 {{ render_streamable("") }}
 {% endif %}

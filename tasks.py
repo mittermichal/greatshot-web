@@ -7,9 +7,35 @@ import glob
 import json
 import dramatiq
 from dramatiq.brokers.redis import RedisBroker
+from threading import Thread
+from time import sleep, time
+import status_worker
 
 redis_broker = RedisBroker(url=tasks_config.REDIS)
 dramatiq.set_broker(redis_broker)
+
+
+def set_render_status(render_id, status_msg, progress=0):
+    status_worker.save_status.send(render_id, status_msg, progress)
+# redis_broker.client.set("render_status_{}".format(render_id),
+#                         json.dumps({'status_msg': status_msg,
+#                                     'progress': progress
+#                                     })
+#                         )
+
+
+def get_render_status(render_id):
+    try:
+        status = redis_broker.client.get("render_status_{}".format(render_id))
+        if status is not None:
+            status_dict = json.loads(status.decode("utf-8"))
+            status_dict['worker_last_beat'] = get_worker_last_beat()
+            return status_dict
+        else:
+            return None
+
+    except json.JSONDecodeError:
+        return None
 
 
 def capture(start, end, etl=False):
@@ -28,8 +54,7 @@ def capture(start, end, etl=False):
 @dramatiq.actor
 def render(render_id, demo_url, start, end, title='render', name='', country='', etl=False):
     print('download '+demo_url+' '+title)
-    # current_task.update_state(state='PROGRESS', meta={'stage': 'downloading demo', 'i': 0})
-    redis_broker.client.set("render_status_{}".format(render_id), 'downloading demo')
+    set_render_status(render_id, 'downloading demo...', 0)
     urllib.request.urlretrieve(demo_url, tasks_config.ETPATH+'etpro/demos/demo-render.dm_84')
     if os.stat(tasks_config.ETPATH+'etpro/demos/demo-render.dm_84').st_size == 0:
         # current_task.update_state(state='FAILURE')
@@ -37,11 +62,11 @@ def render(render_id, demo_url, start, end, title='render', name='', country='',
         print("RENDER: received demo is empty")
         return None
     print('capture '+title)
-    # current_task.update_state(state='PROGRESS', meta={'stage': 'capturing screenshots and sound', 'i': 5})
+    set_render_status(render_id, 'capturing screenshots and sound...', 5)
     capture(start, end, etl)
 
     print('encoding '+title)
-    # current_task.update_state(state='PROGRESS', meta={'stage': 'encoding video', 'i': 30})
+    set_render_status(render_id, 'encoding video...', 30)
     if etl:
         args = ['ffmpeg', '-y', '-framerate', '60',
                 '-i', 'C:\\Users\\admin\\Documents\\ETLegacy\\uvMovieMod\\videos\\render.avi',
@@ -79,16 +104,30 @@ def render(render_id, demo_url, start, end, title='render', name='', country='',
 
     # https://api.streamable.com
     print('uploading '+title)
-    # current_task.update_state(state='PROGRESS', meta={'stage': 'uploading clip...', 'i': 50})
-    r = requests.post('https://api.streamable.com/upload',
-                      auth=(tasks_config.STREAMABLE_NAME, tasks_config.STREAMABLE_PW),
-                      files={'render.mp4': open(tasks_config.ETPATH+'render.mp4', 'rb')},
-                      data={'title': title})
+    set_render_status(render_id, 'uploading clip...', 50)
+    # r = requests.post('https://api.streamable.com/upload',
+    #                   auth=(tasks_config.STREAMABLE_NAME, tasks_config.STREAMABLE_PW),
+    #                   files={'render.mp4': open(tasks_config.ETPATH+'render.mp4', 'rb')},
+    #                   data={'title': title})
 
     try:
-        return json.loads(r.text)["shortcode"]
+        set_render_status(render_id, 'finished', 100)
+        return
+        # return json.loads(r.text)["shortcode"]
     except KeyError:
         print('RENDER: failed to upload')
         # current_task.update_state(state='FAILURE')
         return None
     # return demoUrl
+
+
+def get_worker_last_beat():
+    return int(redis_broker.client.get('worker_last_beat').decode('utf-8'))
+
+
+def send_beat():
+    redis_broker.client.set('worker_last_beat', int(time()) * 1000)
+    sleep(60)
+
+
+# Thread(target=send_beat).start()
