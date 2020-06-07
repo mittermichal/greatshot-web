@@ -6,7 +6,7 @@ requests
 SQLAlchemy
 WTForms
 lxml
-dramatiq
+dramatiq[redis]
 redis==3.5.3
 watchdog==0.8.3
 alembic
