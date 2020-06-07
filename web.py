@@ -19,6 +19,8 @@ from app.models import Render
 from sqlalchemy import desc
 from app.export import parse_output
 from sqlalchemy.orm.exc import NoResultFound
+from time import time
+from datetime import timedelta
 
 flask_app = Flask(__name__)
 flask_app.config.from_pyfile('config.cfg')
@@ -42,6 +44,17 @@ def render_get(render_id):
 @flask_app.route('/get_worker_last_beat')
 def r_get_worker_last_beat():
     return jsonify(get_worker_last_beat())
+
+
+@flask_app.route('/status')
+def status():
+    diff = int(time() - get_worker_last_beat())
+    msg = "Render worker is "
+    if diff <= 60:
+        msg += 'online.'
+    else:
+        msg += 'offline. last online: {} ago'.format(str(timedelta(seconds=diff)))
+    return render_template('layout.html', msg=msg)
 
 
 def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, map_number, player):
