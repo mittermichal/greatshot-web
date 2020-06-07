@@ -30,5 +30,6 @@ def downgrade():
     op.add_column('renders', sa.Column('state', sa.VARCHAR(length=50), nullable=True))
     with op.batch_alter_table('renders') as batch_op:
         batch_op.drop_column('status_msg')
+    with op.batch_alter_table('renders') as batch_op:
         batch_op.drop_column('progress')
     # ### end Alembic commands ###
