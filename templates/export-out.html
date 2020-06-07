@@ -28,7 +28,7 @@
 		<tr>
 			<th>clientNum</th>
 			<th>nick</th>
-			<th>Player profile</th>
+			{#<th>Player profile</th>#}
 			<th>Bodyshots<sup>*</sup></th>
 			<th>Headshots</th>
 			<th>Team-hits</th>
@@ -48,13 +48,13 @@
 				{{ player.szCleanName }}
 			</td>
 
-			<td>
+			{#<td>
 				{% if player.name is defined and player.name!=None %}
 					<a href="{{ url_for('players',player_id=player.id) }}">{{ player.name }}</a><img src="http://www.gamestv.org/images/flags/{{ player.country }}.gif" />
 				{% else %}
 					{{ render_form(player.form) }}
 				{% endif %}
-			</td>
+			</td>#}
 
 			<td>
 				{{ player.hits[2] }}
@@ -107,11 +107,11 @@ var g_players = {{ parser_out.g_players|tojson|safe }};
 			{% for kill in spree %}
 				<span{% if kill.bIsTeamkill %} style="color:red;"{% endif %}>{{ kill.bAttacker }} {{ kill.bTarget }} {{ kill.szTimeString }} {{ kill.szMessage }} {{ kill.dwTime }}</span><br/>
 			{% endfor %}
-			<a class="btn btn-default btn-lg" href="#render-form" onclick="fillForm(this);">
-				<span style="width:20px" class="glyphicon glyphicon glyphicon-film"></span> Render
+			<a class="btn btn-outline-primary" href="#render-form" onclick="fillForm(this);">
+				<span style="width:20px" class="oi oi-video"></span> Render
 			</a>
-			<a class="btn btn-default btn-lg" href="#cut-form" onclick="fillForm(this);">
-				<span style="width:20px" class="glyphicon glyphicon glyphicon-scissors"></span> Cut
+			<a class="btn btn-outline-primary" href="#cut-form" onclick="fillForm(this);">
+				<span style="width:20px" class="oi oi-resize-width"></span> Cut
 			</a>
 		</div>
 		<br/>{{ spree.interval }}<br/>
@@ -127,11 +127,11 @@ var g_players = {{ parser_out.g_players|tojson|safe }};
 			{% for hs in hs_spree %}
 				{{ hs.bAttacker }} {{ hs.bTarget }} {{ hs.dwTime }} {{ hs.eventNum }}<br/>
 			{% endfor %}
-			<a class="btn btn-default btn-lg" href="#render-form" onclick="fillForm(this);">
-				<span style="width:20px" class="glyphicon glyphicon glyphicon-film"></span> Render
+			<a class="btn btn-outline-primary" href="#render-form" onclick="fillForm(this);">
+				<span style="width:20px" class="oi oi-video"></span> Render
 			</a>
-			<a class="btn btn-default btn-lg" href="#cut-form" onclick="fillForm(this);">
-				<span style="width:20px" class="glyphicon glyphicon glyphicon-scissors"></span> Cut
+			<a class="btn btn-outline-primary" href="#cut-form" onclick="fillForm(this);">
+				<span style="width:20px" class="oi oi-resize-width"></span> Cut
 			</a>
 		</div>
 	{% endfor %}
@@ -150,25 +150,29 @@ var g_players = {{ parser_out.g_players|tojson|safe }};
 	{% endfor %}
 {% endfor %}
 
-<form method="post" id="render-form" action="/renders" enctype="multipart/form-data" class="form-horizontal panel panel-default">
-    <div class="panel-heading" style="margin-bottom:10px">Render parameters</div>
-	{{ render_form(rndr_form) }}
-    {{ render_form(cut_form) }}
-    {{ render_btn("Render") }}
-    <hr/>
-    <label class="col-sm-offset-2">
-        <sup>*</sup> Client number only needed for ETTV demo to choose POV
-    </label>
+<form method="post" id="render-form" action="/renders" enctype="multipart/form-data" class="form-horizontal card">
+    <div class="card-header">Render parameters</div>
+	<div class="card-body">
+		{{ render_form(rndr_form) }}
+		{{ render_form(cut_form) }}
+		{{ render_btn("Render") }}
+		<hr/>
+		<label for="client_num" class="col-sm-offset-2">
+			<sup>*</sup> Client number only needed for ETTV demo to choose POV
+		</label>
+	</div>
 </form>
 
-<form method="post" id="cut-form" action="/cut" enctype="multipart/form-data" class="form-horizontal panel panel-default">
-    <div class="panel-heading" style="margin-bottom:10px">Cut parameters</div>
-    {{ render_form(cut_form) }}
-    {{ render_btn("Cut") }}
-    <hr/>
-    <label class="col-sm-offset-2">
-        <sup>*</sup> Client number only needed for ETTV demo to choose POV
-    </label>
+<form method="post" id="cut-form" action="/cut" enctype="multipart/form-data" class="form-horizontal card">
+    <div class="card-header">Cut parameters</div>
+	<div class="card-body">
+		{{ render_form(cut_form) }}
+		{{ render_btn("Cut") }}
+		<hr/>
+		<label for="client_num" class="col-sm-offset-2">
+			<sup>*</sup> Client number only needed for ETTV demo to choose POV
+		</label>
+	</div>
 </form>
 
 {#
@@ -234,8 +238,8 @@ var g_players = {{ parser_out.g_players|tojson|safe }};
 	</tr>
 {% endfor %}
 </table>
-<h2>Raw output</h2>
-<pre>
-{{ out }}
-</pre>
+<div class="card overflow-auto">
+	<div class="card-header">Raw output</div>
+	<pre class="card-body">{{ out }}</pre>
+</div>
 {% endblock %}

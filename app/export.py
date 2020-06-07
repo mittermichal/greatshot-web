@@ -1,7 +1,6 @@
 from pydblite.sqlite import Database, Table
 import json
 from math import sqrt
-from app.models import MatchPlayer,Player
 from app.forms import PlayerForm
 import app.gamestv
 
@@ -146,15 +145,17 @@ def parse_output(lines,gtv_match_id=None):
   result = db.cursor.fetchall()
   for row in result:
     ret.append(list(row))
+  """
+  TODO: player db
   if gtv_match_id!=None:
     for player in players:
       mp = MatchPlayer.query.filter(MatchPlayer.gtv_match_id == gtv_match_id,MatchPlayer.client_num == player['bClientNum']).first()
       if mp!=None:
         db_player=Player.query.filter(Player.id == mp.player_id).first()
         player['id'] = db_player.id
-        player['name']=db_player.name
-        player['country']=db_player.country
+        player['name'] = db_player.name
+        player['country']= db_player.country
       else:
-        player['name']=None
-  # print(ret)
+        player['name'] = None
+  """
   return {'hits': ret, 'players': players, 'demo': demo, 'rounds' : rounds, 'g_players': g_players, 'chat': chat}

@@ -16,13 +16,19 @@ fileConfig(config.config_file_name)
 # add your model's MetaData object here
 # for 'autogenerate' support
 
-#1. SET PYTHONPATH=C:\Users\admin\Documents\et\gtv
-#2. alembic revision --autogenerate
-#3. alembic upgrade head
-from app.models import Render
+# 1. SET PYTHONPATH=C:\Users\admin\Documents\et\gtv
+# 2. alembic revision --autogenerate
+# 3. alembic upgrade head
+from app.models import Base
 
-target_metadata = Render.metadata
-#target_metadata = None
+# to include LibTech3 models
+# from app.Libtech3 import Base as BaseLibTech
+# target_metadata = [Base.metadata, BaseLibTech.metadata]
+
+target_metadata = Base.metadata
+
+# target_metadata = None
+
 
 # other values from the config, defined by the needs of env.py,
 # can be acquired:
@@ -44,7 +50,10 @@ def run_migrations_offline():
     """
     url = config.get_main_option("sqlalchemy.url")
     context.configure(
-        url=url, target_metadata=target_metadata, literal_binds=True)
+        url=url,
+        target_metadata=target_metadata,
+        literal_binds=True
+    )
 
     with context.begin_transaction():
         context.run_migrations()
@@ -70,6 +79,7 @@ def run_migrations_online():
 
         with context.begin_transaction():
             context.run_migrations()
+
 
 if context.is_offline_mode():
     run_migrations_offline()

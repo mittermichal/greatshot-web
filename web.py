@@ -6,20 +6,21 @@ import os
 import subprocess
 import app.Libtech3
 import urllib.request
-from urllib.request import urlopen
-from urllib.error import HTTPError, URLError
-import ftplib
+from urllib.error import HTTPError
 import app.gamestv
 import app.ftp
 import re
 from app.forms import ExportFileForm, ExportMatchLinkForm, CutForm, RenderForm
 import markdown
-import eventexport
 import tasks
+from app.status_worker import get_worker_last_beat
 from app.db import db_session
-from app.models import Render, Player, MatchPlayer
+from app.models import Render
 from sqlalchemy import desc
 from app.export import parse_output
+from sqlalchemy.orm.exc import NoResultFound
+from time import time
+from datetime import timedelta
 
 flask_app = Flask(__name__)
 flask_app.config.from_pyfile('config.cfg')
@@ -32,18 +33,28 @@ def request_wants_json():
 
 @flask_app.route('/renders/<render_id>')
 def render_get(render_id):
-    render = Render.query.filter(Render.id == render_id).first()
-    if render.streamable_short is not None:
-        return render_template('render.html', render=render)
-    result = tasks.render.AsyncResult(render.celery_id)
+    render = Render.query.filter(Render.id == render_id).one()
     if request_wants_json():
-        data = result.result or result.state
-        # print(data)
+        data = {'status_msg': render.status_msg,
+                'progress': render.progress}
         return jsonify(data)
-    if result.successful():
-        render.streamable_short = result.get()
-        db_session.commit()
     return render_template('render.html', render=render)
+
+
+@flask_app.route('/get_worker_last_beat')
+def r_get_worker_last_beat():
+    return jsonify(get_worker_last_beat())
+
+
+@flask_app.route('/status')
+def status():
+    diff = int(time() - get_worker_last_beat())
+    msg = "Render worker is "
+    if diff <= 60:
+        msg += 'online.'
+    else:
+        msg += 'offline. last online: {} ago'.format(str(timedelta(seconds=diff)))
+    return render_template('layout.html', msg=msg)
 
 
 def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, map_number, player):
@@ -56,15 +67,25 @@ def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, 
 
     app.Libtech3.cut(flask_app.config['PARSERPATH'], filename_orig, filename_cut, int(start) - 2000, end, cut_type,
                      client_num)
-    result = tasks.render.delay(flask_app.config['APPHOST'] + '/' + filename_cut,
-                                start, end, title,
-                                player.name if (player is not None) else None,
-                                player.country if (player is not None) else None,
-                                etl=False)
-    r = Render(result.id, title, gtv_match_id, map_number, client_num, player.id if (player is not None) else None)
+    r = Render(
+        title=title,
+        status_msg='started', progress=1,
+        gtv_match_id=gtv_match_id,
+        map_number=map_number,
+        client_num=client_num,
+        start=start, end=end
+    )
     db_session.add(r)
     db_session.flush()
     db_session.commit()
+    tasks.render.send(
+        r.id,
+        flask_app.config['APPHOST'] + '/' + filename_cut,
+        start, end, title,
+        player.name if (player is not None) else None,
+        player.country if (player is not None) else None,
+        etl=False
+    )
     return r.id
 
 
@@ -72,29 +93,20 @@ def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, 
 def renders_list():
     if request.method == 'GET':
         renders = Render.query.order_by(desc(Render.id)).all()
-        # for render in renders:
-        #     if render.streamable_short == None:
-        #         result = tasks.render.AsyncResult(render.celery_id)
-        #         if result.successful():
-        #             render.streamable_short = result.get()
-        db_session.commit()
         return render_template('renders.html', renders=renders)
     if request.method == 'POST':
         form = RenderForm(request.form)
         cut_form = CutForm(request.form)
-        mp = None
-        if cut_form.data['gtv_match_id'] != '' and cut_form.data['client_num'] != '':
-            mp = MatchPlayer.query.filter(MatchPlayer.gtv_match_id == int(cut_form.data['gtv_match_id']),
-                                          MatchPlayer.client_num == int(cut_form.data['client_num'])).first()
-        if mp is not None:
-            db_player = Player.query.filter(Player.id == mp.player_id).first()
-        else:
-            db_player = None
+
+        # TODO: player nickname and country to pass to new render
+        db_player = None
+
         # try:
+        map_number = int(cut_form.data['map_number']) - 1 if cut_form.data['map_number'] != '' else None
         render_id = render_new('upload/' + cut_form.data['filename'], str(int(cut_form.data['start'])),
                                cut_form.data['end'],
                                cut_form.data['cut_type'], cut_form.data['client_num'], form.data['title'],
-                               cut_form.data['gtv_match_id'], int(cut_form.data['map_number']) - 1, db_player)
+                               cut_form.data['gtv_match_id'], map_number, db_player)
         # except Exception as e:
         #     flash(str(e))
         #     return redirect(url_for('export'))
@@ -323,21 +335,41 @@ def matches():
     return render_template('layout.html', msg='soon™')
 
 
+# TODO player db
+"""
 @flask_app.route('/players', methods=['GET', 'POST'])
 def players():
-    players = Player.query.all()
-    return render_template('players.html', players=players)
+    if request.method == 'POST':
+        player_form = PlayerForm(request.form)
 
+        #r = Render(result.id, title, gtv_match_id, map_number, client_num, player.id if (player != None) else None)
+        player = Player()
+        match_player = MatchPlayer()
+        player_form.populate_obj(player)
+        db_session.add(player)
+        db_session.flush()
+
+
+        player_form.populate_obj(match_player)
+        match_player.player_id=player.id
+        db_session.add(match_player)
+        db_session.flush()
+        db_session.commit()
+        return str(match_player.id)
+    else:
+        players=Player.query.all()
+        return render_template('players.html', players=players)
 
 @flask_app.route('/players/<player_id>', methods=['GET', 'POST'])
 def player_get(player_id):
-    player = Player.query.filter(Player.id == player_id).first()
-    renders = Render.query.filter(Render.player_id == player_id)
+    player=Player.query.filter(Player.id == player_id).first()
+    renders=Render.query.filter(Render.player_id == player_id)
     return render_template('player.html', player=player, renders=renders)
+"""
 
 
-@flask_app.route('/getMaps', methods=['POST'])
-def getMaps():
+@flask_app.route('/get_maps', methods=['POST'])
+def get_maps():
     gtv_link = request.form['gtv_link']
     try:
         demo_id = app.gamestv.getMatchDemosId(re.findall(r'(\d+)', gtv_link)[0])
@@ -349,6 +381,18 @@ def getMaps():
         return jsonify({'count': len(app.gamestv.getDemosLinks(demo_id))})
     except HTTPError:
         return jsonify({'count': -2})
+
+
+@flask_app.errorhandler(NoResultFound)
+def handle_no_result_exception(error):
+    flash('Item not found')
+    return render_template('layout.html'), 404
+
+
+@flask_app.errorhandler(404)
+def page_not_found(e):
+    flash(e)
+    return render_template('layout.html'), 404
 
 
 # TODO: upload raw video from worker

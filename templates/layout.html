@@ -3,23 +3,27 @@
 <head>
     {% block head %}
     <link rel="shortcut icon" href="/static/favicon.ico">
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/css/bootstrap.min.css" integrity="sha384-1q8mTJOASx8j1Au+a5WDVnPi2lkFfwwEAa8hDDdjZlpLegxhjVME1fgjWPGmkzs7" crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-2.2.4.js"></script>
-    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.6/js/bootstrap.min.js" integrity="sha384-0mSbJDEHialfmuBBQP6A4Qrprq5OVfW37PRR3j5ELqxss1yVqOtnepnHVP9aJ7xS" crossorigin="anonymous"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='node_modules/bootstrap/dist/css/bootstrap.min.css')}}">
+    <script src="{{ url_for('static', filename='node_modules/jquery/dist/jquery.min.js')}}"></script>
+    <script src="{{ url_for('static', filename='node_modules/bootstrap/dist/js/bootstrap.min.js')}}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='node_modules/open-iconic/font/css/open-iconic-bootstrap.min.css')}}">
     <link rel="stylesheet" href="/static/style.css" />
     <title>W:ET demo tools {% block title %}{% endblock %}</title>
     {% endblock %}
 </head>
 <body>
     <div class="container">
-        <nav>
+        <nav class="navbar">
             <ul class="nav nav-pills">
-                <li><a href="/"><span class="glyphicon glyphicon-info-sign"></span> README</a></li>
-                <li><a href="/cut"><span class="glyphicon glyphicon-scissors"></span> Cut</a></li>
-                <li><a href="/export"><span class="glyphicon glyphicon-export"></span> Export</a></li>
-                <li><a href="/matches"><span class="glyphicon glyphicon glyphicon-list-alt"></span> Matches</a></li>
-                <li><a href="/players"><span class="glyphicon glyphicon glyphicon-list-alt"></span> Players</a></li>
-                <li><a href="/renders"><span class="glyphicon glyphicon glyphicon-film"></span> Renders</a></li>
+                <li class="nav-item"><a class="nav-link" href="/"><span class="oi oi-info"></span> README</a></li>
+                <li class="nav-item"><a class="nav-link" href="/cut"><span class="oi oi-resize-width"></span> Cut</a></li>
+                <li class="nav-item"><a class="nav-link" href="/export"><span class="oi oi-share"></span> Export</a></li>
+                {#
+                    <li><a href="/matches"><span class="oi oi-"></span> Matches</a></li>
+                    <li><a href="/players"><span class="oi oi-"></span> Players</a></li>
+                #}
+                <li class="nav-item"><a class="nav-link" href="/renders"><span class="oi oi-video"></span> Renders</a></li>
+                <li class="nav-item"><a class="nav-link" href="/status"><span class="oi oi-pulse"></span> Status</a></li>
             </ul>
 
         </nav>
@@ -39,7 +43,7 @@
             <hr/>
             {% block footer %}
             &copy; Copyright 2016 by <a href="https://github.com/mittermichal">Michal 'Kimi' Mitter</a>.
-            <a class="btn btn-default" href="https://github.com/mittermichal/advanced-gamestv-stats"><object style="width: 16px;height:16px" data="/static/mark-github.svg" type="image/svg+xml"></object> View on Github</a>
+            <a class="btn btn-outline-primary" href="https://github.com/mittermichal/advanced-gamestv-stats"><object style="width: 16px;height:16px" data="/static/mark-github.svg" type="image/svg+xml"></object> View on Github</a>
             {% endblock %}
         </div>
     </div>

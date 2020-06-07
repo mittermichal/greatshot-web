@@ -1,20 +1,19 @@
 import os
 import subprocess
-from celery import Celery, current_task
-import tasks_config
-import requests
 import urllib.request
 import glob
-import json
+import dramatiq
+from dramatiq.brokers.redis import RedisBroker
+import tasks_config
+from app.status_worker import save_status
 
-os.environ.setdefault('FORKED_BY_MULTIPROCESSING', '1')
+redis_broker = RedisBroker(url=tasks_config.REDIS+'/0', middleware=[])
+dramatiq.set_broker(redis_broker)
 
-celery_app = Celery('tasks', broker=tasks_config.REDIS, backend=tasks_config.REDIS)
-celery_app.conf.update(
-    CELERY_RESULT_BACKEND=tasks_config.REDIS,
-    BROKER_URL=tasks_config.REDIS
-)
-celery_app.config_from_object("tasks_config")
+
+def set_render_status(render_id, status_msg, progress=0):
+    print('render #{}: status: {} progress: {}'.format(render_id, status_msg, progress))
+    save_status.send(render_id, status_msg, progress)
 
 
 def capture(start, end, etl=False):
@@ -30,26 +29,19 @@ def capture(start, end, etl=False):
     p.communicate()
 
 
-@celery_app.task(name="test")
-def test():
-    print('test task run')
-    return 'abab'
-
-
-@celery_app.task(name="render")
-def render(demo_url, start, end, title='render', name='', country='', etl=False):
-    print('download '+demo_url+' '+title)
-    current_task.update_state(state='PROGRESS', meta={'stage': 'downloading demo', 'i': 0})
+@dramatiq.actor
+def render(render_id, demo_url, start, end, title='render', name='', country='', etl=False):
+    # download is finished too fast to set status
+    # set_render_status(render_id, 'downloading demo...', 5)
     urllib.request.urlretrieve(demo_url, tasks_config.ETPATH+'etpro/demos/demo-render.dm_84')
     if os.stat(tasks_config.ETPATH+'etpro/demos/demo-render.dm_84').st_size == 0:
-        current_task.update_state(state='FAILURE')
+        # current_task.update_state(state='FAILURE')
+        set_render_status(render_id, 'error: cutted demo was empty', 100)
         return None
-    print('capture '+title)
-    current_task.update_state(state='PROGRESS', meta={'stage': 'capturing screenshots and sound', 'i': 5})
+    set_render_status(render_id, 'capturing screenshots and sound...', 10)
     capture(start, end, etl)
 
-    print('encoding '+title)
-    current_task.update_state(state='PROGRESS', meta={'stage': 'encoding video', 'i': 30})
+    set_render_status(render_id, 'encoding video...', 40)
     if etl:
         args = ['ffmpeg', '-y', '-framerate', '60',
                 '-i', 'C:\\Users\\admin\\Documents\\ETLegacy\\uvMovieMod\\videos\\render.avi',
@@ -62,72 +54,36 @@ def render(demo_url, start, end, title='render', name='', country='', etl=False)
         video_len = len(glob.glob(tasks_config.ETPATH+'etpro\\screenshots\\shot[0-9]*.tga'))/50
         print("audio_len:",  audio_len, "video_len", video_len)
         if audio_len == 0 or video_len == 0:
-            current_task.update_state(state='FAILURE')
+            set_render_status(render_id, 'error: captured game video or audio is empty', 30)
             return None
         # subprocess.check_output(['sox', 'etpro/wav/synctest.wav',
         # 'etpro/wav/sync.wav', 'tempo', str(audio_len/video_len)], cwd=tasks_config.ETPATH,shell=True)
-        args = ['ffmpeg', '-y', '-framerate', '50', '-i', 'etpro/screenshots/shot%04d.tga',
-                '-i', 'etpro/wav/synctest.wav', '-c:a', 'libvorbis', '-shortest', 'render.mp4']
+        args = ['ffmpeg', '-hide_banner', '-v', 'warning', '-y', '-framerate', '50', '-i', 'etpro/screenshots/shot%04d.tga']
     if name is not None and country is not None:
-        if etl:
-            args.insert(4, '-filter_complex')
-            args.insert(5, "[0] overlay=25:25 [b]; [b] drawtext=fontfile=courbd.ttf:text='" +
-                        name + "': fontcolor=white: fontsize=50: x=100: y=25+(60-text_h)/2")
-            args.insert(4, '-i')
-            args.insert(5, '4x3/'+country+'.png')
-        else:
-            args.insert(6, '-filter_complex')
-            args.insert(7, "[0] [1] overlay=25:25 [b]; [b] drawtext=fontfile=courbd.ttf:text='" +
-                        name + "': fontcolor=white: fontsize=50: x=100: y=25+45.0-text_h-5")
-            args.insert(6, '-i')
-            args.insert(7, '4x3/'+country+'.png')
-    # p = subprocess.Popen(args, cwd=tasks_config.ETPATH, shell=True)
-    # p.communicate()
+        args += [
+            '-filter_complex',
+            "[0] [1] overlay=25:25 [b]; [b] drawtext=fontfile=courbd.ttf:text='" +
+            name + "': fontcolor=white: fontsize=50: x=100: y=25+45.0-text_h-5",
+            '-i',
+            '4x3/'+country+'.png'
+        ]
+    args += ['-i', 'etpro/wav/synctest.wav', '-c:a', 'libvorbis', '-shortest', 'render.mp4']
+    # print(args)
+    p = subprocess.Popen(args, cwd=tasks_config.ETPATH, shell=True)
+    p.communicate()
 
     # https://api.streamable.com
-    print('uploading '+title)
-    current_task.update_state(state='PROGRESS', meta={'stage': 'uploading clip...', 'i': 50})
-    r = requests.post('https://api.streamable.com/upload',
-                      auth=(tasks_config.STREAMABLE_NAME, tasks_config.STREAMABLE_PW),
-                      files={'render.mp4': open(tasks_config.ETPATH+'render.mp4', 'rb')},
-                      data={'title': title})
+    # set_render_status(render_id, 'uploading clip...', 80)
+    # r = requests.post('https://api.streamable.com/upload',
+    #                   auth=(tasks_config.STREAMABLE_NAME, tasks_config.STREAMABLE_PW),
+    #                   files={'render.mp4': open(tasks_config.ETPATH+'render.mp4', 'rb')},
+    #                   data={'title': title})
 
     try:
-        return json.loads(r.text)["shortcode"]
+        set_render_status(render_id, 'finished', 100)
+        return
+        # return json.loads(r.text)["shortcode"]
     except KeyError:
-        print('failed to upload')
-        current_task.update_state(state='FAILURE')
+        set_render_status(render_id, 'error: failed to upload to streamable', 100)
         return None
     # return demoUrl
-
-
-# https://stackoverflow.com/a/1023269/2560239
-def low_priority():
-    """ Set the priority of the process to below-normal."""
-
-    import sys
-    try:
-        sys.getwindowsversion()
-    except AttributeError:
-        is_windows = False
-    else:
-        is_windows = True
-
-    if is_windows:
-        # Based on:
-        #   "Recipe 496767: Set Process Priority In Windows" on ActiveState
-        #   http://code.activestate.com/recipes/496767/
-        import win32api, win32process, win32con
-
-        pid = win32api.GetCurrentProcessId()
-        handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, True, pid)
-        win32process.SetPriorityClass(handle, win32process.BELOW_NORMAL_PRIORITY_CLASS)
-    else:
-        import os
-
-        os.nice(1)
-
-
-if __name__ == '__main__':
-    celery_app.start()
-#     # low_priority()
