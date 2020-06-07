@@ -21,7 +21,7 @@
 
 function get_worker_last_beat(element){
         $.ajax({url: "/get_worker_last_beat", dataType: "json", success: function(data){
-            element.append("</br>Last time worker was online:" + new Date(data));
+            element.append("</br>" + data);
         }
     });
 }

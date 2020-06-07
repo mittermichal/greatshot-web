@@ -43,7 +43,8 @@ def render_get(render_id):
 
 @flask_app.route('/get_worker_last_beat')
 def r_get_worker_last_beat():
-    return jsonify(get_worker_last_beat())
+    diff = int(time() - get_worker_last_beat())
+    return jsonify('last online: {} ago'.format(str(timedelta(seconds=diff))))
 
 
 @flask_app.route('/status')
