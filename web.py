@@ -13,6 +13,7 @@ import re
 from app.forms import ExportFileForm, ExportMatchLinkForm, CutForm, RenderForm
 import markdown
 import tasks
+from app.status_worker import get_worker_last_beat
 from app.db import db_session
 from app.models import Render
 from sqlalchemy import desc
@@ -32,15 +33,15 @@ def request_wants_json():
 def render_get(render_id):
     render = Render.query.filter(Render.id == render_id).one()
     if request_wants_json():
-        data = tasks.get_render_status(render_id)
-        if data is None:
-            data = {'status_msg': "render #{} status not found".format(render_id), 'progress': 100}
+        data = {'status_msg': render.status_msg,
+                'progress': render.progress}
         return jsonify(data)
-    if render.state is None:
-        status = tasks.get_render_status(render_id)
-        if status['status_msg'] == 'finished':
-            pass
     return render_template('render.html', render=render)
+
+
+@flask_app.route('/get_worker_last_beat')
+def r_get_worker_last_beat():
+    return jsonify(get_worker_last_beat())
 
 
 def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, map_number, player):
@@ -55,6 +56,7 @@ def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, 
                      client_num)
     r = Render(
         title=title,
+        status_msg='started', progress=1,
         gtv_match_id=gtv_match_id,
         map_number=map_number,
         client_num=client_num,
@@ -63,7 +65,6 @@ def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, 
     db_session.add(r)
     db_session.flush()
     db_session.commit()
-    tasks.set_render_status(r.id, 'render started')
     tasks.render.send(
         r.id,
         flask_app.config['APPHOST'] + '/' + filename_cut,
@@ -79,12 +80,6 @@ def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, 
 def renders_list():
     if request.method == 'GET':
         renders = Render.query.order_by(desc(Render.id)).all()
-        # for render in renders:
-        #     if render.streamable_short == None:
-        #         result = tasks.render.AsyncResult(render.celery_id)
-        #         if result.successful():
-        #             render.streamable_short = result.get()
-        db_session.commit()
         return render_template('renders.html', renders=renders)
     if request.method == 'POST':
         form = RenderForm(request.form)
@@ -94,10 +89,11 @@ def renders_list():
         db_player = None
 
         # try:
+        map_number = int(cut_form.data['map_number']) - 1 if cut_form.data['map_number'] != '' else None
         render_id = render_new('upload/' + cut_form.data['filename'], str(int(cut_form.data['start'])),
                                cut_form.data['end'],
                                cut_form.data['cut_type'], cut_form.data['client_num'], form.data['title'],
-                               cut_form.data['gtv_match_id'], int(cut_form.data['map_number']) - 1, db_player)
+                               cut_form.data['gtv_match_id'], map_number, db_player)
         # except Exception as e:
         #     flash(str(e))
         #     return redirect(url_for('export'))

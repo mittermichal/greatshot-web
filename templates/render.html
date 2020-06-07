@@ -19,14 +19,21 @@
 {% else %}
 <script>
 
+function get_worker_last_beat(element){
+        $.ajax({url: "/get_worker_last_beat", dataType: "json", success: function(data){
+            element.append("</br>Last time worker was online:" + new Date(data));
+        }
+    });
+}
+
 function doPoll(firstPoll=false){
 
   $.ajax({url: "/renders/{{ render.id }}", dataType: "json", success: function(task){
-        if (!firstPoll && task.status_msg=='render started') {
+        if (!firstPoll && task.status_msg=='started') {
           $('.progress-bar').css({'width': 100 + '%'});
           $('.progress-bar').html("No rendering worker available, reload page later");
           setTimeout(doPoll,30000);
-          $('#progress-info-more').html("Rendering is done on my PC. If there is no rendering worker available, that means I don't have it turned on, but your request is enqueued, so you don't have to send it again. It will get processed when I turn on the worker. You can PM me on discord if its OFF and you want to render something. Last time worker was online:" + new Date(task.worker_last_beat));
+          get_worker_last_beat($('#progress-info-more').html("Rendering is done on my PC. If there is no rendering worker available, that means I don't have it turned on, but your request is enqueued, so you don't have to send it again. It will get processed when I turn on the worker. You can PM me on discord if its OFF and you want to render something."));
         }
         else if (task.status_msg!='finished') {
           $('.progress-bar').css({'width': task.progress + '%'});
@@ -45,10 +52,18 @@ $(function() {
   doPoll(true);
 });
 </script>
+
+{% if render.progress %}
+    {% set progress = render.progress %}
+{% else %}
+    {% set progress = '100' %}
+{% endif %}
+
+
 <div id="progress-info">
     <div class="progress">
-      <div class="progress-bar progress-bar-striped active" role="progressbar" style="width:100%">
-        polling status...
+      <div class="progress-bar progress-bar-striped active" role="progressbar" style="width:{{ render.progress }}%">
+          {{ render.status_msg }}
       </div>
     </div>
     <div id="progress-info-more"></div>
