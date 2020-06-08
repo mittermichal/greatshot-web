@@ -1,0 +1,25 @@
+project link: https://github.com/mittermichal/advanced-gamestv-stats
+website: http://178.62.235.156:5111/
+
+GOAL:
+
+save Name and Country of player to DB to show it in video render like: 
+https://streamable.com/zn7r4
+
+Player 
+-id
+-name
+-country
+
+MatchPlayer
+-id
+-gtv_match_id
+client_num - ingame client number (/players)
+
+match { id:1, gamestv_id: 58467}
+
+run library -> demo { id:1 , md5: a1b1sdff5d5f...}
+
+new_md5 = SELECT md5 FROM demo where id= latest_id 
+
+match_demos { demo_md5: new_md5, match_id: 1 }
