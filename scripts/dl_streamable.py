@@ -10,9 +10,9 @@ def dl_streamable(streamable_short, render_id='test'):
         file_url = 'https:'+r.json()['files']['mp4']['url']
         print('dl video...')
         rv = requests.get(file_url)
-        open('download/renders/'+render_id+'.mp4', 'wb').write(rv.content)
+        open('download/renders/'+str(render_id)+'.mp4', 'wb').write(rv.content)
     else:
-        print('404')
+        print(str(render_id)+'-404')
 
 
 for render in db_session.query(Render).filter(Render.streamable_short != None):
