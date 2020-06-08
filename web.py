@@ -13,7 +13,7 @@ import re
 from app.forms import ExportFileForm, ExportMatchLinkForm, CutForm, RenderForm
 import markdown
 import tasks
-from app.status_worker import get_worker_last_beat
+from app.status_worker import get_worker_last_beat, redis_broker
 from app.db import db_session
 from app.models import Render
 from sqlalchemy import desc
@@ -43,13 +43,13 @@ def render_get(render_id):
 
 @flask_app.route('/get_worker_last_beat')
 def r_get_worker_last_beat():
-    diff = int(time() - get_worker_last_beat())
+    diff = int(redis_broker.client.time()[0] - get_worker_last_beat())
     return jsonify('last online: {} ago'.format(str(timedelta(seconds=diff))))
 
 
 @flask_app.route('/status')
 def status():
-    diff = int(time() - get_worker_last_beat())
+    diff = int(redis_broker.client.time()[0] - get_worker_last_beat())
     msg = "Render worker is "
     if diff <= 60:
         msg += 'online.'
