@@ -13,14 +13,14 @@
    version="1.1"
    x="0px"
    y="0px"
-   width="1024px"
-   height="1024px"
-   viewBox="0 0 1024 1024"
+   width="1131.8278"
+   height="690.28992"
+   viewBox="0 0 1131.8278 690.28991"
    enable-background="new 0 0 1024 1024"
    xml:space="preserve"
    id="svg2"
    inkscape:version="0.92.4 (5da689c313, 2019-01-14)"
-   sodipodi:docname="excellent_logo__quake_iii_by_betoheavy-d61yguq.svg"
+   sodipodi:docname="logo.svg"
    inkscape:export-filename="C:\Users\admin\Documents\et\gtv\static\excellent_logo__quake_iii_by_betoheavy-d61yguq.svg.png"
    inkscape:export-xdpi="42.371391"
    inkscape:export-ydpi="42.371391"><metadata
@@ -52,17 +52,17 @@
    guidetolerance="20"
    inkscape:pageopacity="0"
    inkscape:pageshadow="2"
-   inkscape:window-width="1920"
-   inkscape:window-height="1018"
+   inkscape:window-width="1858"
+   inkscape:window-height="1058"
    id="namedview16"
    showgrid="false"
    inkscape:zoom="0.5944982"
-   inkscape:cx="641.6638"
-   inkscape:cy="341.81685"
-   inkscape:window-x="-8"
+   inkscape:cx="386.06163"
+   inkscape:cy="243.76865"
+   inkscape:window-x="54"
    inkscape:window-y="-8"
    inkscape:window-maximized="1"
-   inkscape:current-layer="layer3"
+   inkscape:current-layer="layer2"
    inkscape:pagecheckerboard="true"
    inkscape:snap-midpoints="true"
    inkscape:object-nodes="true"
@@ -84,15 +84,20 @@
    inkscape:snap-smooth-nodes="true"
    inkscape:snap-center="true"
    inkscape:snap-text-baseline="true"
-   inkscape:snap-page="true"><sodipodi:guide
-     position="513.69342,443.19317"
+   inkscape:snap-page="true"
+   fit-margin-top="8"
+   fit-margin-left="8"
+   fit-margin-right="8"
+   fit-margin-bottom="8"><sodipodi:guide
+     position="565.91389,345.14497"
      orientation="1,0"
      id="guide4736"
      inkscape:locked="false" /></sodipodi:namedview>
 <g
    id="Capa_1"
    display="none"
-   style="display:none">
+   style="display:none"
+   transform="translate(52.220462,-235.66187)">
 	<g
    id="Capa_2"
    display="inline"
@@ -114,14 +119,14 @@
 			<image
    sodipodi:absref="C:\Users\admin\Documents\et\gtv\static\DCE2ADC0.jpeg"
    xlink:href="DCE2ADC0.jpeg"
-   style="display:inline;overflow:visible;opacity:0.4"
-   display="inline"
-   overflow="visible"
-   enable-background="new    "
-   width="64"
-   height="64"
+   id="image11"
    transform="matrix(13.6089,0,0,13.6089,76.5156,87.042)"
-   id="image11">
+   height="64"
+   width="64"
+   enable-background="new    "
+   overflow="visible"
+   display="inline"
+   style="display:inline;overflow:visible;opacity:0.4">
 		</image>
 	</g>
 </g>
@@ -130,10 +135,12 @@
    inkscape:groupmode="layer"
    id="layer1"
    inkscape:label="Layer"
-   style="display:inline" /><g
+   style="display:inline"
+   transform="translate(52.220462,-235.66187)" /><g
    inkscape:groupmode="layer"
    id="layer3"
-   inkscape:label="export"><rect
+   inkscape:label="export"
+   transform="translate(52.220462,-235.66187)"><rect
      style="display:inline;opacity:0;fill:#000000;stroke:none;stroke-width:1.3422569"
      id="rect4730"
      width="1125"
@@ -145,15 +152,16 @@
    inkscape:groupmode="layer"
    id="layer2"
    inkscape:label="Layer#1"
-   style="display:inline"><image
+   style="display:inline"
+   transform="translate(52.220462,-235.66187)"><image
      sodipodi:absref="C:\Users\admin\Documents\et\gtv\static\return_to_castle_wolfenstein___logo_by_lelekhd_d6gsbzn.png"
      xlink:href="return_to_castle_wolfenstein___logo_by_lelekhd_d6gsbzn.png"
-     style="display:none"
-     width="1963.0292"
-     height="1187.5599"
-     id="image3005"
+     y="43.36956"
      x="-461.00824"
-     y="43.36956" /><g
+     id="image3005"
+     height="1187.5599"
+     width="1963.0292"
+     style="display:none" /><g
      id="Capa_2_1_">
 	
 </g><g
