@@ -1,5 +1,5 @@
 Flask
-Flask_WTF>=0.14.3
+Flask_WTF
 Markdown
 PyDbLite
 requests
@@ -7,6 +7,7 @@ SQLAlchemy
 WTForms
 lxml
 dramatiq[redis]
-redis==3.5.3
-watchdog==0.8.3
+redis
+watchdog
 alembic
+Werkzeug
