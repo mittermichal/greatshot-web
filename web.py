@@ -9,7 +9,7 @@ import app.gamestv
 import app.ftp
 import re
 from app.forms import ExportFileForm, ExportMatchLinkForm, CutForm, RenderForm
-import markdown
+from markdown import markdown
 import tasks
 from app.status_worker import get_worker_last_beat, redis_broker
 from app.db import db_session
@@ -418,7 +418,7 @@ def export_get(export_id, map_num, render=False, html=True):
 
 @flask_app.route('/')
 def index():
-    return render_template('layout.html', msg=markdown.markdown(open('README.md', 'r').read()))
+    return render_template('layout.html', msg=markdown(open('README.md', 'r').read()))
 
 
 @flask_app.route('/get_maps', methods=['POST'])
