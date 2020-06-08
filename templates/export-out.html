@@ -103,7 +103,7 @@ var g_players = {{ parser_out.g_players|tojson|safe }};
 
 {% for player in parser_out.players %}
 	{% for spree in player.sprees %}
-		<div data-title="{{ player['szCleanName'] }}'s {{ spree|length }}-man kill" data-client_num="{{ player['bClientNum'] }}" data-start="{{ spree[0]['dwTime']-2000 }}" data-end="{{ 2000+spree[spree|length - 1]['dwTime'] }}">
+		<div class="shadow-sm p-3" data-title="{{ player['szCleanName'] }}'s {{ spree|length }}-man kill" data-client_num="{{ player['bClientNum'] }}" data-start="{{ spree[0]['dwTime']-2000 }}" data-end="{{ 2000+spree[spree|length - 1]['dwTime'] }}">
 			{% for kill in spree %}
 				<span{% if kill.bIsTeamkill %} style="color:red;"{% endif %}>{{ kill.bAttacker }} {{ kill.bTarget }} {{ kill.szTimeString }} {{ kill.szMessage }} {{ kill.dwTime }}</span><br/>
 			{% endfor %}
@@ -114,7 +114,6 @@ var g_players = {{ parser_out.g_players|tojson|safe }};
 				<span style="width:20px" class="oi oi-resize-width"></span> Cut
 			</a>
 		</div>
-		<br/>{{ spree.interval }}<br/>
 	{% endfor %}
 {% endfor %}
 
@@ -122,7 +121,7 @@ var g_players = {{ parser_out.g_players|tojson|safe }};
 
 {% for player in parser_out.players %}
 	{% for hs_spree in player.hs_sprees %}
-		<div class="hs-spree" data-title="{{ player['szCleanName'] }}'s {{ hs_spree|length }}-headshots spree" data-client_num="{{ player['bClientNum'] }}" data-start="{{ hs_spree[0]['dwTime']-2000 }}" data-end="{{ 2000+hs_spree[hs_spree|length - 1]['dwTime'] }}">
+		<div class="hs-spree shadow-sm p-3" data-title="{{ player['szCleanName'] }}'s {{ hs_spree|length }}-headshots spree" data-client_num="{{ player['bClientNum'] }}" data-start="{{ hs_spree[0]['dwTime']-2000 }}" data-end="{{ 2000+hs_spree[hs_spree|length - 1]['dwTime'] }}">
 			{{ player.szCleanName }} HS Count: {{ hs_spree|length }} Length:{{ hs_spree[hs_spree|length - 1]['dwTime']-hs_spree[0]['dwTime'] }}<br/>
 			{% for hs in hs_spree %}
 				{{ hs.bAttacker }} {{ hs.bTarget }} {{ hs.dwTime }} {{ hs.eventNum }}<br/>
@@ -140,7 +139,7 @@ var g_players = {{ parser_out.g_players|tojson|safe }};
 
 {% for player in parser_out.players %}
 	{% for trick in player.rifletricks %}
-		<div class="rifletrick" data-title="{{ player['szCleanName'] }}'s rifletrick" data-client_num="{{ player['bClientNum'] }}" data-start="{{ trick['dwTime']-6000 }}" data-end="{{ 2000+trick['dwTime'] }}">
+		<div class="rifletrick shadow-sm p-3" data-title="{{ player['szCleanName'] }}'s rifletrick" data-client_num="{{ player['bClientNum'] }}" data-start="{{ trick['dwTime']-6000 }}" data-end="{{ 2000+trick['dwTime'] }}">
 			{{ player.szCleanName }} From: To: Distance: {{ trick.distance }}<br/>
 				{{ trick.bAttacker }} {{ trick.bTarget }} {{ trick.szTimeString }} {{ trick.szMessage }} {{ trick.dwTime }} <br/>
 			<a class="btn btn-default btn-lg" href="#render-form" onclick="fillForm(this);">
