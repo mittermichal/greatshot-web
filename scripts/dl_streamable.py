@@ -12,7 +12,7 @@ def dl_streamable(streamable_short, render_id='test'):
         rv = requests.get(file_url)
         open('download/renders/'+str(render_id)+'.mp4', 'wb').write(rv.content)
     else:
-        print(str(render_id)+'-404')
+        print(render_id, r.status_code)
 
 
 for render in db_session.query(Render).filter(Render.streamable_short != None):
