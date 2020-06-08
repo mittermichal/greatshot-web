@@ -63,7 +63,7 @@ def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, 
         filename_orig = filename
     else:
         filename_orig = 'upload/' + get_gtv_demo(gtv_match_id, map_number)
-    filename_cut = 'download/' + str(gtv_match_id) + '_' + str(map_number) + '_' + str(client_num) + '_' + str(
+    filename_cut = 'download/cuts/' + str(gtv_match_id) + '_' + str(map_number) + '_' + str(client_num) + '_' + str(
         start) + '_' + str(end) + '.dm_84'
 
     app.Libtech3.cut(flask_app.config['PARSERPATH'], filename_orig, filename_cut, int(start) - 2000, end, cut_type,
@@ -155,7 +155,6 @@ def upload(request):
 
 @flask_app.route('/download/<path:filename>')
 def download_static(filename):
-    # http://stackoverflow.com/questions/24612366/flask-deleting-uploads-after-they-have-been-downloaded
     return send_from_directory(directory='download', filename=filename)
 
 
@@ -174,12 +173,12 @@ def cut():
             else:
                 filename = upload(request)
             app.Libtech3.cut(
-                flask_app.config['PARSERPATH'], 'upload/' + filename, 'download/demo-out.dm_84', request.form['start'],
+                flask_app.config['PARSERPATH'], 'upload/' + filename, 'download/cuts/demo-out.dm_84', request.form['start'],
                 request.form['end'], request.form['cut_type'], request.form['client_num'])
         except Exception as e:
             flash(e)
             return render_template('cut.html', cut_form=cut_form, form1=form1, form2=form2)
-        return send_from_directory(directory='download', filename='demo-out.dm_84', as_attachment=True,
+        return send_from_directory(directory='download/cuts', filename='demo-out.dm_84', as_attachment=True,
                                    attachment_filename='demo-out.dm_84')
     else:
         return render_template('cut.html', cut_form=cut_form, form1=form1, form2=form2)
@@ -212,13 +211,13 @@ def export():
             cut_form.map_number.data = int(request.form['map_number'])-1
         else:
             cut_form.filename.data = filename
-        parsed_output = parse_output(open('download/'+filename+'.json', 'r',
+        parsed_output = parse_output(open('download/exports/'+filename+'.json', 'r',
                                           encoding='utf-8', errors='ignore').readlines(),
                                      cut_form.gtv_match_id.data)
         # make gtv comment
         # retrieve clips that are from this demo
         return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form,
-                               out=open('download/'+filename+'.json', 'r', encoding='utf-8', errors='ignore').read(),
+                               out=open('download/exports/'+filename+'.json', 'r', encoding='utf-8', errors='ignore').read(),
                                parser_out=parsed_output)
     return render_template('export.html', form1=form1, form2=form2)
 
@@ -228,8 +227,8 @@ def export_last():
     cut_form = CutForm()
     render_form = RenderForm()
     return render_template('export-out.html', cut_form=cut_form, rndr_form=render_form,
-                           out=open('download/out.json', 'r').read(),
-                           parser_out=parse_output(open('download/out.json', 'r').readlines()))
+                           out=open('download/exports/out.json', 'r').read(),
+                           parser_out=parse_output(open('download/exports/out.json', 'r').readlines()))
 
 
 def generate_ftp_path(export_id):
@@ -300,11 +299,11 @@ def export_get(export_id, map_num, render=False, html=True):
     else:
         arg = flask_app.config['INDEXER'] % (filename, filename)
         subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
-        f = open('download/'+filename+'.json', 'r', encoding='utf-8', errors='ignore')
+        f = open('download/exports/'+filename+'.json', 'r', encoding='utf-8', errors='ignore')
         out = f.readlines()
         f.close()
-        os.remove('download/'+filename+'.json')
-        #return filename
+        # os.remove('download/exports/'+filename+'.json')
+        # return filename
 
     parser_out = parse_output(out, export_id)
     if render:
@@ -396,11 +395,5 @@ def page_not_found(e):
     return render_template('layout.html'), 404
 
 
-# TODO: upload raw video from worker
-'''
-@flask_app.route('/raw')
-def raw():
-  return send_from_directory(directory='.', filename='render.mp4', as_attachment=True, attachment_filename='render.mp4')
-'''
 if __name__ == "__main__":
     flask_app.run(port=5111, host='0.0.0.0')
