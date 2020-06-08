@@ -1,11 +1,13 @@
 import os
 import subprocess
 import urllib.request
+from urllib.parse import urlparse
 import glob
 import dramatiq
 from dramatiq.brokers.redis import RedisBroker
 import tasks_config
 from app.status_worker import save_status
+import requests
 
 redis_broker = RedisBroker(url=tasks_config.REDIS+'/0', middleware=[])
 dramatiq.set_broker(redis_broker)
@@ -26,20 +28,23 @@ def capture(start, end, etl=False):
         open(tasks_config.ETPATH + 'etmain\\init-tga.cfg', 'w').write('exec_at_time '+str(start)+' record-tga')
         open(tasks_config.ETPATH + 'etmain\\init-wav.cfg', 'w').write('exec_at_time '+str(start)+' record-wav')
         p = subprocess.Popen(['render.bat', tasks_config.ETPATH])
-    p.communicate()
+    p.communicate(timeout=60)
 
 
 @dramatiq.actor
-def render(render_id, demo_url, start, end, title='render', name='', country='', etl=False):
+def render(render_id, demo_url, start, end, name='', country='', crf='23', etl=False):
     # download is finished too fast to set status
     # set_render_status(render_id, 'downloading demo...', 5)
     urllib.request.urlretrieve(demo_url, tasks_config.ETPATH+'etpro/demos/demo-render.dm_84')
     if os.stat(tasks_config.ETPATH+'etpro/demos/demo-render.dm_84').st_size == 0:
-        # current_task.update_state(state='FAILURE')
         set_render_status(render_id, 'error: cutted demo was empty', 100)
         return None
     set_render_status(render_id, 'capturing screenshots and sound...', 10)
-    capture(start, end, etl)
+    try:
+        capture(start, end, etl)
+    except subprocess.TimeoutExpired:
+        # this prob wont work as intended
+        set_render_status(render_id, 'error: game capture took too long', 100)
 
     set_render_status(render_id, 'encoding video...', 40)
     if etl:
@@ -67,23 +72,22 @@ def render(render_id, demo_url, start, end, title='render', name='', country='',
             '-i',
             '4x3/'+country+'.png'
         ]
-    args += ['-i', 'etpro/wav/synctest.wav', '-c:a', 'libvorbis', '-shortest', 'render.mp4']
+    args += ['-i', 'etpro/wav/synctest.wav', '-c:a', 'libvorbis', '-shortest', '-crf', str(crf), 'render.mp4']
     # print(args)
     p = subprocess.Popen(args, cwd=tasks_config.ETPATH, shell=True)
     p.communicate()
 
-    # https://api.streamable.com
-    # set_render_status(render_id, 'uploading clip...', 80)
-    # r = requests.post('https://api.streamable.com/upload',
-    #                   auth=(tasks_config.STREAMABLE_NAME, tasks_config.STREAMABLE_PW),
-    #                   files={'render.mp4': open(tasks_config.ETPATH+'render.mp4', 'rb')},
-    #                   data={'title': title})
-
-    try:
+    url_parsed = urlparse(demo_url)
+    filename = str(render_id) + '.mp4'
+    print(filename)
+    # netloc = url_parsed.netloc.replace('localhost','127.0.0.1')
+    print('upload url: ' + url_parsed.scheme + '://' + url_parsed.netloc + '/upload')
+    r = requests.put(
+        url_parsed.scheme + '://' + url_parsed.netloc + '/download',
+        auth=(tasks_config.STREAMABLE_NAME, tasks_config.STREAMABLE_PW),
+        files={filename: open(tasks_config.ETPATH + 'render.mp4', 'rb')})
+    print('upload r code:' + str(r.status_code))
+    if r.status_code == 200:
         set_render_status(render_id, 'finished', 100)
-        return
-        # return json.loads(r.text)["shortcode"]
-    except KeyError:
-        set_render_status(render_id, 'error: failed to upload to streamable', 100)
-        return None
-    # return demoUrl
+    else:
+        print('bad? upload status code:', r.status_code)

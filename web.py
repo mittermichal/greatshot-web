@@ -1,12 +1,10 @@
-#!/usr/bin/env python
-# -*- coding: utf-8 -*-
-
-from flask import Flask, request, redirect, url_for, render_template, send_from_directory, jsonify, flash
+from flask import Flask, request, redirect, url_for, render_template, send_from_directory, jsonify, flash, Response
 import os
 import subprocess
 import app.Libtech3
 import urllib.request
 from urllib.error import HTTPError
+import urllib.parse
 import app.gamestv
 import app.ftp
 import re
@@ -19,8 +17,11 @@ from app.models import Render
 from sqlalchemy import desc
 from app.export import parse_output
 from sqlalchemy.orm.exc import NoResultFound
-from time import time
+from time import strftime, gmtime
 from datetime import timedelta
+from glob import glob, iglob
+from werkzeug.utils import secure_filename
+import tasks_config
 
 flask_app = Flask(__name__)
 flask_app.config.from_pyfile('config.cfg')
@@ -58,7 +59,7 @@ def status():
     return render_template('layout.html', msg=msg)
 
 
-def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, map_number, player):
+def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, map_number, player, crf = 23):
     if gtv_match_id == '':
         filename_orig = filename
     else:
@@ -77,7 +78,6 @@ def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, 
         start=start, end=end
     )
     db_session.add(r)
-    db_session.flush()
     db_session.commit()
     tasks.render.send(
         r.id,
@@ -85,7 +85,7 @@ def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, 
         start, end, title,
         player.name if (player is not None) else None,
         player.country if (player is not None) else None,
-        etl=False
+        etl=False, crf=crf
     )
     return r.id
 
@@ -104,10 +104,12 @@ def renders_list():
 
         # try:
         map_number = int(cut_form.data['map_number']) - 1 if cut_form.data['map_number'] != '' else None
-        render_id = render_new('upload/' + cut_form.data['filename'], str(int(cut_form.data['start'])),
+        filepath = ('upload/' + cut_form.data['filename'], request.form['filepath'])[request.form['filepath'] != '']
+        render_id = render_new(filepath, str(int(cut_form.data['start'])),
                                cut_form.data['end'],
                                cut_form.data['cut_type'], cut_form.data['client_num'], form.data['title'],
-                               cut_form.data['gtv_match_id'], map_number, db_player)
+                               cut_form.data['gtv_match_id'], map_number, db_player, form.data['crf'])
+
         # except Exception as e:
         #     flash(str(e))
         #     return redirect(url_for('export'))
@@ -130,6 +132,8 @@ def allowed_file(filename):
 
 
 # http://flask.pocoo.org/docs/0.11/patterns/fileuploads/
+# @flask_app.route('/uploads/<path:filename>')
+
 def upload(request):
     if 'uselast' in request.form:
         print('uselast')
@@ -140,6 +144,8 @@ def upload(request):
             file.save(os.path.join('upload', filename))
         elif request.form['filename'] != '':
             filename = request.form['filename']
+        elif request.form['filepath'] != '':
+            filename = request.form['filepath']
         else:
             raise Exception("No filename selected for cut")
         # if user does not select file, browser also
@@ -152,10 +158,53 @@ def upload(request):
         return filename
     return 'demo.tv_84'
 
+def check_auth(username, password):
+    """This function is called to check if a username /
+    password combination is valid.
+    """
+    return username == tasks_config.STREAMABLE_NAME and password == tasks_config.STREAMABLE_PW
+
+def authenticate():
+    """Sends a 401 response that enables basic auth"""
+    return Response(
+    'Could not verify your access level for that URL.\n'
+    'You have to login with proper credentials', 401,
+    {'WWW-Authenticate': 'Basic realm="Login Required"'})
+
+@flask_app.route('/download', methods=['GET', 'POST', 'PUT'])
+def download():
+    if request.method == 'PUT':
+        auth = request.authorization
+        if not auth or not check_auth(auth.username, auth.password):
+            return authenticate()
+        try:
+            for filename, file in request.files.items():
+                name = secure_filename(request.files[filename].name)
+                file.save(os.path.join('download', name))
+                return name
+            return jsonify({'error': 'no file'})
+        except Exception as e:
+            print(e)
+            return jsonify({'error':e})
+    else:
+        blob_filter = request.args.get('filter', '*.*')
+        if not re.match(r'(\*|\w|\s)+', blob_filter):
+            blob_filter = '*.*'
+            flash('bad character in blob -> reverting to *.*')
+        files = sorted([{'name': f,
+                         'ctime': os.path.getctime(f),
+                         'formatted_ctime': strftime('%c', gmtime(os.path.getctime(f)))}
+                        for f in glob('download/' + blob_filter, recursive=False)],
+                       key=lambda f: f['ctime'],
+                       reverse=True)
+        return render_template('download_list.html', files=files)
+
 
 @flask_app.route('/download/<path:filename>')
 def download_static(filename):
-    return send_from_directory(directory='download', filename=filename)
+    as_attachment = request.args.get('dl', '0') == '1'
+    # http://stackoverflow.com/questions/24612366/flask-deleting-uploads-after-they-have-been-downloaded
+    return send_from_directory(directory='download', filename=filename, as_attachment=as_attachment)
 
 
 # TODO exclude POV playerstate/entity
@@ -173,8 +222,10 @@ def cut():
             else:
                 filename = upload(request)
             app.Libtech3.cut(
-                flask_app.config['PARSERPATH'], 'upload/' + filename, 'download/cuts/demo-out.dm_84', request.form['start'],
-                request.form['end'], request.form['cut_type'], request.form['client_num'])
+                flask_app.config['PARSERPATH'],
+                ('upload/' + filename, request.form['filepath'])[request.form['filepath'] != ''],
+                'download/cuts/demo-out.dm_84',
+                request.form['start'], request.form['end'], request.form['cut_type'], request.form['client_num'])
         except Exception as e:
             flash(e)
             return render_template('cut.html', cut_form=cut_form, form1=form1, form2=form2)
@@ -217,9 +268,49 @@ def export():
         # make gtv comment
         # retrieve clips that are from this demo
         return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form,
-                               out=open('download/exports/'+filename+'.json', 'r', encoding='utf-8', errors='ignore').read(),
+                               out=open('download/exports/'+filename+'.json',
+                                        'r', encoding='utf-8', errors='ignore').read(),
                                parser_out=parsed_output)
+    try:
+        ettv_demos_path = flask_app.config['ETTV_DEMOS_PATH']
+        ettv_demos = [
+            url_for('export_ettv', path=urllib.parse.quote(os.path.relpath(x, ettv_demos_path), safe=''))
+            for x in sorted(
+                [f for f in iglob(ettv_demos_path + '**/*.tv_84', recursive=True)],
+                key=lambda f: os.path.getmtime(f),
+                reverse=True
+            )
+        ]
+        return render_template('export.html', form1=form1, form2=form2, ettv_demos=ettv_demos)
+    except IndexError:
+        print('indexerror')
+        pass
+
     return render_template('export.html', form1=form1, form2=form2)
+
+
+@flask_app.route('/export/ettv_demo/<path>')
+def export_ettv(path):
+    ettv_demos_path = flask_app.config['ETTV_DEMOS_PATH']
+    path = os.path.join(os.path.normcase(ettv_demos_path), os.path.normcase(urllib.parse.unquote(path)))
+    print(path)
+    cut_form = CutForm()
+    rndr_form = RenderForm()
+    filename = os.path.abspath(path)
+    print(filename)
+    cut_form.filepath.data = filename
+    # cut_form.filename = 'aaa'
+    indexer = 'indexTarget/%s/exportJsonFile/%s.json/exportBulletEvents/1/exportDemo/1/exportChatMessages/1/exportRevives/1'
+    if os.name == 'posix':
+        indexer = indexer.replace('/', '\\')
+    arg = indexer % (filename, filename)
+    subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
+    parsed_output = parse_output(
+        open(path + '.json', 'r', encoding='utf-8', errors='ignore').readlines(),
+        cut_form.gtv_match_id.data)
+    return render_template('export-out.html', cut_form=cut_form, rndr_form=rndr_form,
+                           out=open(path + '.json', 'r').read(),
+                           parser_out=parsed_output)
 
 
 @flask_app.route('/export/last')
@@ -328,44 +419,6 @@ def export_get(export_id, map_num, render=False, html=True):
 @flask_app.route('/')
 def index():
     return render_template('layout.html', msg=markdown.markdown(open('README.md', 'r').read()))
-
-
-@flask_app.route('/matches', methods=['GET', 'POST'])
-def matches():
-    return render_template('layout.html', msg='soon™')
-
-
-# TODO player db
-"""
-@flask_app.route('/players', methods=['GET', 'POST'])
-def players():
-    if request.method == 'POST':
-        player_form = PlayerForm(request.form)
-
-        #r = Render(result.id, title, gtv_match_id, map_number, client_num, player.id if (player != None) else None)
-        player = Player()
-        match_player = MatchPlayer()
-        player_form.populate_obj(player)
-        db_session.add(player)
-        db_session.flush()
-
-
-        player_form.populate_obj(match_player)
-        match_player.player_id=player.id
-        db_session.add(match_player)
-        db_session.flush()
-        db_session.commit()
-        return str(match_player.id)
-    else:
-        players=Player.query.all()
-        return render_template('players.html', players=players)
-
-@flask_app.route('/players/<player_id>', methods=['GET', 'POST'])
-def player_get(player_id):
-    player=Player.query.filter(Player.id == player_id).first()
-    renders=Render.query.filter(Render.player_id == player_id)
-    return render_template('player.html', player=player, renders=renders)
-"""
 
 
 @flask_app.route('/get_maps', methods=['POST'])

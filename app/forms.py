@@ -1,6 +1,6 @@
-from wtforms import StringField, FileField, SelectField, HiddenField, IntegerField
-from wtforms.fields.html5 import IntegerField
 from flask_wtf import FlaskForm
+from wtforms import StringField, FileField, SelectField, HiddenField, validators
+from wtforms.fields.html5 import IntegerField
 from app.countries import countries
 
 
@@ -22,15 +22,19 @@ class CutForm(FlaskForm):
     gtv_match_id = HiddenField('gtv_match_id')
     map_number = HiddenField('map_number')
     filename = HiddenField('filename')
+    filepath = HiddenField('filepath')
 
 
 class RenderForm(FlaskForm):
     title = StringField('Title')
+    crf = IntegerField('crf (default:23)', [validators.NumberRange(min=18, max=25)], default=23)
+    name = StringField('Name')
+    country = SelectField('Country', choices=[(x, x) for x in countries], default='eu')
 
 
 class PlayerForm(FlaskForm):
     name = StringField('Name')
     country = SelectField('Country', choices=[(x, x) for x in countries], default='eu')
-    #gtv_mame = SelectField('gtv_mame')
+    # gtv_mame = SelectField('gtv_mame')
     client_num = HiddenField('client_num')
     match_id = HiddenField('match_id')
