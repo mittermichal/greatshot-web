@@ -1,4 +1,4 @@
-from .status_worker import redis_broker
+from tasks import redis_broker
 from time import sleep, time
 from threading import Thread
 

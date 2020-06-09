@@ -11,7 +11,7 @@ import re
 from app.forms import ExportFileForm, ExportMatchLinkForm, CutForm, RenderForm
 from markdown import markdown
 import tasks
-from app.status_worker import get_worker_last_beat, redis_broker
+from app.status_worker import get_worker_last_beat
 from app.db import db_session
 from app.models import Render
 from sqlalchemy import desc
@@ -35,22 +35,24 @@ def request_wants_json():
 @flask_app.route('/renders/<render_id>')
 def render_get(render_id):
     render = Render.query.filter(Render.id == render_id).one()
+    video_path = 'download/renders/' + str(render_id) + '.mp4'
+    video_exists = os.path.isfile(video_path)
     if request_wants_json():
         data = {'status_msg': render.status_msg,
                 'progress': render.progress}
         return jsonify(data)
-    return render_template('render.html', render=render)
+    return render_template('render.html', render=render, video_path='/' + video_path, video_exists=video_exists)
 
 
 @flask_app.route('/get_worker_last_beat')
 def r_get_worker_last_beat():
-    diff = int(redis_broker.client.time()[0] - get_worker_last_beat())
+    diff = int(tasks.redis_broker.client.time()[0] - get_worker_last_beat())
     return jsonify('last online: {} ago'.format(str(timedelta(seconds=diff))))
 
 
 @flask_app.route('/status')
 def status():
-    diff = int(redis_broker.client.time()[0] - get_worker_last_beat())
+    diff = int(tasks.redis_broker.client.time()[0] - get_worker_last_beat())
     msg = "Render worker is "
     if diff <= 60:
         msg += 'online.'
@@ -59,7 +61,7 @@ def status():
     return render_template('layout.html', msg=msg)
 
 
-def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, map_number, player, crf = 23):
+def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, map_number, name=None, country=None, crf=23):
     if gtv_match_id == '':
         filename_orig = filename
     else:
@@ -82,9 +84,8 @@ def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, 
     tasks.render.send(
         r.id,
         flask_app.config['APPHOST'] + '/' + filename_cut,
-        start, end, title,
-        player.name if (player is not None) else None,
-        player.country if (player is not None) else None,
+        start, end,
+        name, country,
         etl=False, crf=crf
     )
     return r.id
@@ -108,8 +109,8 @@ def renders_list():
         render_id = render_new(filepath, str(int(cut_form.data['start'])),
                                cut_form.data['end'],
                                cut_form.data['cut_type'], cut_form.data['client_num'], form.data['title'],
-                               cut_form.data['gtv_match_id'], map_number, db_player, form.data['crf'])
-
+                               cut_form.data['gtv_match_id'], map_number,
+                               form.data['name'], form.data['country'], form.data['crf'])
         # except Exception as e:
         #     flash(str(e))
         #     return redirect(url_for('export'))
@@ -158,18 +159,22 @@ def upload(request):
         return filename
     return 'demo.tv_84'
 
+
 def check_auth(username, password):
     """This function is called to check if a username /
     password combination is valid.
     """
     return username == tasks_config.STREAMABLE_NAME and password == tasks_config.STREAMABLE_PW
 
+
 def authenticate():
     """Sends a 401 response that enables basic auth"""
     return Response(
-    'Could not verify your access level for that URL.\n'
-    'You have to login with proper credentials', 401,
-    {'WWW-Authenticate': 'Basic realm="Login Required"'})
+        'Could not verify your access level for that URL.\n'
+        'You have to login with proper credentials', 401,
+        {'WWW-Authenticate': 'Basic realm="Login Required"'}
+    )
+
 
 @flask_app.route('/download', methods=['GET', 'POST', 'PUT'])
 def download():
@@ -180,12 +185,12 @@ def download():
         try:
             for filename, file in request.files.items():
                 name = secure_filename(request.files[filename].name)
-                file.save(os.path.join('download', name))
+                file.save(os.path.join('download/renders', name))
                 return name
             return jsonify({'error': 'no file'})
         except Exception as e:
             print(e)
-            return jsonify({'error':e})
+            return jsonify({'error': e})
     else:
         blob_filter = request.args.get('filter', '*.*')
         if not re.match(r'(\*|\w|\s)+', blob_filter):

@@ -4,12 +4,12 @@ import dramatiq
 from dramatiq.brokers.redis import RedisBroker
 import tasks_config
 
-redis_broker = RedisBroker(url=tasks_config.REDIS+'/1', middleware=[])
-dramatiq.set_broker(redis_broker)
+status_redis_broker = RedisBroker(url=tasks_config.REDIS+'/'+tasks_config.STATUS_WORKER_REDIS_DB, middleware=[])
+dramatiq.set_broker(status_redis_broker)
 
 
 def get_worker_last_beat():
-    return int(redis_broker.client.get('worker_last_beat').decode('utf-8'))
+    return int(status_redis_broker.client.get('worker_last_beat').decode('utf-8'))
 
 
 @dramatiq.actor

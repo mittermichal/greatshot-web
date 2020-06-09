@@ -41,16 +41,11 @@ function doPoll(firstPoll=false){
           setTimeout(doPoll,3000);
          } else {
           $('#progress-info').hide();
-          $('.wrap iframe').attr('src',$('.wrap iframe').attr('src')+task+'?autoplay=1&hd=1');
-          $('.wrap a').attr('href',$('.wrap a').attr('href')+task);
-          $('.wrap').show();
+          $('#render-video video source').attr('src','{{ video_path }}');
+          $('#render-video').show();
         }
     }});
 }
-
-$(function() {
-  doPoll(true);
-});
 </script>
 
 {% if render.progress %}
@@ -60,24 +55,35 @@ $(function() {
 {% endif %}
 
 
-<div id="progress-info">
-    <div class="progress">
-      <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width:{{ render.progress }}%">
-          {{ render.status_msg }}
-      </div>
+
+
+{% if not video_exists %}
+    {% set video_src = '' %}
+    <script>
+        $(function() {
+          setTimeout(function(){doPoll(true)},3000);
+        });
+    </script>
+    <div id="progress-info">
+        <div class="progress">
+          <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width:{{ render.progress }}%">
+              {{ render.status_msg }}
+          </div>
+        </div>
+        <div id="progress-info-more"></div>
     </div>
-    <div id="progress-info-more"></div>
-</div>
-{{ render_streamable("") }}
 {% endif %}
 
+<div id="render-video"{% if not video_exists %} style="display:none;"{% endif %}>
+    <video controls>
+        {% if video_exists %}
+        <source src="{{ video_src }}" type="video/mp4">
+    </video>
+    <a href="{{ video_src }}?dl=1">Download video</a>
+</div>
 
-{#
-  <video controls>
-    <source src="/static/render.mp4" type="video/mp4">
-  </video>
-  <a href="/static/render.mp4">Download render</a>
-#}
+{{ render_streamable("") }}
+{% endif %}
 
 {% endblock %}
 
