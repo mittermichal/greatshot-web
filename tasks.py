@@ -45,7 +45,7 @@ def ffmpeg_args(name=None, country=None, crf=23):
     return args
 
 
-@dramatiq.actor
+@dramatiq.actor(queue_name='render')
 def render(render_id, demo_url, start, end, name=None, country=None, crf='23', etl=False):
     print(locals())
     # download is finished too fast to set status
