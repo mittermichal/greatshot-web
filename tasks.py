@@ -9,8 +9,8 @@ import tasks_config
 from app.status_worker import save_status
 import requests
 
-tasks_redis_broker = RedisBroker(url=tasks_config.REDIS+'/0', middleware=[])
-dramatiq.set_broker(tasks_redis_broker)
+redis_broker = RedisBroker(url=tasks_config.REDIS, middleware=[], namespace=tasks_config.DRAMATIQ_NS)
+dramatiq.set_broker(redis_broker)
 
 
 def set_render_status(render_id, status_msg, progress=0):
