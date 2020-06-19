@@ -41,6 +41,7 @@ function doPoll(firstPoll=false){
           setTimeout(doPoll,3000);
          } else {
           $('#progress-info').hide();
+          $('#render-video video source').attr('src','{{ video_path }}');
           $('#render-video video')[0].load();
           $('#render-video').show();
         }

@@ -11,7 +11,6 @@ import re
 from app.forms import ExportFileForm, ExportMatchLinkForm, CutForm, RenderForm
 from markdown import markdown
 import tasks
-from app.status_worker import get_worker_last_beat
 from app.db import db_session
 from app.models import Render
 from sqlalchemy import desc
@@ -32,7 +31,7 @@ def request_wants_json():
     return best == 'application/json' and request.accept_mimetypes[best] > request.accept_mimetypes['text/html']
 
 
-@flask_app.route('/renders/<render_id>')
+@flask_app.route('/renders/<render_id>', methods=['GET'])
 def render_get(render_id):
     render = Render.query.filter(Render.id == render_id).one()
     video_path = 'download/renders/' + str(render_id) + '.mp4'
@@ -44,15 +43,24 @@ def render_get(render_id):
     return render_template('render.html', render=render, video_path='/' + video_path, video_exists=video_exists)
 
 
+@flask_app.route('/renders/<render_id>', methods=['POST'])
+def render_post(render_id):
+    db_session.query(Render).filter(Render.id == render_id).update(
+        {Render.status_msg: request.json['status_msg'], Render.progress: request.json['progress']}
+    )
+    db_session.commit()
+    return "", 200
+
+
 @flask_app.route('/get_worker_last_beat')
 def r_get_worker_last_beat():
-    diff = int(tasks.redis_broker.client.time()[0] - get_worker_last_beat())
+    diff = int(tasks.redis_broker.client.time()[0] - tasks.get_worker_last_beat())
     return jsonify('last online: {} ago'.format(str(timedelta(seconds=diff))))
 
 
 @flask_app.route('/status')
 def status():
-    diff = int(tasks.redis_broker.client.time()[0] - get_worker_last_beat())
+    diff = int(tasks.redis_broker.client.time()[0] - tasks.get_worker_last_beat())
     msg = "Render worker is "
     if diff <= 60:
         msg += 'online.'
