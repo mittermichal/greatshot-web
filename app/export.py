@@ -36,6 +36,7 @@ def parse_output(lines, gtv_match_id=None):
     rounds = []
     chat = []
     demo = {}
+    revives = []
     db = Database(":memory:")
     table = db.create('hits', ("player", 'INTEGER'), ("region", 'INTEGER'))
     table.create_index("player")
@@ -137,6 +138,7 @@ def parse_output(lines, gtv_match_id=None):
                 reviver['revives'] = reviver['revives'] + 1
             revived = get_player(players, j['bRevived'])
             revived['revived'] = revived['revived'] + 1
+            revives.append(j)
         elif 'szType' in j and j['szType'] == 'chat' and j["bPlayer"] != -1:
             chat.append(j)
 
@@ -162,4 +164,12 @@ def parse_output(lines, gtv_match_id=None):
       else:
         player['name'] = None
   """
-    return {'hits': ret, 'players': players, 'demo': demo, 'rounds': rounds, 'g_players': g_players, 'chat': chat}
+    return {
+      'hits': ret,
+      'players': players,
+      'demo': demo,
+      'rounds': rounds,
+      'g_players': g_players,
+      'chat': chat,
+      'revives': revives
+    }

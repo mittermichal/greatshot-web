@@ -4,6 +4,11 @@
 
 {% block title %} - Export output{% endblock %}
 
+{% block head %}
+	{{ super() }}
+	<script src="{{ url_for('static', filename='node_modules/vis-timeline/standalone/umd/vis-timeline-graph2d.min.js')}}"></script>
+    <link rel="stylesheet" href="{{ url_for('static', filename='node_modules/vis-timeline/dist/vis-timeline-graph2d.css')}}">
+{% endblock %}
 
 {% block content %}
 <h1>Export output</h1>
@@ -217,9 +222,38 @@ var g_players = {{ parser_out.g_players|tojson|safe }};
 	{% endfor %}
 {% endfor %}
 
-<div class="timeline">
 
+
+<div id="timeline">
 </div>
+
+<script>
+	//TODO need to export round start times 1st
+	function get_round(server_time, rounds) {
+		return 0;
+	}
+
+	function timestring(m_timeLimit, m_serverTime, m_levelStartTime) {
+		return (m_timeLimit * 60 * 1000) - (m_serverTime - m_levelStartTime)
+	}
+
+	var revives = {{ parser_out.revives|tojson|safe }};
+	var container = document.getElementById("timeline");
+	//numbers.map(i => i*i);
+	var items = new vis.DataSet([
+	  { id: 1, content: "item 1", start: "2014-04-20" },
+	  { id: 2, content: "item 2", start: "2014-04-14" },
+	  { id: 3, content: "item 3", start: "2014-04-18" },
+	  { id: 4, content: "item 4", start: "2014-04-16", end: "2014-04-19" },
+	  { id: 5, content: "item 5", start: "2014-04-25" },
+	  { id: 6, content: "item 6", start: "2014-04-27", type: "point" },
+	]);
+	t_revives = revives.map(function(r){ return {content: ""+r.bReviver+"->"+r.bRevived, start: r.dwTime/1000, type: "point" }});
+	// Configuration for the Timeline
+	var options = {};
+	// Create a Timeline
+	var timeline = new vis.Timeline(container, t_revives, options);
+</script>
 
 <h2>Chat</h2>
 <table>
