@@ -5,6 +5,7 @@ import app.Libtech3
 import urllib.request
 from urllib.error import HTTPError
 import urllib.parse
+import requests
 import app.gamestv
 import app.ftp
 import re
@@ -49,6 +50,16 @@ def render_post(render_id):
         {Render.status_msg: request.json['status_msg'], Render.progress: request.json['progress']}
     )
     db_session.commit()
+    if request.json['status_msg'] == 'finished' and 'RENDER_FINISHED_WEBHOOK' in flask_app.config.keys():
+        try:
+            requests.post(
+                flask_app.config['RENDER_FINISHED_WEBHOOK'],
+                json={
+                    'content': url_for('download_static', filename='renders/' + render_id + '.mp4')
+                }
+            )
+        except requests.RequestException:
+            pass
     return "", 200
 
 
