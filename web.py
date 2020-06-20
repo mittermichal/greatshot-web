@@ -281,14 +281,16 @@ def export():
                 return render_template('export.html', form1=form1, form2=form2)
 
         filename = upload(request)
-        arg = flask_app.config['INDEXER'] % (filename, filename)
-        subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
+        export_out_file_path = 'download/exports/'+filename+'.json'
+        if not os.path.isfile(export_out_file_path):
+            arg = flask_app.config['INDEXER'] % (filename, filename)
+            subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
         if request.form['gtv_match_id'] != '' and request.form['map_number'] != '':
             cut_form.gtv_match_id.data = re.findall(r'(\d+)', request.form['map_number'])[0]
             cut_form.map_number.data = int(request.form['map_number'])-1
         else:
             cut_form.filename.data = filename
-        parsed_output = parse_output(open('download/exports/'+filename+'.json', 'r',
+        parsed_output = parse_output(open(export_out_file_path, 'r',
                                           encoding='utf-8', errors='ignore').readlines(),
                                      cut_form.gtv_match_id.data)
         # make gtv comment
@@ -330,7 +332,8 @@ def export_ettv(path):
     if os.name == 'posix':
         indexer = indexer.replace('/', '\\')
     arg = indexer % (filename, filename)
-    subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
+    if not os.path.isfile(path + '.json'):
+        subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
     parsed_output = parse_output(
         open(path + '.json', 'r', encoding='utf-8', errors='ignore').readlines(),
         cut_form.gtv_match_id.data)
@@ -414,9 +417,11 @@ def export_get(export_id, map_num, render=False, html=True):
         flash(str(e))
         return error_response
     else:
-        arg = flask_app.config['INDEXER'] % (filename, filename)
-        subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
-        f = open('download/exports/'+filename+'.json', 'r', encoding='utf-8', errors='ignore')
+        export_out_file_path = 'download/exports/'+filename+'.json'
+        if not os.path.isfile(export_out_file_path):
+            arg = flask_app.config['INDEXER'] % (filename, filename)
+            subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
+        f = open(export_out_file_path, 'r', encoding='utf-8', errors='ignore')
         out = f.readlines()
         f.close()
         # os.remove('download/exports/'+filename+'.json')
