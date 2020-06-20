@@ -17,6 +17,7 @@
 {% if render.streamable_short %}
   {{ render_streamable(render.streamable_short) }}
 {% else %}
+<script src="https://cdn.jsdelivr.net/npm/socket.io-client@2/dist/socket.io.js"></script>
 <script>
 
 function get_worker_last_beat(element){

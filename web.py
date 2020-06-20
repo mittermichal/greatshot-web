@@ -22,9 +22,11 @@ from datetime import timedelta
 from glob import glob, iglob
 from werkzeug.utils import secure_filename
 import tasks_config
+from flask_socketio import SocketIO, emit
 
 flask_app = Flask(__name__)
 flask_app.config.from_pyfile('config.cfg')
+socketio = SocketIO(flask_app, cookie=None)
 
 
 def request_wants_json():
@@ -472,6 +474,12 @@ def handle_no_result_exception(error):
 def page_not_found(e):
     flash(e)
     return render_template('layout.html'), 404
+
+
+@socketio.on('my event')
+def test_message(message):
+    print(message)
+    emit('my response', {'data': 'got it!'})
 
 
 if __name__ == "__main__":
