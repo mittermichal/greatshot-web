@@ -41,7 +41,7 @@ def parse_output(lines, gtv_match_id=None):
     table.create_index("player")
     table.create_index("region")
 
-    if gtv_match_id != None and gtv_match_id != '':
+    if gtv_match_id is not None and gtv_match_id != '':
         g_players = app.gamestv.getPlayers(gtv_match_id)
     else:
         g_players = []
