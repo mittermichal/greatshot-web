@@ -6,6 +6,7 @@
 	- hit regions (headshots) counter
 	- fast consecutive kills <img src="/static/excellent.png" height="25" width="25"/> [example](https://streamable.com/a5tx7)
 	- consecutive headshots - [example](https://streamable.com/e4ogi)
+	- revive stats
 - download ettv demo (tv_84) from [gamestv.org](http://gamestv.org)
 - render demo to video and publish it - [example](https://streamable.com/2d77)
 - link highlights and statistics in comments of gamestv match
@@ -15,8 +16,6 @@
 ## what it could do in future:
 - create database of players with statistics
 - visualize timeline of match
-- have better documentation
-- revive stats
 - retrieve true damage stats when its bugged to 0
 
 
