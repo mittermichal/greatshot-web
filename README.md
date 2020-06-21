@@ -1,5 +1,5 @@
 # Wolfenstein: Enemy Territory demo tools
-
+[![Discord](https://img.shields.io/discord/546291405404897290?label=discord)](https://discord.gg/p59kWdF)
 ## what it can do:
 - cut demos (dm_84/tv_84) -> dm_84
 - export demos (dm_84/tv_84) to json and analyze it to output:
