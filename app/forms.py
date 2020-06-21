@@ -11,7 +11,7 @@ class ExportFileForm(FlaskForm):
 class ExportMatchLinkForm(FlaskForm):
     gtv_match_id = StringField('Match link',
                                render_kw={"placeholder": "http://www.gamestv.org/event/56051-tag-vs-elysium/"})
-    map_number = StringField('Map number', render_kw={"placeholder": "1"})
+    map_number = IntegerField('Map number', default=1, render_kw={"min": 1})
 
 
 class CutForm(FlaskForm):
