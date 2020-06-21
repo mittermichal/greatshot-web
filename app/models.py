@@ -16,3 +16,6 @@ class Render(Base):
     client_num = Column(Integer())
     start = Column(Integer())
     end = Column(Integer())
+
+    def __repr__(self):
+        return str(vars(self)).replace(',', ',\n')

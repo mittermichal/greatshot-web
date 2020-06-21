@@ -2,7 +2,6 @@ import os
 import subprocess
 import urllib.request
 from urllib.parse import urlparse
-import glob
 import dramatiq
 from dramatiq.brokers.redis import RedisBroker
 import tasks_config
@@ -96,7 +95,7 @@ def render(render_id, demo_url, start, end, name=None, country=None, crf='23', e
     # netloc = url_parsed.netloc.replace('localhost','127.0.0.1')
     # print('upload url: ' + url_parsed.scheme + '://' + url_parsed.netloc + '/upload')
     r = requests.put(
-        url_parsed.scheme + '://' + url_parsed.netloc + '/download',
+        url_parsed.scheme + '://' + url_parsed.netloc + '/renders',
         auth=(tasks_config.STREAMABLE_NAME, tasks_config.STREAMABLE_PW),
         files={filename: open(tasks_config.ETPATH + 'render.mp4', 'rb')})
     # print('upload r code:' + str(r.status_code))
