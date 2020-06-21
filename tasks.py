@@ -12,6 +12,9 @@ redis_broker = RedisBroker(url=tasks_config.REDIS, middleware=[], namespace=task
 dramatiq.set_broker(redis_broker)
 
 
+# TODO: pipe ET console output to socket server
+#  pipe this to socket server https://stackoverflow.com/questions/43978018/ffmpeg-get-machine-readable-output
+
 def get_worker_last_beat():
     return int(redis_broker.client.get('worker_last_beat').decode('utf-8'))
 
