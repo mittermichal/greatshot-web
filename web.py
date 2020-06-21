@@ -55,7 +55,7 @@ def render_post(render_id):
             requests.post(
                 flask_app.config['RENDER_FINISHED_WEBHOOK'],
                 json={
-                    'content': flask_app.config['APPHOST']+'/'+url_for(
+                    'content': flask_app.config['APPHOST']+url_for(
                         'download_static', filename='renders/' + render_id + '.mp4'
                     )
                 }
