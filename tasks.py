@@ -38,14 +38,14 @@ def capture(start, end, etl=False):
 
 def ffmpeg_args(name, country, crf):
     args = ['ffmpeg', '-hide_banner', '-y', '-framerate', '50', '-i', 'etpro/screenshots/shot%04d.tga']
-    if name is not None and country is not None:
+    if name != "":
         args += [
             '-filter_complex',
             "[0] [1] overlay=25:150 [b]; [b] drawtext=fontfile=courbd.ttf:text='" +
             name + "': fontcolor=white: fontsize=50: x=100: y=150+45.0-text_h-5",
-            '-i',
-            '4x3/' + country + '.png'
         ]
+    if country != "None":
+        args += ['-i', '4x3/' + country + '.png']
     args += ['-i', 'etpro/wav/synctest.wav', '-shortest', '-crf', str(crf), '-pix_fmt', 'yuv420p', 'render.mp4']
     return args
 

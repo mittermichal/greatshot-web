@@ -29,7 +29,7 @@ class RenderForm(FlaskForm):
     title = StringField('Title')
     crf = IntegerField('crf (default:23)', [validators.NumberRange(min=18, max=25)], default=23)
     name = StringField('Name')
-    country = SelectField('Country', choices=[(x, x) for x in countries], default='eu')
+    country = SelectField('Country', choices=[(x, x) for x in [None]+countries], default=None)
 
 
 class PlayerForm(FlaskForm):
