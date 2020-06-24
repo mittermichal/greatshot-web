@@ -343,7 +343,7 @@ def export_ettv(path):
     if os.name == 'posix':
         indexer = indexer.replace('/', '\\')
     arg = indexer % (filename, filename)
-    if not os.path.isfile(path + '.txt'):
+    if not os.path.isfile(path + '.txt') or request.args.get('live', False):
         subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
     parsed_output = parse_output(
         open(path + '.txt', 'r', encoding='utf-8', errors='ignore').readlines(),
