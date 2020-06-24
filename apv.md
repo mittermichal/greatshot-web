@@ -8,3 +8,4 @@ I have chosen to add features to this project
     - display data from app.Libtech3 models
     - Player model
     - M-N relation of Player and app.Libtech3.Demo
+- error logging
