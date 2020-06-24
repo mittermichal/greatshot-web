@@ -4,8 +4,13 @@ I have chosen to add features to this project
 - paginate result list
 - input client and server side validation
 - user login, authorization - user and role models
+    - registration, login
+    - assigning roles to users
 - database tables with relations:
-    - display data from app.Libtech3 models
+    - display data from app.Libtech3 models - app/Libtech3.py
     - Player model
+        - got nickname, nationality
+        - can has links to sites like twitch, youtube
     - M-N relation of Player and app.Libtech3.Demo
+        - user interface for assigning Player to Demo
 - error logging
