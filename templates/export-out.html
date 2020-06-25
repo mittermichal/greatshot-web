@@ -8,6 +8,7 @@
 	{{ super() }}
 	<script src="{{ url_for('static', filename='node_modules/vis-timeline/standalone/umd/vis-timeline-graph2d.min.js')}}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='node_modules/vis-timeline/dist/vis-timeline-graph2d.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='timeline.css')}}">
 {% endblock %}
 
 {% block content %}
@@ -238,21 +239,169 @@ var g_players = {{ parser_out.g_players|tojson|safe }};
 	}
 
 	var revives = {{ parser_out.revives|tojson|safe }};
+	var rounds = {{ parser_out.rounds|tojson|safe }};
+	var demo = {{ parser_out.demo|tojson|safe }}
+	var players = {{ parser_out.players|tojson|safe }}
+	var obituaries = {{ parser_out.obituaries|tojson|safe }}
+	var timelimit = parseInt(demo.szServerConfig.match(/timelimit\\(\d+)/)[1]);
+
+	function getRound(server_time) {
+		if (rounds[0].dwStartTime > server_time) {console.log("2soon")}
+		if (demo.dwEndTime < server_time) {console.log("2late")}
+		var i = 0;
+		while (i<rounds.length-1 && rounds[i+1].dwStartTime < server_time) i++;
+		return rounds[i];
+	}
+
+	function getTimelimit(round) {
+		if (round.szTimeToBeat == "0") {
+			return timelimit;
+		} else {
+			return parseFloat(round.szTimeToBeat);
+		}
+	}
+
+	function msec(server_time) {
+		if (rounds[0].dwStartTime > server_time) {return -1;}
+		if (demo.dwEndTime < server_time) {return -1;}
+		var round = getRound(server_time);
+		return (getTimelimit(round) * 60 * 1000) - (server_time - round.dwStartTime);
+	}
+
+	function msecToTimeString(milliseconds) {
+		if (milliseconds<0) return "-";
+		var mins = Math.floor(milliseconds / (1000 * 60)) % 60;
+		var seconds = Math.floor(milliseconds / (1000)) % 60;
+		var tens = Math.floor(seconds / 10);
+		seconds = seconds % 10;
+		return mins.toString()+":"+tens.toString()+seconds.toString();
+	}
+
 	var container = document.getElementById("timeline");
-	//numbers.map(i => i*i);
-	var items = new vis.DataSet([
-	  { id: 1, content: "item 1", start: "2014-04-20" },
-	  { id: 2, content: "item 2", start: "2014-04-14" },
-	  { id: 3, content: "item 3", start: "2014-04-18" },
-	  { id: 4, content: "item 4", start: "2014-04-16", end: "2014-04-19" },
-	  { id: 5, content: "item 5", start: "2014-04-25" },
-	  { id: 6, content: "item 6", start: "2014-04-27", type: "point" },
-	]);
-	t_revives = revives.map(function(r){ return {content: ""+r.bReviver+"->"+r.bRevived, start: r.dwTime/1000, type: "point" }});
-	// Configuration for the Timeline
-	var options = {};
+	var groups = new vis.DataSet();
+	for (var g = 0; g < players.length; g++) {
+		var player = players[g];
+		if (player.bTeam == 1 || player.bTeam == 2)
+			groups.add({id: player.bClientNum, content: player.szCleanName});
+	}
+	groups.add({id: "render", content: ""});
+
+	//var items = [{ content: "test", start: 69911100, group: 0}];
+	var items = new vis.DataSet();
+	/*items = items.concat(
+		revives.map(function(r){ return {group:r.bReviver, content: r.bRevived.toString(), start: r.dwTime, type: "point" }})
+	);*/
+	items.add(
+		obituaries.map(function(o){ return {
+			group:o.bAttacker,
+			content: "",
+			start: o.dwTime,
+			type: "point",
+			title: o.szMessage
+		}})
+	);
+	items.add({
+		start: rounds[0].dwStartTime,
+		end: rounds[0].dwStartTime+100000,
+		type: "range",
+		content: "render-test",
+		group: "render",
+		editable: {updateGroup:true,updateTime:true},
+		className: "render"
+	});
+	var options = {
+	  start: demo.dwStartTime,
+	  end: demo.dwEndTime,
+	  showCurrentTime: false,
+	  editable: {
+	  	overrideItems: false,
+	  },
+	  cluster: {
+	  	titleTemplate: "{count}",
+	  	//maxItems: -1
+	  	clusterCriteria: function(a,b) {
+	  		return Math.abs(b.start.valueOf()-a.start.valueOf())<=4000;
+	  	}
+	  },
+	  stack: false,
+	  format: {
+		minorLabels: function (date, scale, step) {
+		  var now = new Date();
+		  var ago = now - date;
+		  var divider;
+		  switch (scale) {
+			case "millisecond":
+			  divider = 1;
+			  break;
+			case "second":
+			  divider = 1000;
+			  break;
+			case "minute":
+			  divider = 1000 * 60;
+			  break;
+			case "hour":
+			  divider = 1000 * 60 * 60;
+			  break;
+			case "day":
+			  divider = 1000 * 60 * 60 * 24;
+			  break;
+			case "weekday":
+			  divider = 1000 * 60 * 60 * 24 * 7;
+			  break;
+			case "month":
+			  divider = 1000 * 60 * 60 * 24 * 30;
+			  break;
+			case "year":
+			  divider = 1000 * 60 * 60 * 24 * 365;
+			  break;
+			default:
+			  return new Date(date);
+		  }
+		  return msecToTimeString(msec(date.valueOf()));
+		},
+		majorLabels: function (date, scale, step) {
+		  var now = new Date();
+		  var ago = now - date;
+		  var divider;
+		  switch (scale) {
+			case "millisecond":
+			  divider = 1;
+			  break;
+			case "second":
+			  divider = 1000;
+			  break;
+			case "minute":
+			  divider = 1000 * 60;
+			  break;
+			case "hour":
+			  divider = 1000 * 60 * 60;
+			  break;
+			case "day":
+			  divider = 1000 * 60 * 60 * 24;
+			  break;
+			case "weekday":
+			  divider = 1000 * 60 * 60 * 24 * 7;
+			  break;
+			case "month":
+			  divider = 1000 * 60 * 60 * 24 * 30;
+			  break;
+			case "year":
+			  divider = 1000 * 60 * 60 * 24 * 365;
+			  break;
+			default:
+			  return new Date(date);
+		  }
+		  return msecToTimeString(msec(date.valueOf()),rounds);
+		},
+	  },
+	  zoomMin: 5000,
+	  zoomMax: 1000*60*60*3
+	};
+
 	// Create a Timeline
-	var timeline = new vis.Timeline(container, t_revives, options);
+	var timeline = new vis.Timeline(container, items, options);
+	timeline.setGroups(groups);
+	timeline.redraw();
 </script>
 
 <h2>Chat</h2>

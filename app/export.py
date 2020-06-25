@@ -37,6 +37,7 @@ def parse_output(lines, gtv_match_id=None):
     chat = []
     demo = {}
     revives = []
+    obituaries = []
     db = Database(":memory:")
     table = db.create('hits', ("player", 'INTEGER'), ("region", 'INTEGER'))
     table.create_index("player")
@@ -72,42 +73,34 @@ def parse_output(lines, gtv_match_id=None):
             j['hs_sprees'] = []
             j['hs_spree'] = []
 
-            form = PlayerForm()
-            form.client_num.data = j['bClientNum']
-            if gtv_match_id != None:
-
-                for g_player in g_players:
-                    if j['szCleanName'].lower().find(g_player['name'].lower()) != -1:
-                        form.name.data = g_player['name']
-                        form.country.data = g_player['country']
-
-            j['form'] = form
             players.append(j)
 
-        elif 'szType' in j and j['szType'] == 'obituary' and j['bAttacker'] != 254 and j['bAttacker'] != j[
-            'bTarget'] and j['bIsTeamkill'] == 0:
-            # and j['bAttacker']!=j['bTarget']:
-            # if j['bAttacker']>=len(players):
-            # print(j['bAttacker'])
-            # print(players[j['bAttacker']])
+        elif 'szType' in j and j['szType'] == 'obituary':
+            obituaries.append(j)
+            if j['bAttacker'] != 254 and j['bAttacker'] != j[
+                'bTarget'] and j['bIsTeamkill'] == 0:
+                # and j['bAttacker']!=j['bTarget']:
+                # if j['bAttacker']>=len(players):
+                # print(j['bAttacker'])
+                # print(players[j['bAttacker']])
 
-            attacker = get_player(players, j['bAttacker'])
-            j['distance'] = dist(j['kx'], j['ky'], j['tx'], j['ty'])
+                attacker = get_player(players, j['bAttacker'])
+                j['distance'] = dist(j['kx'], j['ky'], j['tx'], j['ty'])
 
-            # riflenade
-            if (j['bWeapon'] == 43 or j['bWeapon'] == 44) and j['distance'] > 2000:
-                attacker['rifletricks'].append(j)
+                # riflenade
+                if (j['bWeapon'] == 43 or j['bWeapon'] == 44) and j['distance'] > 2000:
+                    attacker['rifletricks'].append(j)
 
-            spree = attacker['spree']
-            sprees = attacker['sprees']
-            if (not len(spree)) or (j['dwTime'] - spree[len(spree) - 1]['dwTime'] <= 4000):
-                spree.append(j)
-            else:
-                if len(spree) >= 3:
-                    sprees.append(spree)
-                spree = [j]
-            attacker['spree'] = spree
-            attacker['sprees'] = sprees
+                spree = attacker['spree']
+                sprees = attacker['sprees']
+                if (not len(spree)) or (j['dwTime'] - spree[len(spree) - 1]['dwTime'] <= 4000):
+                    spree.append(j)
+                else:
+                    if len(spree) >= 3:
+                        sprees.append(spree)
+                    spree = [j]
+                attacker['spree'] = spree
+                attacker['sprees'] = sprees
 
         elif 'szType' in j and j['szType'] == 'bulletevent':
             attacker = get_player(players, j['bAttacker'])
@@ -171,5 +164,6 @@ def parse_output(lines, gtv_match_id=None):
       'rounds': rounds,
       'g_players': g_players,
       'chat': chat,
-      'revives': revives
+      'revives': revives,
+      'obituaries': obituaries
     }
