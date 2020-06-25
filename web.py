@@ -36,12 +36,17 @@ def request_wants_json():
 def render_get(render_id):
     render = Render.query.filter(Render.id == render_id).one()
     video_path = 'download/renders/' + str(render_id) + '.mp4'
+    video_url = url_for('static', filename=video_path)
     video_exists = os.path.isfile(video_path)
     if request_wants_json():
         data = {'status_msg': render.status_msg,
                 'progress': render.progress}
         return jsonify(data)
-    return render_template('render.html', render=render, video_path='/' + video_path, video_exists=video_exists)
+    return render_template(
+        'render.html', render=render,
+        video_url=video_url, video_exists=video_exists,
+        download_url=url_for('download_static', path='renders/' + str(render.id) + '.mp4', dl=1)
+    )
 
 
 @flask_app.route('/renders/<render_id>', methods=['POST'])
@@ -55,8 +60,8 @@ def render_post(render_id):
             requests.post(
                 flask_app.config['RENDER_FINISHED_WEBHOOK'],
                 json={
-                    'content': flask_app.config['APPHOST']+'/'+url_for(
-                        'download_static', filename='renders/' + render_id + '.mp4'
+                    'content': flask_app.config['APPHOST']+url_for(
+                        'static', filename='download/renders/' + render_id + '.mp4'
                     )
                 }
             )
@@ -197,40 +202,46 @@ def authenticate():
     )
 
 
-@flask_app.route('/download', methods=['GET', 'POST', 'PUT'])
-def download():
-    if request.method == 'PUT':
-        auth = request.authorization
-        if not auth or not check_auth(auth.username, auth.password):
-            return authenticate()
-        try:
-            for filename, file in request.files.items():
-                name = secure_filename(request.files[filename].name)
-                file.save(os.path.join('download/renders', name))
-                return name
-            return jsonify({'error': 'no file'})
-        except Exception as e:
-            print(e)
-            return jsonify({'error': e})
+@flask_app.route('/renders', methods=['PUT'])
+def render_upload():
+    auth = request.authorization
+    if not auth or not check_auth(auth.username, auth.password):
+        return authenticate()
+    try:
+        for filename, file in request.files.items():
+            name = secure_filename(request.files[filename].name)
+            file.save(os.path.join('download/renders', name))
+            return name
+        return jsonify({'error': 'no file'})
+    except Exception as e:
+        print(e)
+        return jsonify({'error': e})
+
+
+@flask_app.route('/download/')
+@flask_app.route('/download/<path:path>')
+def download_static(path=''):
+    full_path = os.path.normpath(os.path.join('download', path))
+    if os.path.isfile(full_path):
+        as_attachment = request.args.get('dl', '0') == '1'
+        # http://stackoverflow.com/questions/24612366/flask-deleting-uploads-after-they-have-been-downloaded
+        return send_from_directory(directory='download', filename=path, as_attachment=as_attachment)
+    elif os.path.isdir(full_path):
+        lst = sorted(
+            [{
+                'name': f,
+                'path': os.path.join(path, f).replace("\\", "/"),
+                'ctime': os.path.getctime(os.path.join(full_path, f)),
+                'formatted_ctime': strftime('%c', gmtime(os.path.getctime(os.path.join(full_path, f)))),
+                'isdir': os.path.isdir(os.path.join(full_path, f))
+            } for f in os.listdir(full_path)],
+            key=lambda f: [f['isdir'], f['ctime']],
+            reverse=True
+        )
+        return render_template('download_list.html', files=lst)
     else:
-        blob_filter = request.args.get('filter', '*.*')
-        if not re.match(r'(\*|\w|\s)+', blob_filter):
-            blob_filter = '*.*'
-            flash('bad character in blob -> reverting to *.*')
-        files = sorted([{'name': f,
-                         'ctime': os.path.getctime(f),
-                         'formatted_ctime': strftime('%c', gmtime(os.path.getctime(f)))}
-                        for f in glob('download/' + blob_filter, recursive=False)],
-                       key=lambda f: f['ctime'],
-                       reverse=True)
-        return render_template('download_list.html', files=files)
-
-
-@flask_app.route('/download/<path:filename>')
-def download_static(filename):
-    as_attachment = request.args.get('dl', '0') == '1'
-    # http://stackoverflow.com/questions/24612366/flask-deleting-uploads-after-they-have-been-downloaded
-    return send_from_directory(directory='download', filename=filename, as_attachment=as_attachment)
+        flash("file not found")
+        return download_static(''), 404
 
 
 # TODO exclude POV playerstate/entity
@@ -281,7 +292,7 @@ def export():
                 return render_template('export.html', form1=form1, form2=form2)
 
         filename = upload(request)
-        export_out_file_path = 'download/exports/'+filename+'.json'
+        export_out_file_path = 'download/exports/'+filename+'.txt'
         if not os.path.isfile(export_out_file_path):
             arg = flask_app.config['INDEXER'] % (filename, filename)
             subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
@@ -296,7 +307,7 @@ def export():
         # make gtv comment
         # retrieve clips that are from this demo
         return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form,
-                               out=open('download/exports/'+filename+'.json',
+                               out=open('download/exports/'+filename+'.txt',
                                         'r', encoding='utf-8', errors='ignore').read(),
                                parser_out=parsed_output)
     try:
@@ -328,17 +339,17 @@ def export_ettv(path):
     print(filename)
     cut_form.filepath.data = filename
     # cut_form.filename = 'aaa'
-    indexer = 'indexTarget/%s/exportJsonFile/%s.json/exportBulletEvents/1/exportDemo/1/exportChatMessages/1/exportRevives/1'
+    indexer = 'indexTarget/%s/exportJsonFile/%s.txt/exportBulletEvents/1/exportDemo/1/exportChatMessages/1/exportRevives/1'
     if os.name == 'posix':
         indexer = indexer.replace('/', '\\')
     arg = indexer % (filename, filename)
-    if not os.path.isfile(path + '.json'):
+    if not os.path.isfile(path + '.txt') or request.args.get('live', False):
         subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
     parsed_output = parse_output(
-        open(path + '.json', 'r', encoding='utf-8', errors='ignore').readlines(),
+        open(path + '.txt', 'r', encoding='utf-8', errors='ignore').readlines(),
         cut_form.gtv_match_id.data)
     return render_template('export-out.html', cut_form=cut_form, rndr_form=rndr_form,
-                           out=open(path + '.json', 'r').read(),
+                           out=open(path + '.txt', 'r').read(),
                            parser_out=parsed_output)
 
 
@@ -347,8 +358,8 @@ def export_last():
     cut_form = CutForm()
     render_form = RenderForm()
     return render_template('export-out.html', cut_form=cut_form, rndr_form=render_form,
-                           out=open('download/exports/out.json', 'r').read(),
-                           parser_out=parse_output(open('download/exports/out.json', 'r').readlines()))
+                           out=open('download/exports/out.txt', 'r').read(),
+                           parser_out=parse_output(open('download/exports/out.txt', 'r').readlines()))
 
 
 def generate_ftp_path(export_id):
@@ -417,7 +428,7 @@ def export_get(export_id, map_num, render=False, html=True):
         flash(str(e))
         return error_response
     else:
-        export_out_file_path = 'download/exports/'+filename+'.json'
+        export_out_file_path = 'download/exports/'+filename+'.txt'
         if not os.path.isfile(export_out_file_path):
             arg = flask_app.config['INDEXER'] % (filename, filename)
             subprocess.call([flask_app.config['PARSERPATH'], 'indexer', arg])
@@ -480,4 +491,4 @@ def page_not_found(e):
 
 
 if __name__ == "__main__":
-    flask_app.run(port=5111, host='0.0.0.0')
+    flask_app.run(port=5111, host='0.0.0.0', static_files={'/static': '/path/to/static'})

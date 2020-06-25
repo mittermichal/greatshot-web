@@ -2,7 +2,6 @@ import os
 import subprocess
 import urllib.request
 from urllib.parse import urlparse
-import glob
 import dramatiq
 from dramatiq.brokers.redis import RedisBroker
 import tasks_config
@@ -39,14 +38,14 @@ def capture(start, end, etl=False):
 
 def ffmpeg_args(name, country, crf):
     args = ['ffmpeg', '-hide_banner', '-y', '-framerate', '50', '-i', 'etpro/screenshots/shot%04d.tga']
-    if name is not None and country is not None:
+    if name != "":
         args += [
             '-filter_complex',
             "[0] [1] overlay=25:150 [b]; [b] drawtext=fontfile=courbd.ttf:text='" +
             name + "': fontcolor=white: fontsize=50: x=100: y=150+45.0-text_h-5",
-            '-i',
-            '4x3/' + country + '.png'
         ]
+    if country != "None":
+        args += ['-i', '4x3/' + country + '.png']
     args += ['-i', 'etpro/wav/synctest.wav', '-shortest', '-crf', str(crf), '-pix_fmt', 'yuv420p', 'render.mp4']
     return args
 
@@ -96,7 +95,7 @@ def render(render_id, demo_url, start, end, name=None, country=None, crf='23', e
     # netloc = url_parsed.netloc.replace('localhost','127.0.0.1')
     # print('upload url: ' + url_parsed.scheme + '://' + url_parsed.netloc + '/upload')
     r = requests.put(
-        url_parsed.scheme + '://' + url_parsed.netloc + '/download',
+        url_parsed.scheme + '://' + url_parsed.netloc + '/renders',
         auth=(tasks_config.STREAMABLE_NAME, tasks_config.STREAMABLE_PW),
         files={filename: open(tasks_config.ETPATH + 'render.mp4', 'rb')})
     # print('upload r code:' + str(r.status_code))

@@ -6,13 +6,19 @@
 {% block content %}
 <h2>Downloads</h2>
 
-<ul>
+<table>
 {% for file in files %}
-    <li>
-        <a href="{{ file.name }}">{{ file.name }} </a> {{ file.formatted_ctime }}
-    </li>
+    <tr>
+        <td><a href="{{ url_for('download_static',path=file.path) }}">{{ file.name }}</a></td>
+        <td>
+            <a href="{{ url_for('download_static',path=file.path, dl=1) }}">
+                <span class="oi oi-data-transfer-download"></span>
+            </a>
+        </td>
+        <td> {{ file.formatted_ctime }} </td>
+    </tr>
 {% endfor %}
-</ul>
+</table>
 
 {% endblock %}
 

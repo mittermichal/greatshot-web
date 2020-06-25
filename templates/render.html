@@ -38,10 +38,10 @@ function doPoll(firstPoll=false){
         else if (task.status_msg!='finished') {
           $('.progress-bar').css({'width': task.progress + '%'});
           $('.progress-bar').html(task.status_msg);
-          setTimeout(doPoll,3000);
+          if (task.progress!=100) setTimeout(doPoll,3000);
          } else {
           $('#progress-info').hide();
-          $('#render-video video source').attr('src','{{ video_path }}');
+          $('#render-video video source').attr('src','{{ video_url }}');
           $('#render-video video')[0].load();
           $('#render-video').show();
         }
@@ -59,11 +59,13 @@ function doPoll(firstPoll=false){
 
 
 {% if not video_exists %}
+    {% if render.progress!=100 %}
     <script>
         $(function() {
           setTimeout(function(){doPoll(true)},3000);
         });
     </script>
+    {% endif %}
     <div id="progress-info">
         <div class="progress">
           <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width:{{ render.progress }}%">
@@ -76,12 +78,20 @@ function doPoll(firstPoll=false){
 
 <div id="render-video"{% if not video_exists %} style="display:none;"{% endif %}>
     <video controls>
-            <source src="{{ video_path }}" type="video/mp4">
+            <source src="{{ video_url }}" type="video/mp4">
     </video>
-    <a href="{{ video_path }}?dl=1">Download video</a>
+    {# <input type="text" class="form-control" value="{{ video_url }}" readonly> #}
+    <a href="{{ download_url }}">
+        <span class="oi oi-data-transfer-download m1" style="font-size:48px"></span>
+    </a>
 </div>
 
 {{ render_streamable("") }}
+
+<pre>
+    {{ render }}
+</pre>
+
 
 {% endif %} {# if render.streamable_short #}
 {% endblock %}
