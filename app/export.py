@@ -139,7 +139,11 @@ def parse_output(lines, gtv_match_id=None):
             revived['revived'] = revived['revived'] + 1
         elif 'szType' in j and j['szType'] == 'chat' and j["bPlayer"] != -1:
             chat.append(j)
-
+    for player in players:
+        if len(player['spree']) >= 3:
+            player['sprees'].append(player['spree'])
+        if len(player['hs_spree']) >= 3:
+            player['hs_sprees'].append(player['hs_spree'])
         # if j['bAttacker']==int(player) and j['bRegion']!=130 and j['bRegion']!=131 and j['bRegion']!=0:
         # filter(lambda p: p['bClientNum'] == j['bTarget'], players)
         # exporter.add_event(j['dwTime'],'^2BULLETEVENT      ' +str(j['bRegion']) + '^7 ' + players[j['bTarget']]['szName'])
