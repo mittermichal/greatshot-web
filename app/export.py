@@ -1,7 +1,6 @@
 from pydblite.sqlite import Database, Table
 import json
 from math import sqrt
-from app.forms import PlayerForm
 import app.gamestv
 
 
@@ -71,16 +70,6 @@ def parse_output(lines, gtv_match_id=None):
             j['hs_sprees'] = []
             j['hs_spree'] = []
 
-            form = PlayerForm()
-            form.client_num.data = j['bClientNum']
-            if gtv_match_id != None:
-
-                for g_player in g_players:
-                    if j['szCleanName'].lower().find(g_player['name'].lower()) != -1:
-                        form.name.data = g_player['name']
-                        form.country.data = g_player['country']
-
-            j['form'] = form
             players.append(j)
 
         elif 'szType' in j and j['szType'] == 'obituary' and j['bAttacker'] != 254 and j['bAttacker'] != j[
