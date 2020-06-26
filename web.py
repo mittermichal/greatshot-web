@@ -129,22 +129,15 @@ def renders_list():
     if request.method == 'POST':
         form = RenderForm(request.form)
         cut_form = CutForm(request.form)
+        # TODO: dynamic validation of: - client number
+        #                              - start and end time
         if form.validate_on_submit() and cut_form.validate_on_submit():
-            # TODO: player nickname and country to pass to new render
-            db_player = None
-            return
-            # try:
             map_number = int(cut_form.data['map_number']) - 1 if cut_form.data['map_number'] != '' else None
             filepath = ('upload/' + cut_form.data['filename'], request.form['filepath'])[request.form['filepath'] != '']
-            render_id = render_new(filepath, str(int(cut_form.data['start'])),
-                                   cut_form.data['end'],
+            render_id = render_new(filepath, str(int(cut_form.data['start'])), cut_form.data['end'],
                                    cut_form.data['cut_type'], cut_form.data['client_num'], form.data['title'],
                                    cut_form.data['gtv_match_id'], map_number,
                                    form.data['name'], form.data['country'], form.data['crf'])
-            # except Exception as e:
-            #     flash(str(e))
-            #     return redirect(url_for('export'))
-            #     return redirect(url_for('export',_anchor='render-form'), code=307)
             return redirect(url_for('render_get', render_id=render_id))
         else:
             flash_errors(form)
