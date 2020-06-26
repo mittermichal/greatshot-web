@@ -171,28 +171,24 @@ def allowed_file(filename):
 # @flask_app.route('/uploads/<path:filename>')
 
 def upload(request):
-    if 'uselast' in request.form:
-        print('uselast')
+    if 'file' in request.files:
+        file = request.files['file']
+        filename = 'demo.' + file.filename.rsplit('.', 1)[1]
+        file.save(os.path.join('upload', filename))
+    elif request.form['filename'] != '':
+        filename = request.form['filename']
+    elif request.form['filepath'] != '':
+        filename = request.form['filepath']
     else:
-        if 'file' in request.files:
-            file = request.files['file']
-            filename = 'demo.' + file.filename.rsplit('.', 1)[1]
-            file.save(os.path.join('upload', filename))
-        elif request.form['filename'] != '':
-            filename = request.form['filename']
-        elif request.form['filepath'] != '':
-            filename = request.form['filepath']
-        else:
-            raise Exception("No filename selected for cut")
-        # if user does not select file, browser also
-        # submit a empty part without filename
-        #if file.filename == '':
-        #    return 'demo.tv_84'
-        #if not file or not allowed_file(file.filename):
-        #    return 'demo.tv_84'
+        raise Exception("No filename selected for cut")
+    # if user does not select file, browser also
+    # submit a empty part without filename
+    #if file.filename == '':
+    #    return 'demo.tv_84'
+    #if not file or not allowed_file(file.filename):
+    #    return 'demo.tv_84'
 
-        return filename
-    return 'demo.tv_84'
+    return filename
 
 
 def check_auth(username, password):
@@ -360,22 +356,6 @@ def export_ettv(path):
     return render_template('export-out.html', cut_form=cut_form, rndr_form=rndr_form,
                            out=open(path + '.txt', 'r').read(),
                            parser_out=parsed_output)
-
-
-@flask_app.route('/export/last')
-def export_last():
-    cut_form = CutForm()
-    render_form = RenderForm()
-    return render_template('export-out.html', cut_form=cut_form, rndr_form=render_form,
-                           out=open('download/exports/out.txt', 'r').read(),
-                           parser_out=parse_output(open('download/exports/out.txt', 'r').readlines()))
-
-
-def generate_ftp_path(export_id):
-    path = ''
-    for c in str(export_id):
-        path = path + c + '/'
-    return path
 
 
 @flask_app.route('/export/<export_id>')
