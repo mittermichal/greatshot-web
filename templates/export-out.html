@@ -93,6 +93,7 @@ function fillForm(e) {
 		value=$(e).parent().attr('data-'+parameters[i]);
 		$('form #'+parameters[i]).attr('value',value)
 		$('form #'+parameters[i]).val(value);
+		$('form #'+parameters[i]).change();
 	}
 }
 
@@ -159,6 +160,11 @@ var g_players = {{ parser_out.g_players|tojson|safe }};
 		<label for="client_num" class="col-sm-offset-2">
 			<sup>*</sup> Client number only needed for ETTV demo to choose POV
 		</label>
+		<label for="crf" class="col-sm-offset-2">
+			<sup>**</sup>
+			<a href="https://trac.ffmpeg.org/wiki/Encode/H.264#crf">ffmpeg's crf</a>
+			lower value - higher quality
+		</label>
 	</div>
 </form>
 
@@ -173,6 +179,7 @@ var g_players = {{ parser_out.g_players|tojson|safe }};
 		</label>
 	</div>
 </form>
+<script src="{{ url_for('static', filename='input-spinner.js')}}"></script>
 
 {#
 <div style="">

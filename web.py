@@ -40,15 +40,19 @@ def render_get(render_id):
     video_path = 'download/renders/' + str(render_id) + '.mp4'
     video_url = url_for('static', filename=video_path)
     video_exists = os.path.isfile(video_path)
-    if request_wants_json():
-        data = {'status_msg': render.status_msg,
-                'progress': render.progress}
-        return jsonify(data)
     return render_template(
         'render.html', render=render,
         video_url=video_url, video_exists=video_exists,
         download_url=url_for('download_static', path='renders/' + str(render.id) + '.mp4', dl=1)
     )
+
+
+@flask_app.route('/renders/<render_id>/status', methods=['GET'])
+def render_status_get(render_id):
+    render = Render.query.filter(Render.id == render_id).one()
+    data = {'status_msg': render.status_msg,
+            'progress': render.progress}
+    return jsonify(data)
 
 
 @flask_app.route('/renders/<render_id>', methods=['POST'])
@@ -127,23 +131,21 @@ def renders_list():
     if request.method == 'POST':
         form = RenderForm(request.form)
         cut_form = CutForm(request.form)
-
-        # TODO: player nickname and country to pass to new render
-        db_player = None
-
-        # try:
-        map_number = int(cut_form.data['map_number']) - 1 if cut_form.data['map_number'] != '' else None
-        filepath = ('upload/' + cut_form.data['filename'], request.form['filepath'])[request.form['filepath'] != '']
-        render_id = render_new(filepath, str(int(cut_form.data['start'])),
-                               cut_form.data['end'],
-                               cut_form.data['cut_type'], cut_form.data['client_num'], form.data['title'],
-                               cut_form.data['gtv_match_id'], map_number,
-                               form.data['name'], form.data['country'], form.data['crf'])
-        # except Exception as e:
-        #     flash(str(e))
-        #     return redirect(url_for('export'))
-        #     return redirect(url_for('export',_anchor='render-form'), code=307)
-        return redirect(url_for('render_get', render_id=render_id))
+        # TODO: dynamic validation of: - client number
+        #                              - start and end time
+        if form.validate_on_submit() and cut_form.validate_on_submit():
+            map_number = int(cut_form.data['map_number']) - 1 if cut_form.data['map_number'] != '' else None
+            filepath = ('upload/' + cut_form.data['filename'], request.form['filepath'])[request.form['filepath'] != '']
+            render_id = render_new(filepath, str(int(cut_form.data['start'])), cut_form.data['end'],
+                                   cut_form.data['cut_type'], cut_form.data['client_num'], form.data['title'],
+                                   cut_form.data['gtv_match_id'], map_number,
+                                   form.data['name'], form.data['country'], form.data['crf'])
+            return redirect(url_for('render_get', render_id=render_id))
+        else:
+            flash_errors(form)
+            flash_errors(cut_form)
+            renders = Render.query.order_by(desc(Render.id)).all()
+            return render_template('renders.html', renders=renders)
 
 
 def spree_time_interval(spree):
@@ -164,28 +166,23 @@ def allowed_file(filename):
 # @flask_app.route('/uploads/<path:filename>')
 
 def upload(request):
-    if 'uselast' in request.form:
-        print('uselast')
+    if 'file' in request.files:
+        file = request.files['file']
+        filename = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6)) + file.filename
+        file.save(os.path.join('upload', filename))
+    elif request.form['filename'] != '':
+        filename = request.form['filename']
+    elif request.form['filepath'] != '':
+        filename = request.form['filepath']
     else:
-        if 'file' in request.files:
-            file = request.files['file']
-            filename = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6)) + file.filename
-            file.save(os.path.join('upload', filename))
-        elif request.form['filename'] != '':
-            filename = request.form['filename']
-        elif request.form['filepath'] != '':
-            filename = request.form['filepath']
-        else:
-            raise Exception("No filename selected for cut")
-        # if user does not select file, browser also
-        # submit a empty part without filename
-        #if file.filename == '':
-        #    return 'demo.tv_84'
-        #if not file or not allowed_file(file.filename):
-        #    return 'demo.tv_84'
-
-        return filename
-    return 'demo.tv_84'
+        raise Exception("No filename selected for cut")
+    # if user does not select file, browser also
+    # submit a empty part without filename
+    # if file.filename == '':
+    #    return 'demo.tv_84'
+    # if not file or not allowed_file(file.filename):
+    #    return 'demo.tv_84'
+    return filename
 
 
 def check_auth(username, password):
@@ -355,22 +352,6 @@ def export_ettv(path):
                            parser_out=parsed_output)
 
 
-@flask_app.route('/export/last')
-def export_last():
-    cut_form = CutForm()
-    render_form = RenderForm()
-    return render_template('export-out.html', cut_form=cut_form, rndr_form=render_form,
-                           out=open('download/exports/out.txt', 'r').read(),
-                           parser_out=parse_output(open('download/exports/out.txt', 'r').readlines()))
-
-
-def generate_ftp_path(export_id):
-    path = ''
-    for c in str(export_id):
-        path = path + c + '/'
-    return path
-
-
 @flask_app.route('/export/<export_id>')
 def export_get_match(export_id):
     renders = Render.query.order_by(desc(Render.id)).filter(Render.gtv_match_id == export_id)
@@ -490,6 +471,16 @@ def handle_no_result_exception(error):
 def page_not_found(e):
     flash(e)
     return render_template('layout.html'), 404
+
+
+def flash_errors(form):
+    """Flashes form errors"""
+    for field, errors in form.errors.items():
+        for error in errors:
+            flash(u"Error in the %s field - %s" % (
+                getattr(form, field).label.text,
+                error
+            ), 'error')
 
 
 if __name__ == "__main__":
