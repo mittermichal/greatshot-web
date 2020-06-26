@@ -2,7 +2,22 @@
     {% if field.type!="CSRFTokenField" and field.type!="HiddenField" %}
         <div class="form-group row frm-{{ field.name }}">
             {{ field.label(class_="col-form-label col-sm-4") }}
-            <div class="col-sm-8">{{ field(class_="form-control",**kwargs)|safe }}</div>
+            <div class="col-sm-8">
+                {% if field.name == "start" or field.name == "end" %}
+                    <div class="input-group">
+                        <div class="input-group-prepend"><button class="btn btn-decrement btn-outline-secondary" type="button">
+                            <strong>-</strong></button>
+                        </div>
+                        {{ field(class_="form-control",**kwargs)|safe }}
+                        <div class="input-group-append">
+                            <button class="btn btn-increment btn-outline-secondary" type="button">
+                                <strong>+</strong></button>
+                        </div>
+                    </div>
+                {% else %}
+                    {{ field(class_="form-control",**kwargs)|safe }}
+                {% endif %}
+            </div>
         </div>
     {% else %}
         {{ field(class_="form-control",**kwargs)|safe }}
