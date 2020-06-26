@@ -15,8 +15,8 @@ class ExportMatchLinkForm(FlaskForm):
 
 
 class CutForm(FlaskForm):
-    start = IntegerField('Start', default=0)
-    end = IntegerField('End', default=2147483000)
+    start = IntegerField('Start', default=0, render_kw={"step": "50"})
+    end = IntegerField('End', default=2147483000, render_kw={"step": "50"})
     length = StringField('Length', render_kw={"disabled": "disabled"})
     cut_type = SelectField('Cut type', choices=[
             ('0', 'SNAPNUMBER'),
