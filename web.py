@@ -22,6 +22,8 @@ from datetime import timedelta
 from glob import glob, iglob
 from werkzeug.utils import secure_filename
 import tasks_config
+import random
+import string
 
 flask_app = Flask(__name__)
 flask_app.config.from_pyfile('config.cfg')
@@ -167,7 +169,7 @@ def upload(request):
     else:
         if 'file' in request.files:
             file = request.files['file']
-            filename = 'demo.' + file.filename.rsplit('.', 1)[1]
+            filename = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6)) + file.filename
             file.save(os.path.join('upload', filename))
         elif request.form['filename'] != '':
             filename = request.form['filename']
