@@ -38,15 +38,19 @@ def render_get(render_id):
     video_path = 'download/renders/' + str(render_id) + '.mp4'
     video_url = url_for('static', filename=video_path)
     video_exists = os.path.isfile(video_path)
-    if request_wants_json():
-        data = {'status_msg': render.status_msg,
-                'progress': render.progress}
-        return jsonify(data)
     return render_template(
         'render.html', render=render,
         video_url=video_url, video_exists=video_exists,
         download_url=url_for('download_static', path='renders/' + str(render.id) + '.mp4', dl=1)
     )
+
+
+@flask_app.route('/renders/<render_id>/status', methods=['GET'])
+def render_status_get(render_id):
+    render = Render.query.filter(Render.id == render_id).one()
+    data = {'status_msg': render.status_msg,
+            'progress': render.progress}
+    return jsonify(data)
 
 
 @flask_app.route('/renders/<render_id>', methods=['POST'])
