@@ -93,6 +93,7 @@ function fillForm(e) {
 		value=$(e).parent().attr('data-'+parameters[i]);
 		$('form #'+parameters[i]).attr('value',value)
 		$('form #'+parameters[i]).val(value);
+		$('form #'+parameters[i]).change();
 	}
 }
 
