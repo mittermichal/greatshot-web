@@ -30,11 +30,3 @@ class RenderForm(FlaskForm):
     crf = IntegerField('crf (default:23)', [validators.NumberRange(min=18, max=25)], default=23)
     name = StringField('Name')
     country = SelectField('Country', choices=[(x, x) for x in [None]+countries], default=None)
-
-
-class PlayerForm(FlaskForm):
-    name = StringField('Name')
-    country = SelectField('Country', choices=[(x, x) for x in countries], default='eu')
-    # gtv_mame = SelectField('gtv_mame')
-    client_num = HiddenField('client_num')
-    match_id = HiddenField('match_id')
