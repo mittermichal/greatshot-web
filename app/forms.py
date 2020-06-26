@@ -32,7 +32,7 @@ class CutForm(FlaskForm):
 class RenderForm(FlaskForm):
     title = StringField('Title')
     crf = IntegerField(
-        'encode quality',
+        'encode quality **',
         [validators.NumberRange(min=18, max=51)],
         default=23,
         render_kw={"min": 18, "max": 51}

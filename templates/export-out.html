@@ -159,6 +159,11 @@ var g_players = {{ parser_out.g_players|tojson|safe }};
 		<label for="client_num" class="col-sm-offset-2">
 			<sup>*</sup> Client number only needed for ETTV demo to choose POV
 		</label>
+		<label for="crf" class="col-sm-offset-2">
+			<sup>**</sup>
+			<a href="https://trac.ffmpeg.org/wiki/Encode/H.264#crf">ffmpeg's crf</a>
+			lower value - higher quality
+		</label>
 	</div>
 </form>
 
