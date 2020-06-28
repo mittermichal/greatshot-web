@@ -88,7 +88,7 @@ def parse_output(lines, gtv_match_id=None):
 
             spree = attacker['spree']
             sprees = attacker['sprees']
-            if (not len(spree)) or (j['dwTime'] - spree[len(spree) - 1]['dwTime'] <= 4000):
+            if (not len(spree)) or (j['dwTime'] - spree[len(spree) - 1]['dwTime'] <= 6000):
                 spree.append(j)
             else:
                 if len(spree) >= 3:
@@ -102,7 +102,7 @@ def parse_output(lines, gtv_match_id=None):
             if j['bRegion'] == 130:
                 hs_spree = attacker['hs_spree']
                 hs_sprees = attacker['hs_sprees']
-                if (not len(hs_spree)) or (j['dwTime'] - hs_spree[len(hs_spree) - 1]['dwTime'] <= 4000):
+                if (not len(hs_spree)) or (j['dwTime'] - hs_spree[len(hs_spree) - 1]['dwTime'] <= 5000):
                     hs_spree.append(j)
                 else:
                     if len(hs_spree) >= 3:
