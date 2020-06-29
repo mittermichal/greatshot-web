@@ -12,6 +12,7 @@ from datetime import timedelta
 import os
 import requests
 from .. import socketio
+from flask_paginate import Pagination, get_page_parameter, get_per_page_parameter
 
 renders = Blueprint('renders', __name__)
 
@@ -158,8 +159,18 @@ def renders_list():
             renders = Render.query.order_by(desc(Render.id)).all()
             return render_template('renders.html', renders=renders)
     else:
-        renders = Render.query.order_by(desc(Render.id)).all()
-        return render_template('renders.html', renders=renders)
+        page = request.args.get(get_page_parameter(), type=int, default=1)
+        per_page = request.args.get(get_per_page_parameter(), type=int, default=100)
+        query = Render.query.order_by(desc(Render.id))
+        renders = query.limit(per_page).offset(per_page * (page - 1)).all()
+        pagination = Pagination(
+            page=page,
+            per_page=per_page,
+            total=query.count(),
+            record_name='renders',
+            bs_version=4
+        )
+        return render_template('renders.html', renders=renders, pagination=pagination)
 
 
 @renders.route('/renders', methods=['PUT'])

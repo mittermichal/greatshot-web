@@ -1,3 +1,7 @@
+{% if pagination %}
+    {{ pagination.info }}
+    {{ pagination.links }}
+{% endif %}
 <table class="table">
     <thead>
         <tr>
@@ -25,3 +29,6 @@
 {% endfor %}
     </tbody>
 </table>
+{% if pagination %}
+    {{ pagination.links }}
+{% endif %}
