@@ -1,7 +1,9 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, FileField, SelectField, HiddenField, validators
+from wtforms import StringField, FileField, SelectField, HiddenField, PasswordField, BooleanField, SubmitField, validators
+from wtforms.validators import ValidationError, DataRequired, EqualTo
 from wtforms.fields.html5 import IntegerField
 from app.countries import countries
+from app.models import User
 
 
 class ExportFileForm(FlaskForm):
@@ -49,3 +51,23 @@ class RenderForm(FlaskForm):
     name = StringField('Name')
     country = SelectField('Country', choices=[(x, x) for x in ["None"]+countries], default="None")
 
+
+class LoginForm(FlaskForm):
+    nick = StringField('Username', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    remember_me = BooleanField('Remember Me')
+    submit = SubmitField('Sign In')
+
+
+class RegistrationForm(FlaskForm):
+    nick = StringField('Nick', validators=[DataRequired()])
+    password = PasswordField('Password', validators=[DataRequired()])
+    password2 = PasswordField(
+        'Repeat Password', validators=[DataRequired(), EqualTo('password')])
+    submit = SubmitField('Register')
+
+    def validate_nick(self, nick):
+        # Render.query.filter(Render.id == render_id).one()
+        user = User.query.filter(User.nick == nick.data).first()
+        if user is not None:
+            raise ValidationError('Nick "{}" already taken'.format(nick.data))

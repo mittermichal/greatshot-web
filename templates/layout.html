@@ -26,10 +26,15 @@
                     <li><a href="/matches"><span class="oi oi-"></span> Matches</a></li>
                     <li><a href="/players"><span class="oi oi-"></span> Players</a></li>
                 #}
-                <li class="nav-item"><a class="nav-link" href="/renders"><span class="oi oi-video"></span> Renders</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('renders_list') }}"><span class="oi oi-video"></span> Renders</a></li>
                 <li class="nav-item"><a class="nav-link" href="{{ url_for('download_static', path='') }}"><span class="oi oi-arrow-thick-bottom"></span> Download</a></li>
-                <li class="nav-item"><a class="nav-link" href="/status"><span class="oi oi-pulse"></span> Status</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('status') }}"><span class="oi oi-pulse"></span> Status</a></li>
                 <li class="nav-item"><a class="nav-link" href="https://discord.gg/p59kWdF"><img src="https://discord.com/assets/f8389ca1a741a115313bede9ac02e2c0.svg" style="height: 1.5em">Discord</a></li>
+                {% if current_user.is_anonymous %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}"><span class="oi oi-account-login"></span> Login</a></li>
+                {% else %}
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}"><span class="oi oi-account-logout"></span> Logout</a></li>
+                {% endif %}
             </ul>
 
         </nav>

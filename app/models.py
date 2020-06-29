@@ -1,6 +1,7 @@
 from sqlalchemy import Column, Integer, String, SmallInteger
 from app.db import Base
 from werkzeug.security import generate_password_hash, check_password_hash
+from flask_login import UserMixin
 
 target_metadata = Base.metadata
 
@@ -22,7 +23,7 @@ class Render(Base):
         return str(vars(self)).replace(',', ',\n')
 
 
-class User(Base):
+class User(UserMixin, Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     nick = Column(String(50), unique=True)

@@ -12,3 +12,4 @@ watchdog
 alembic
 Werkzeug
 flask-paginate
+flask-login
