@@ -1,7 +1,9 @@
-from sqlalchemy import Column, Integer, String, SmallInteger
+from sqlalchemy import Column, Integer, String, SmallInteger, ForeignKey
+from sqlalchemy.orm import relationship
 from app.db import Base
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
+from enum import IntEnum
 
 target_metadata = Base.metadata
 
@@ -23,14 +25,31 @@ class Render(Base):
         return str(vars(self)).replace(',', ',\n')
 
 
+class UserRoles(Base):
+    __tablename__ = 'user_roles'
+    user_id = Column(Integer, ForeignKey('users.id'), primary_key=True)
+    role = Column(SmallInteger)
+
+    def __repr__(self):
+        return str(Roles(self.role))
+
+
 class User(UserMixin, Base):
     __tablename__ = 'users'
     id = Column(Integer, primary_key=True)
     nick = Column(String(50), unique=True)
     password_hash = Column(String(128))
+    roles = relationship(
+        "UserRoles"
+    )
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+
+class Roles(IntEnum):
+    ADMIN = 1
+
