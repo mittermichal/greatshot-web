@@ -11,3 +11,4 @@ redis
 watchdog
 alembic
 Werkzeug
+flask-paginate

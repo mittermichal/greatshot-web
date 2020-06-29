@@ -22,6 +22,7 @@ from datetime import timedelta
 from glob import glob, iglob
 from werkzeug.utils import secure_filename
 import tasks_config
+from flask_paginate import Pagination, get_page_parameter
 
 flask_app = Flask(__name__)
 flask_app.config.from_pyfile('config.cfg')
@@ -124,8 +125,18 @@ def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, 
 @flask_app.route('/renders', methods=['GET', 'POST'])
 def renders_list():
     if request.method == 'GET':
-        renders = Render.query.order_by(desc(Render.id)).all()
-        return render_template('renders.html', renders=renders)
+        page = request.args.get(get_page_parameter(), type=int, default=1)
+        per_page = 20
+        query = Render.query.order_by(desc(Render.id))
+        renders = query.limit(per_page).offset(per_page*(page-1)).all()
+        pagination = Pagination(
+            page=page,
+            per_page=per_page,
+            total=query.count(),
+            record_name='renders',
+            bs_version=4
+        )
+        return render_template('renders.html', renders=renders, pagination=pagination)
     if request.method == 'POST':
         form = RenderForm(request.form)
         cut_form = CutForm(request.form)
