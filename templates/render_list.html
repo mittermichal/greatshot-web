@@ -1,5 +1,7 @@
-{{ pagination.info }}
-{{ pagination.links }}
+{% if pagination %}
+    {{ pagination.info }}
+    {{ pagination.links }}
+{% endif %}
 <table class="table">
   <thead>
     <tr>
@@ -26,7 +28,9 @@
 {% endfor %}
   </tbody>
 </table>
-{{ pagination.links }}
+{% if pagination %}
+    {{ pagination.links }}
+{% endif %}
 {#
   <video controls>
     <source src="/static/render.mp4" type="video/mp4">
