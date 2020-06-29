@@ -29,6 +29,14 @@ class CutForm(FlaskForm):
     filename = HiddenField('filename')
     filepath = HiddenField('filepath')
 
+    def validate_render_length(self):
+        length = self.end.data - self.start.data
+        if length > 1000*30 or length < 4000:
+            self.length.errors.append("Length of render has to be between 4000 and 30000 miliseconds")
+            return False
+        else:
+            return True
+
 
 class RenderForm(FlaskForm):
     title = StringField('Title')

@@ -145,7 +145,7 @@ def renders_list():
         cut_form = CutForm(request.form)
         # TODO: dynamic validation of: - client number
         #                              - start and end time
-        if form.validate_on_submit() and cut_form.validate_on_submit():
+        if form.validate_on_submit() and cut_form.validate_on_submit() and cut_form.validate_render_length():
             map_number = int(cut_form.data['map_number']) - 1 if cut_form.data['map_number'] != '' else None
             filepath = ('app/upload/' + cut_form.data['filename'], request.form['filepath'])[request.form['filepath'] != '']
             render_id = render_new(filepath, str(int(cut_form.data['start'])), cut_form.data['end'],
