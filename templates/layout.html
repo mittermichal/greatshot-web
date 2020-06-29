@@ -33,6 +33,9 @@
                 {% if current_user.is_anonymous %}
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('login') }}"><span class="oi oi-account-login"></span> Login</a></li>
                 {% else %}
+                    {% for item in auth_nav_items %}
+                        <li class="nav-item"><a class="nav-link" href="{{ item.url }}">{{ item.title }}</a></li>
+                    {% endfor %}
                     <li class="nav-item"><a class="nav-link" href="{{ url_for('logout') }}"><span class="oi oi-account-logout"></span> Logout</a></li>
                 {% endif %}
             </ul>

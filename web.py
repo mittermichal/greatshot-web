@@ -570,6 +570,17 @@ def user_delete(user_id):
     return redirect(url_for('users'))
 
 
+@flask_app.context_processor
+def context_processor():
+    auth_nav_items = []
+    if current_user.is_authenticated:
+        if Roles.ADMIN.value in [user_role.role for user_role in current_user.roles]:
+            auth_nav_items.append({'url': url_for('users'), 'title': 'Users'})
+        if Roles.CONTRIBUTOR.value in [user_role.role for user_role in current_user.roles]:
+            pass
+    return {'auth_nav_items': auth_nav_items}
+
+
 @flask_app.errorhandler(NotAuthorizedException)
 def handle_no_result_exception(error):
     flash('Not authorized')
