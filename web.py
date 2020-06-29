@@ -24,10 +24,10 @@ from werkzeug.utils import secure_filename
 import tasks_config
 from flask_paginate import Pagination, get_page_parameter
 from flask_login import LoginManager
-from flask_login import current_user, login_user, logout_user
-from app.models import User
-from app.forms import LoginForm, RegistrationForm
-from wtforms.validators import ValidationError
+from flask_login import current_user, login_user, logout_user, login_required
+from app.models import User, Roles, UserRoles
+from app.forms import LoginForm, RegistrationForm, UserForm
+from app.exceptions import NotAuthorizedException
 
 
 flask_app = Flask(__name__)
@@ -519,6 +519,67 @@ def register():
     else:
         flash_errors(form)
     return render_template('register.html', title='Register', form=form)
+
+
+@flask_app.route('/users', methods=['GET'])
+@login_required
+def users():
+    if Roles.ADMIN.value not in [user_role.role for user_role in current_user.roles]:
+        raise NotAuthorizedException
+    page = request.args.get(get_page_parameter(), type=int, default=1)
+    per_page = 20
+    query = User.query
+    users = query.limit(per_page).offset(per_page*(page-1)).all()
+    pagination = Pagination(
+        page=page,
+        per_page=per_page,
+        total=query.count(),
+        record_name='users',
+        bs_version=4
+    )
+    return render_template('users.html', users=users, pagination=pagination)
+
+
+@flask_app.route('/user/<user_id>', methods=['GET', 'POST'])
+@login_required
+def user_r(user_id):
+    if Roles.ADMIN.value not in [user_role.role for user_role in current_user.roles]:
+        raise NotAuthorizedException
+    user = User.query.filter(User.id == user_id).one()
+    form = UserForm(roles=[user_role.role for user_role in user.roles])
+    if form.validate_on_submit():
+        UserRoles.query.filter(UserRoles.user_id == user_id).delete()
+        db_session.commit()
+        user.roles = [UserRoles(user_id=user_id, role=int(role)) for role in form.roles.data]
+        db_session.commit()
+        flash('User edited')
+        return redirect(url_for('user_r', user_id=user_id))
+    else:
+        flash_errors(form)
+    return render_template('user.html', user=user, form=form)
+
+
+@flask_app.route('/user/<user_id>/delete', methods=['POST'])
+@login_required
+def user_delete(user_id):
+    if Roles.ADMIN.value not in [user_role.role for user_role in current_user.roles]:
+        raise NotAuthorizedException
+    User.query.filter(User.id == user_id).delete()
+    db_session.commit()
+    flash('User deleted')
+    return redirect(url_for('users'))
+
+
+@flask_app.errorhandler(NotAuthorizedException)
+def handle_no_result_exception(error):
+    flash('Not authorized')
+    return render_template('layout.html'), 401
+
+
+@flask_app.errorhandler(401)
+def handle_no_result_exception(error):
+    flash('Not authorized')
+    return render_template('layout.html'), 401
 
 
 @flask_app.errorhandler(NoResultFound)

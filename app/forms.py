@@ -1,9 +1,9 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, FileField, SelectField, HiddenField, PasswordField, BooleanField, SubmitField, validators
+from wtforms import StringField, FileField, SelectField, HiddenField, PasswordField, BooleanField, SubmitField, SelectMultipleField, validators
 from wtforms.validators import ValidationError, DataRequired, EqualTo
 from wtforms.fields.html5 import IntegerField
 from app.countries import countries
-from app.models import User
+from app.models import User, Roles
 
 
 class ExportFileForm(FlaskForm):
@@ -71,3 +71,17 @@ class RegistrationForm(FlaskForm):
         user = User.query.filter(User.nick == nick.data).first()
         if user is not None:
             raise ValidationError('Nick "{}" already taken'.format(nick.data))
+
+
+class UserForm(FlaskForm):
+    roles = SelectMultipleField(
+        'roles',
+        choices=[(str(role.value), role.name) for role in Roles],
+        render_kw={"autocomplete": "Off"}
+    )
+    submit = SubmitField('Save')
+
+
+class DeleteForm(FlaskForm):
+    id = HiddenField()
+

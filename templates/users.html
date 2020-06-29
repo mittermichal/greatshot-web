@@ -1,0 +1,31 @@
+{% extends "layout.html" %}
+{% block title %}Users{% endblock %}
+{% block content %}
+{{ pagination.info }}
+{{ pagination.links }}
+<table class="table">
+    <thead>
+    <tr>
+        <th>#</th>
+        <th>nick</th>
+        <th>roles</th>
+        <th>actions</th>
+    </tr>
+    </thead>
+    <tbody>
+{% for user in users %}
+    <tr>
+        <td><a href="{{ url_for('user_r',user_id=user.id) }}">{{ user.id }} </a></td>
+        <td>{{ user.nick }} </td>
+        <td>{{ user.roles }} </td>
+        <td>
+            <a class="btn" href="{{ url_for('user_r',user_id=user.id) }}"><span class="oi oi-pencil"></span></a>
+            <form class="d-inline" action="{{ url_for('user_delete',user_id=user.id) }}" method="post">
+                <button class="btn" type="submit"><span class="oi oi-x"></span></button>
+            </form>
+        </td>
+    </tr>
+{% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -27,7 +27,8 @@ class Render(Base):
 
 class UserRoles(Base):
     __tablename__ = 'user_roles'
-    user_id = Column(Integer, ForeignKey('users.id'), primary_key=True)
+    id = Column(Integer, primary_key=True)
+    user_id = Column(Integer, ForeignKey('users.id'))
     role = Column(SmallInteger)
 
     def __repr__(self):
@@ -39,9 +40,7 @@ class User(UserMixin, Base):
     id = Column(Integer, primary_key=True)
     nick = Column(String(50), unique=True)
     password_hash = Column(String(128))
-    roles = relationship(
-        "UserRoles"
-    )
+    roles = relationship("UserRoles")
 
     def set_password(self, password):
         self.password_hash = generate_password_hash(password)
@@ -52,4 +51,4 @@ class User(UserMixin, Base):
 
 class Roles(IntEnum):
     ADMIN = 1
-
+    CONTRIBUTOR = 2

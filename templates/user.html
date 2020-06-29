@@ -1,0 +1,11 @@
+{% from "form.html" import render_form %}
+{% extends "layout.html" %}
+{% block title %}User "{{ user.nick }}"{% endblock %}
+
+{% block content %}
+    <h1>User "{{ user.nick }}" edit</h1>
+    <form action="" method="post">
+        {{ render_form(form) }}
+    </form>
+{% endblock %}
+
