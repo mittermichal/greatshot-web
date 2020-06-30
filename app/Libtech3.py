@@ -4,8 +4,11 @@ import os
 from enum import Enum
 from sqlalchemy import Column, Integer, String, ForeignKey, SmallInteger, Text
 from sqlalchemy.ext.declarative import declarative_base
+from app.db import db_session
+from sqlalchemy.orm import relationship
 
 Base = declarative_base()
+Base.query = db_session.query_property()
 
 
 def cut(bin_path, input_file, output_file, start, end, type, pov):
@@ -36,27 +39,36 @@ class Demo(Base):
     bPOVId = Column(SmallInteger)
     bIsTVDemo = Column(SmallInteger)
 
+    rounds = relationship('Round')
+    players = relationship('Player')
+
 
 class Round(Base):
     __tablename__ = 'roundstats'
     dwSeq = Column(Integer, primary_key=True)
-    szMd5 = Column(String(32), index=True)
+    szMd5 = Column(String(32), ForeignKey('demo.szMd5'), index=True)
     bRound = Column(String(128))
     szTimeToBeat = Column(String(32))
     dwStartTime = Column(Integer)
     szStats = Column(String(512))
 
+    def vars(self):
+        return vars(self)
+
 
 class Player(Base):
     __tablename__ = 'player'
     dwSeq = Column(Integer, primary_key=True)
-    szMd5 = Column(String(32), index=True)
+    szMd5 = Column(String(32), ForeignKey('demo.szMd5'), index=True)
     szName = Column(String(128))
     szCleanName = Column(String(64))
     bClientNum = Column(SmallInteger)
     szInfoString = Column(String(128))
     bTeam = Column(SmallInteger)
     bTVClient = Column(SmallInteger)
+
+    def vars(self):
+        return vars(self).pop('_sa_instance_state', None)
 
     def team_name(self, session):
         demo = session.query(Demo).filter(Demo.szMd5 == self.szMd5)[0]
@@ -71,7 +83,7 @@ class Player(Base):
 class Revive(Base):
     __tablename__ = 'revive'
     dwSeq = Column(Integer, primary_key=True)
-    szMd5 = Column(String(32), index=True)
+    szMd5 = Column(String(32), ForeignKey('demo.szMd5'), index=True)
     bRevived = Column(SmallInteger)
     bReviver = Column(SmallInteger)
     dwTime = Column(Integer)
@@ -80,7 +92,7 @@ class Revive(Base):
 class Obituary(Base):
     __tablename__ = 'obituary'
     dwSeq = Column(Integer, primary_key=True)
-    szMd5 = Column(String(32), index=True)
+    szMd5 = Column(String(32), ForeignKey('demo.szMd5'), index=True)
     bAttacker = Column(SmallInteger)
     bTarget = Column(SmallInteger)
     bWeapon = Column(SmallInteger)
@@ -93,7 +105,7 @@ class Obituary(Base):
 class BulletEvent(Base):
     __tablename__ = 'bulletevent'
     dwSeq = Column(Integer, primary_key=True)
-    szMd5 = Column(String(32), index=True)
+    szMd5 = Column(String(32), ForeignKey('demo.szMd5'), index=True)
     bRegion = Column(SmallInteger)
     bTarget = Column(SmallInteger)
     bAttacker = Column(SmallInteger)

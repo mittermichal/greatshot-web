@@ -28,11 +28,13 @@ from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User, Roles, UserRoles
 from app.forms import LoginForm, RegistrationForm, UserForm
 from app.exceptions import NotAuthorizedException
+from app.blueprints.libtech3 import libtech3
 
 
 flask_app = Flask(__name__)
 flask_app.config.from_pyfile('config.cfg')
 login = LoginManager(flask_app)
+flask_app.register_blueprint(libtech3)
 
 
 def request_wants_json():

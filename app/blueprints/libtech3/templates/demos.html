@@ -1,0 +1,24 @@
+{% extends "layout.html" %}
+{% block title %}Demos{% endblock %}
+{% block content %}
+{{ pagination.info }}
+{{ pagination.links }}
+<table class="table">
+    <thead>
+    <tr>
+        <th>#</th>
+        <th>md5</th>
+        <th>file</th>
+    </tr>
+    </thead>
+    <tbody>
+{% for demo in demos %}
+    <tr>
+        <td><a href="{{ url_for('libtech3.demo',demo_id=demo.dwSeq) }}">{{ demo.dwSeq }} </a></td>
+        <td>{{ demo.szMd5 }} </td>
+        <td>{{ demo.szName }} </td>
+    </tr>
+{% endfor %}
+    </tbody>
+</table>
+{% endblock %}

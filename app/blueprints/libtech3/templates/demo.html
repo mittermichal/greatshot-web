@@ -1,0 +1,42 @@
+{% extends "layout.html" %}
+{% block title %}Demo {{ demo.szName }}{% endblock %}
+{% block content %}
+<h1>Demo {{ demo.szName }}</h1>
+<h2>Rounds</h2>
+{% for round in demo.rounds %}
+	{% for key in round.vars().keys() %}
+		{% if key=='szStats' %}
+			<b>{{ key }}</b> <pre>{{ round[key]|replace('%n', '\n') }} </pre>
+		{% else %}
+			<b>{{ key }}</b> {{ round[key] }} <br/>
+		{% endif %}
+	{% endfor %}
+{% endfor %}
+
+
+<table class="table">
+	<thead>
+		<tr>
+			<th>clientNum</th>
+			<th>nick</th>
+            <th>team</th>
+			{#<th>Player profile</th>#}
+		</tr>
+	</thead>
+
+{% for player in demo.players %}
+		<tr>
+			<td>
+				{{ player.bClientNum }}
+			</td>
+			<td>
+				{{ player.szCleanName }}
+			</td>
+            <td>
+				{{ player.bTeam }}
+			</td>
+        </tr>
+{% endfor %}
+</table>
+
+{% endblock %}
