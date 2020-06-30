@@ -4,6 +4,7 @@ from wtforms.validators import ValidationError, DataRequired, EqualTo
 from wtforms.fields.html5 import IntegerField
 from app.countries import countries
 from app.models import User, Roles
+from flask import flash
 
 
 class ExportFileForm(FlaskForm):
@@ -82,6 +83,23 @@ class UserForm(FlaskForm):
     submit = SubmitField('Save')
 
 
-class DeleteForm(FlaskForm):
-    id = HiddenField()
+class PlayerProfileForm(FlaskForm):
+    nick = StringField('Nick', validators=[DataRequired()])
+    country_iso = SelectField('Country', choices=[(x, x) for x in countries])
+    submit = SubmitField('Save')
 
+
+class PlayerDemoForm(FlaskForm):
+    player_id = SelectField('Nick')
+    country_iso = SelectField('Country', choices=[(x, x) for x in countries])
+    submit = SubmitField('Save')
+
+
+def flash_errors(form):
+    """Flashes form errors"""
+    for field, errors in form.errors.items():
+        for error in errors:
+            flash(u"Error in the %s field - %s" % (
+                getattr(form, field).label.text,
+                error
+            ), 'error')

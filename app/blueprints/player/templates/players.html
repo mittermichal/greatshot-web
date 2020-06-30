@@ -1,0 +1,36 @@
+{% extends "layout.html" %}
+{% block title %}Players{% endblock %}
+{% block content %}
+{{ pagination.info }}
+{{ pagination.links }}
+{% if can_edit %}
+    <a href="{{ url_for('players.add') }}" class="btn btn-primary"><span class="oi oi-plus"></span> Add</a>
+{% endif %}
+<table class="table">
+    <thead>
+    <tr>
+        <th>#</th>
+        <th>nick</th>
+        <th>country</th>
+        {% if can_edit %}<th>actions</th>{% endif %}
+    </tr>
+    </thead>
+    <tbody>
+{% for player in players %}
+    <tr>
+        <td><a href="{{ url_for('players.view',player_id=player.id) }}">{{ player.id }} </a></td>
+        <td>{{ player.nick }} </td>
+        <td><img alt="{{ player.country_iso }}" src="http://www.gamestv.org/images/flags/{{ player.country_iso }}.gif"/></td>
+        {% if can_edit %}
+        <td>
+            <a href="{{ url_for('players.edit', player_id=player.id) }}" class="btn btn-primary"><span class="oi oi-pencil"></span></a>
+            <form class="d-inline" action="{{ url_for('players.delete',player_id=player.id) }}" method="post">
+                <button class="btn" type="submit"><span class="oi oi-x"></span></button>
+            </form>
+        </td>
+        {% endif %}
+    </tr>
+{% endfor %}
+    </tbody>
+</table>
+{% endblock %}

@@ -4,6 +4,7 @@ from app.db import Base
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_login import UserMixin
 from enum import IntEnum
+from app.Libtech3 import Player
 
 # target_metadata = Base.metadata
 
@@ -52,3 +53,18 @@ class User(UserMixin, Base):
 class Roles(IntEnum):
     ADMIN = 1
     CONTRIBUTOR = 2
+
+
+class PlayerProfile(Base):
+    __tablename__ = 'player_profiles'
+    id = Column(Integer, primary_key=True)
+    nick = Column(String(8))
+    country_iso = Column(String(8))
+    demos = relationship("PlayerDemo")
+    # demo_player = relationship("player")
+
+
+class PlayerDemo(Base):
+    __tablename__ = 'player_demos'
+    player_profile_id = Column(Integer, ForeignKey('player_profiles.id'), primary_key=True)
+    demo_player_id = Column(Integer, ForeignKey(Player.dwSeq), primary_key=True)

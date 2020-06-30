@@ -1,0 +1,10 @@
+{% from "form.html" import render_form %}
+{% extends "layout.html" %}
+
+{% block title %}Player edit{% endblock %}
+
+{% block content %}
+    <form action="" method="post">
+        {{ render_form(form) }}
+    </form>
+{% endblock %}

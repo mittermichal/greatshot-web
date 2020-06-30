@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+{% block title %}{{ player.nick }}{% endblock %}
+{% block content %}
+<h1 class="d-inline">{{ player.nick }} </h1>
+<img alt="{{ player.country_iso }}" src="http://www.gamestv.org/images/flags/{{ player.country_iso }}.gif"/>
+{% if can_edit %}
+<a href="{{ url_for('players.edit', player_id=player.id) }}" class="btn btn-primary"><span class="oi oi-pencil"></span></a>
+<form class="d-inline" action="{{ url_for('players.delete',player_id=player.id) }}" method="post">
+    <button class="btn" type="submit"><span class="oi oi-x"></span></button>
+</form>
+{% endif %}
+
+{% endblock %}

@@ -26,15 +26,17 @@ from flask_paginate import Pagination, get_page_parameter
 from flask_login import LoginManager
 from flask_login import current_user, login_user, logout_user, login_required
 from app.models import User, Roles, UserRoles
-from app.forms import LoginForm, RegistrationForm, UserForm
+from app.forms import LoginForm, RegistrationForm, UserForm, flash_errors
 from app.exceptions import NotAuthorizedException
 from app.blueprints.libtech3 import libtech3
+from app.blueprints.player import players
 
 
 flask_app = Flask(__name__)
 flask_app.config.from_pyfile('config.cfg')
 login = LoginManager(flask_app)
 flask_app.register_blueprint(libtech3)
+flask_app.register_blueprint(players)
 
 
 def request_wants_json():
@@ -605,16 +607,6 @@ def handle_no_result_exception(error):
 def page_not_found(e):
     flash(e)
     return render_template('layout.html'), 404
-
-
-def flash_errors(form):
-    """Flashes form errors"""
-    for field, errors in form.errors.items():
-        for error in errors:
-            flash(u"Error in the %s field - %s" % (
-                getattr(form, field).label.text,
-                error
-            ), 'error')
 
 
 if __name__ == "__main__":
