@@ -22,10 +22,10 @@ fileConfig(config.config_file_name)
 from app.models import Base
 
 # to include LibTech3 models
-# from app.Libtech3 import Base as BaseLibTech
-# target_metadata = [Base.metadata, BaseLibTech.metadata]
+from app.Libtech3 import Base as BaseLibTech
+target_metadata = [Base.metadata, BaseLibTech.metadata]
 
-target_metadata = Base.metadata
+# target_metadata = Base.metadata
 
 # target_metadata = None
 

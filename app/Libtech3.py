@@ -2,7 +2,7 @@ import subprocess
 import sys
 import os
 from enum import Enum
-from sqlalchemy import Column, Integer, String, ForeignKey, SmallInteger
+from sqlalchemy import Column, Integer, String, ForeignKey, SmallInteger, Text
 from sqlalchemy.ext.declarative import declarative_base
 
 Base = declarative_base()
@@ -26,9 +26,25 @@ class Demo(Base):
     szPOVName = Column(String(64))
     szTeamA = Column(String(128))
     szTeamB = Column(String(128))
+    szServerConfig = Column(Text)
+    dwScanTime = Column(Integer)
+    dwPlayerCount = Column(Integer)
+    dwObitCount = Column(Integer)
+    dwBulletCount = Column(Integer)
+    dwChatCount = Column(Integer)
+    dwFrameCount = Column(Integer)
+    bPOVId = Column(SmallInteger)
+    bIsTVDemo = Column(SmallInteger)
 
 
-# TODO not all columns here
+class Round(Base):
+    __tablename__ = 'roundstats'
+    dwSeq = Column(Integer, primary_key=True)
+    szMd5 = Column(String(32), index=True)
+    bRound = Column(String(128))
+    szTimeToBeat = Column(String(32))
+    dwStartTime = Column(Integer)
+    szStats = Column(String(512))
 
 
 class Player(Base):
