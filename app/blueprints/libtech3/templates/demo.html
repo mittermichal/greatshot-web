@@ -1,3 +1,4 @@
+{% from "form.html" import render_form %}
 {% extends "layout.html" %}
 {% block title %}Demo {{ demo.szName }}{% endblock %}
 {% block content %}
@@ -20,9 +21,10 @@
 			<th>clientNum</th>
 			<th>nick</th>
             <th>team</th>
-			{#<th>Player profile</th>#}
+			<th>Player profile</th>
 		</tr>
 	</thead>
+
 
 {% for player in demo.players %}
 		<tr>
@@ -34,6 +36,16 @@
 			</td>
             <td>
 				{{ player.bTeam }}
+			</td>
+			<td>
+			{% if can_edit_player %}
+			<form method="post" action="">
+				<input type="hidden" name="client_num" value="{{ player.bClientNum }}">
+				{{ render_form(form) }}
+			</form>
+			{% else %}
+
+			{% endif %}
 			</td>
         </tr>
 {% endfor %}

@@ -90,8 +90,8 @@ class PlayerProfileForm(FlaskForm):
 
 
 class PlayerDemoForm(FlaskForm):
-    player_id = SelectField('Nick')
-    country_iso = SelectField('Country', choices=[(x, x) for x in countries])
+    player_id = SelectField('Player')
+    client_num = HiddenField()
     submit = SubmitField('Save')
 
 

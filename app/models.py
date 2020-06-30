@@ -68,3 +68,4 @@ class PlayerDemo(Base):
     __tablename__ = 'player_demos'
     player_profile_id = Column(Integer, ForeignKey('player_profiles.id'), primary_key=True)
     demo_player_id = Column(Integer, ForeignKey(Player.dwSeq), primary_key=True)
+    client_num = Column(Integer)
