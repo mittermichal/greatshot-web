@@ -89,7 +89,7 @@ def render(render_id, demo_url, start, end, name=None, country=None, crf='23', e
 
     p = subprocess.Popen(args, cwd=tasks_config.ETPATH, shell=True)
     p.communicate()
-
+    set_render_status(url_parsed, render_id, 'uploading video', 90)
     filename = str(render_id) + '.mp4'
     # print(filename)
     # netloc = url_parsed.netloc.replace('localhost','127.0.0.1')
