@@ -19,7 +19,8 @@ def set_render_status(url_parsed, render_id, status_msg, progress=0):
     print('render #{}: status: {} progress: {}'.format(render_id, status_msg, progress))
     requests.post(
         url_parsed.scheme + '://' + url_parsed.netloc + '/renders/'+str(render_id),
-        json={'status_msg': status_msg, 'progress': progress}
+        json={'status_msg': status_msg, 'progress': progress},
+        auth=(tasks_config.STREAMABLE_NAME, tasks_config.STREAMABLE_PW)
     )
 
 
