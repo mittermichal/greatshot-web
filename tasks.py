@@ -6,6 +6,7 @@ import dramatiq
 from dramatiq.brokers.redis import RedisBroker
 import tasks_config
 import requests
+import glob
 
 redis_broker = RedisBroker(url=tasks_config.REDIS, middleware=[], namespace=tasks_config.DRAMATIQ_NS)
 dramatiq.set_broker(redis_broker)
@@ -31,10 +32,31 @@ def capture(start, end, etl=False):
             'exec_at_time ' + str(int(end) - 500) + ' stopvideo')
         p = subprocess.Popen(['render-etl.bat', tasks_config.ETPATH])
     else:
-        open(tasks_config.ETPATH + 'etmain\\init-tga.cfg', 'w').write('exec_at_time '+str(start)+' record-tga')
-        open(tasks_config.ETPATH + 'etmain\\init-wav.cfg', 'w').write('exec_at_time '+str(start)+' record-wav')
-        p = subprocess.Popen(['render.bat', tasks_config.ETPATH])
-    p.communicate(timeout=60)
+        delete_screenshots('etpro')
+        with open(os.path.join(tasks_config.ETPATH, 'etmain', 'init-tga.cfg'), 'w') as file:
+            file.write('exec_at_time '+str(start)+' record-tga')
+        with open(os.path.join(tasks_config.ETPATH, 'etmain', 'init-wav.cfg'), 'w') as file:
+            file.write('exec_at_time '+str(start)+' record-wav')
+        p = subprocess.Popen([os.path.join(tasks_config.ETPATH, 'ET.exe'),
+                              '+set', 'cl_profile', 'merlin-stream',
+                              '+viewlog', '1', '+logfile', 'render.log'
+                              '+set', 'fs_game', 'etpro', '+set com_maxfps 125',
+                              '+timescale', '0', '+demo', 'demo-render',
+                              '+timescale', '0', '+wait', '2',
+                              '+timescale', '1', '+exec', 'init-tga',
+                              '+condump', 'init-tga.log', '+timescale', '1',
+                              '+set', 'nextdemo', 'exec preinit-wav'
+                              ], cwd=tasks_config.ETPATH)
+    try:
+        p.communicate(timeout=60)
+    except subprocess.TimeoutExpired as e:
+        p.kill()
+        raise e
+
+
+def delete_screenshots(mod='etpro'):
+    for file in glob.glob(os.path.join(tasks_config.ETPATH, mod+'/screenshots/*.tga')):
+        os.remove(file)
 
 
 def ffmpeg_args(name, country, crf):
@@ -62,12 +84,13 @@ def render(render_id, demo_url, start, end, name=None, country=None, crf='23', e
     urllib.request.urlretrieve(demo_url, tasks_config.ETPATH+'etpro/demos/demo-render.dm_84')
     if os.stat(tasks_config.ETPATH+'etpro/demos/demo-render.dm_84').st_size == 0:
         set_render_status(url_parsed, render_id, 'error: cutted demo was empty', 100)
-        return None
+        return
     try:
         capture(start, end, etl)
     except subprocess.TimeoutExpired:
         # this prob wont work as intended
         set_render_status(url_parsed, render_id, 'error: game capture took too long', 100)
+        return
 
     set_render_status(url_parsed, render_id, 'encoding video...', 40)
     if etl:
