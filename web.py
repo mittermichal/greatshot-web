@@ -49,9 +49,6 @@ def render_get(render_id):
 
 @flask_app.route('/renders/<render_id>/status', methods=['GET'])
 def render_status_get(render_id):
-    auth = request.authorization
-    if not auth or not check_auth(auth.username, auth.password):
-        return authenticate()
     render = Render.query.filter(Render.id == render_id).one()
     data = {'status_msg': render.status_msg,
             'progress': render.progress}
@@ -60,6 +57,9 @@ def render_status_get(render_id):
 
 @flask_app.route('/renders/<render_id>', methods=['POST'])
 def render_post(render_id):
+    auth = request.authorization
+    if not auth or not check_auth(auth.username, auth.password):
+        return authenticate()
     db_session.query(Render).filter(Render.id == render_id).update(
         {Render.status_msg: request.json['status_msg'], Render.progress: request.json['progress']}
     )
