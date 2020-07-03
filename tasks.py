@@ -1,6 +1,5 @@
 import os
 import subprocess
-import urllib.request
 from urllib.parse import urlparse
 import dramatiq
 from dramatiq.brokers.redis import RedisBroker
@@ -83,8 +82,10 @@ def render(render_id, demo_url, start, end, name=None, country=None, crf='23', e
     # download is finished too fast to set status
     # set_render_status(render_id, 'downloading demo...', 5)
     set_render_status(url_parsed, render_id, 'capturing screenshots and sound...', 10)
-    urllib.request.urlretrieve(demo_url, tasks_config.ETPATH+'etpro/demos/demo-render.dm_84')
-    if os.stat(tasks_config.ETPATH+'etpro/demos/demo-render.dm_84').st_size == 0:
+    demo_file_path = os.path.join(tasks_config.ETPATH, 'etpro/demos/demo-render.dm_84')
+    open(demo_file_path, 'wb').\
+        write(requests.get(demo_url).content)
+    if os.stat(demo_file_path).st_size == 0:
         set_render_status(url_parsed, render_id, 'error: cutted demo was empty', 100)
         return
     try:
