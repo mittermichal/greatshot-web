@@ -25,7 +25,7 @@ def set_render_status(url_parsed, render_id, status_msg, progress=0):
     )
 
 
-def capture(start, end, etl=False):
+def capture(start, end, etl=False, fps=50):
     # http://stackoverflow.com/questions/5069224/handling-subprocess-crash-in-windows
     if etl:
         open(tasks_config.ETPATH + 'etmain\\init-tga.cfg', 'w').write(
@@ -33,6 +33,8 @@ def capture(start, end, etl=False):
         p = subprocess.Popen(['render-etl.bat', tasks_config.ETPATH])
     else:
         delete_screenshots('etpro')
+        with open(os.path.join(tasks_config.ETPATH, 'etpro', 'record-tga.cfg'), 'w') as file:
+            file.write('cl_avidemo '+str(fps))
         with open(os.path.join(tasks_config.ETPATH, 'etmain', 'init-tga.cfg'), 'w') as file:
             file.write('exec_at_time '+str(start)+' record-tga')
         with open(os.path.join(tasks_config.ETPATH, 'etmain', 'init-wav.cfg'), 'w') as file:
