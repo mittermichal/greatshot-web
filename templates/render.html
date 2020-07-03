@@ -67,8 +67,8 @@ function doPoll(firstPoll=false){
     </script>
     {% endif %}
     <div id="progress-info">
-        <div class="progress">
-          <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width:{{ render.progress }}%">
+        <div class="progress bg-dark">
+          <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width:{{ render.progress }}%; overflow: visible;">
               {{ render.status_msg }}
           </div>
         </div>
