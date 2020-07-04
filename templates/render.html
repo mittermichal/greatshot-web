@@ -2,14 +2,13 @@
 {% block title %}Render output{% endblock %}
 
 {% macro render_streamable(shortcode) %}
-<div class="wrap" {% if shortcode|length==0 %}style="display:none;"{% endif %}">
+<div class="wrap">
     <a href="https://streamable.com/{{ shortcode }}">streamable.com - HD version* </a>
     <div style="width: 100%; height: 0px; position: relative; padding-bottom: 56.250%;">
         <iframe src="https://streamable.com/e/{{ shortcode }}" frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen scrolling="no" style="width: 100%; height: 100%; position: absolute;"></iframe>
     </div>
     <p>*HD doesn't work with embeded video</p>
 </div>
-
 {% endmacro %}
 
 {% block content %}
