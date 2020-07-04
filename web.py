@@ -24,6 +24,19 @@ from werkzeug.utils import secure_filename
 import tasks_config
 import random
 import string
+import sentry_sdk
+from sentry_sdk.integrations.flask import FlaskIntegration
+import config
+
+try:
+    sentry_sdk.init(
+        config.SENTRY_DSN,
+        integrations=[FlaskIntegration()]
+    )
+except AttributeError:
+    # WITHOUT SENTRY
+    pass
+
 
 flask_app = Flask(__name__)
 flask_app.config.from_pyfile('config.cfg')

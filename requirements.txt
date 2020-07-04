@@ -11,3 +11,6 @@ redis
 watchdog
 alembic
 Werkzeug
+blinker
+sentry_sdk
+sentry_dramatiq

@@ -6,6 +6,13 @@ from dramatiq.brokers.redis import RedisBroker
 import tasks_config
 import requests
 import glob
+import sentry_sdk
+import sentry_dramatiq
+
+sentry_sdk.init(
+    tasks_config.SENTRY_DSN,
+    integrations=[sentry_dramatiq.DramatiqIntegration()],
+)
 
 redis_broker = RedisBroker(url=tasks_config.REDIS, middleware=[], namespace=tasks_config.DRAMATIQ_NS)
 dramatiq.set_broker(redis_broker)
