@@ -1,27 +1,24 @@
-from flask import Flask, request, redirect, url_for, render_template, send_from_directory, jsonify, flash, Response
+from flask import Flask, request, redirect, url_for, render_template, send_from_directory, jsonify, flash
 import os
 import subprocess
 import app.Libtech3
 import urllib.request
 from urllib.error import HTTPError
 import urllib.parse
-import requests
 import app.gamestv
+from app.utils import get_gtv_demo
 import app.ftp
 import re
 from app.forms import ExportFileForm, ExportMatchLinkForm, CutForm, RenderForm
 from markdown import markdown
-import tasks
 from app.db import db_session
 from app.models import Render
 from sqlalchemy import desc
 from app.export import parse_output
 from sqlalchemy.orm.exc import NoResultFound
 from time import strftime, gmtime
-from datetime import timedelta
 from glob import iglob
-from werkzeug.utils import secure_filename
-import tasks_config
+from views.renders import renders, render_new
 import random
 import string
 import sentry_sdk
@@ -40,123 +37,7 @@ except AttributeError:
 
 flask_app = Flask(__name__)
 flask_app.config.from_pyfile('config.cfg')
-
-
-@flask_app.route('/renders/<render_id>', methods=['GET'])
-def render_get(render_id):
-    render = Render.query.filter(Render.id == render_id).one()
-    video_path = 'download/renders/' + str(render_id) + '.mp4'
-    video_url = url_for('static', filename=video_path)
-    video_exists = os.path.isfile(video_path)
-    return render_template(
-        'render.html', render=render,
-        video_url=video_url, video_exists=video_exists,
-        download_url=url_for('download_static', path='renders/' + str(render.id) + '.mp4', dl=1)
-    )
-
-
-@flask_app.route('/renders/<render_id>/status', methods=['GET'])
-def render_status_get(render_id):
-    render = Render.query.filter(Render.id == render_id).one()
-    data = {'status_msg': render.status_msg,
-            'progress': render.progress}
-    return jsonify(data)
-
-
-@flask_app.route('/renders/<render_id>', methods=['POST'])
-def render_post(render_id):
-    auth = request.authorization
-    if not auth or not check_auth(auth.username, auth.password):
-        return authenticate()
-    db_session.query(Render).filter(Render.id == render_id).update(
-        {Render.status_msg: request.json['status_msg'], Render.progress: request.json['progress']}
-    )
-    db_session.commit()
-    if request.json['status_msg'] == 'finished' and 'RENDER_FINISHED_WEBHOOK' in flask_app.config.keys():
-        try:
-            requests.post(
-                flask_app.config['RENDER_FINISHED_WEBHOOK'],
-                json={
-                    'content': flask_app.config['APPHOST']+url_for(
-                        'static', filename='download/renders/' + render_id + '.mp4'
-                    )
-                }
-            )
-        except requests.RequestException:
-            pass
-    return "", 200
-
-
-@flask_app.route('/get_worker_last_beat')
-def r_get_worker_last_beat():
-    diff = int(tasks.redis_broker.client.time()[0] - tasks.get_worker_last_beat())
-    return jsonify('last online: {} ago'.format(str(timedelta(seconds=diff))))
-
-
-@flask_app.route('/status')
-def status():
-    diff = int(tasks.redis_broker.client.time()[0] - tasks.get_worker_last_beat())
-    msg = "Render worker is "
-    if diff <= 60:
-        msg += 'online.'
-    else:
-        msg += 'offline. last online: {} ago'.format(str(timedelta(seconds=diff)))
-    return render_template('layout.html', msg=msg)
-
-
-def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, map_number, name=None, country=None, crf=23):
-    if gtv_match_id == '':
-        filename_orig = filename
-    else:
-        filename_orig = 'upload/' + get_gtv_demo(gtv_match_id, map_number)
-    filename_cut = 'download/cuts/' + str(gtv_match_id) + '_' + str(map_number) + '_' + str(client_num) + '_' + str(
-        start) + '_' + str(end) + '.dm_84'
-
-    app.Libtech3.cut(flask_app.config['PARSERPATH'], filename_orig, filename_cut, int(start) - 2000, end, cut_type,
-                     client_num)
-    r = Render(
-        title=title,
-        status_msg='started', progress=1,
-        gtv_match_id=gtv_match_id,
-        map_number=map_number,
-        client_num=client_num,
-        start=start, end=end
-    )
-    db_session.add(r)
-    db_session.commit()
-    tasks.render.send(
-        r.id,
-        flask_app.config['APPHOST'] + '/' + filename_cut,
-        start, end,
-        name, country,
-        etl=False, crf=crf
-    )
-    return r.id
-
-
-@flask_app.route('/renders', methods=['GET', 'POST'])
-def renders_list():
-    if request.method == 'GET':
-        renders = Render.query.order_by(desc(Render.id)).all()
-        return render_template('renders.html', renders=renders)
-    if request.method == 'POST':
-        form = RenderForm(request.form)
-        cut_form = CutForm(request.form)
-        # TODO: dynamic validation of: - client number
-        #                              - start and end time
-        if form.validate_on_submit() and cut_form.validate_on_submit():
-            map_number = int(cut_form.data['map_number']) - 1 if cut_form.data['map_number'] != '' else None
-            filepath = ('upload/' + cut_form.data['filename'], request.form['filepath'])[request.form['filepath'] != '']
-            render_id = render_new(filepath, str(int(cut_form.data['start'])), cut_form.data['end'],
-                                   cut_form.data['cut_type'], cut_form.data['client_num'], form.data['title'],
-                                   cut_form.data['gtv_match_id'], map_number,
-                                   form.data['name'], form.data['country'], form.data['crf'])
-            return redirect(url_for('render_get', render_id=render_id))
-        else:
-            flash_errors(form)
-            flash_errors(cut_form)
-            renders = Render.query.order_by(desc(Render.id)).all()
-            return render_template('renders.html', renders=renders)
+flask_app.register_blueprint(renders)
 
 
 @flask_app.teardown_appcontext
@@ -176,35 +57,6 @@ def upload(request):
     else:
         raise Exception("No filename selected for cut")
     return filename
-
-
-def check_auth(username, password):
-    return username == tasks_config.STREAMABLE_NAME and password == tasks_config.STREAMABLE_PW
-
-
-def authenticate():
-    """Sends a 401 response that enables basic auth"""
-    return Response(
-        'Could not verify your access level for that URL.\n'
-        'You have to login with proper credentials', 401,
-        {'WWW-Authenticate': 'Basic realm="Login Required"'}
-    )
-
-
-@flask_app.route('/renders', methods=['PUT'])
-def render_upload():
-    auth = request.authorization
-    if not auth or not check_auth(auth.username, auth.password):
-        return authenticate()
-    try:
-        for filename, file in request.files.items():
-            name = secure_filename(request.files[filename].name)
-            file.save(os.path.join('download/renders', name))
-            return name
-        return jsonify({'error': 'no file'})
-    except Exception as e:
-        print(e)
-        return jsonify({'error': e})
 
 
 @flask_app.route('/download/')
@@ -348,39 +200,6 @@ def export_get_match(export_id):
     return render_template('renders.html', renders=renders, export_id=export_id)
 
 
-def get_gtv_demo(gtv_match_id, map_num):
-    filename = str(gtv_match_id) + '_' + str(map_num) + '.tv_84'
-    if not os.path.exists('upload/'+filename):
-        try:
-            demo_id = app.gamestv.getMatchDemosId(int(gtv_match_id))
-        except HTTPError:
-            error_message = "Match not found"
-            raise Exception(error_message)
-        except IndexError:
-            try:
-                demo_links = app.gamestv.getDemosDownloadLinks(gtv_match_id)[int(map_num)]
-            except IndexError:
-                error_message = "Match not available for replay"
-                raise Exception(error_message)
-        else:
-            try:
-                demo_links = app.gamestv.getDemosLinks(demo_id)[int(map_num)]
-            except IndexError:
-                error_message = "demo not found"
-                raise Exception(error_message)
-            except HTTPError:
-                error_message = "no demos for this match"
-                raise Exception(error_message)
-            except TypeError:
-                error_message = "demos are probably private but possible to download"
-                raise Exception(error_message)
-        try:
-            urllib.request.urlretrieve(demo_links, 'upload/' + filename)
-        except urllib.error.HTTPError:
-            raise Exception("Download from gamestv.org failed - 404")
-    return filename
-
-
 @flask_app.route('/export/<export_id>/<map_num>')
 def export_get(export_id, map_num, render=False, html=True):
     export_id = int(export_id)
@@ -461,16 +280,6 @@ def handle_no_result_exception(error):
 def page_not_found(e):
     flash(e)
     return render_template('layout.html'), 404
-
-
-def flash_errors(form):
-    """Flashes form errors"""
-    for field, errors in form.errors.items():
-        for error in errors:
-            flash(u"Error in the %s field - %s" % (
-                getattr(form, field).label.text,
-                error
-            ), 'error')
 
 
 if __name__ == "__main__":
