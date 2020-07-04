@@ -4,6 +4,7 @@ import tasks_config
 import urllib.request
 from urllib.error import HTTPError
 import app.gamestv
+import requests
 
 
 def check_auth(username, password):

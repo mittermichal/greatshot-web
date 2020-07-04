@@ -1,12 +1,10 @@
 import urllib.request
-from html.parser import HTMLParser
 import re
 import json
-
+from time import sleep
 from lxml import html
-
 import config
-from lxml import etree
+import requests
 
 
 def commentExists(matchId):
@@ -60,25 +58,39 @@ def getMatchDemosId(match_id):
 
 # requests demos for match and return their links in list
 def getDemosLinks(demoId):
-    opener = urllib.request.build_opener()
-    opener.addheaders = [('Cookie', config.gtvcookie)]
-    params = urllib.parse.urlencode({'jsAction': 'rpcCall', 'dldemo': 'true'}).encode('UTF-8')
-    url = urllib.request.Request("https://www.gamestv.org/demos/" + str(demoId), params)
-    response = opener.open(url).read().decode('iso-8859-1')
-    pollId = json.loads(response)['pollID']
-    print(response)
-    print('pollid: ' + str(pollId))
-    params = urllib.parse.urlencode({'jsAction': 'rpcPoll', 'pollID': str(pollId)}).encode('UTF-8')
-    url = urllib.request.Request("https://www.gamestv.org/demos/" + str(demoId), params)
-    parm = None
-    while parm == None:
+    try:
+        if hasattr(config, 'demo_storage_url'):
+            r = requests.get(config.demo_storage_url + str(demoId))
+            if r.status_code != 200:
+                raise requests.exceptions.RequestException
+            else:
+                return [
+                    config.demo_storage_url + str(demoId) + '/' + file['name']
+                    for file in json.loads(r.content)
+                ]
+        else:
+            raise requests.exceptions.RequestException
+    except requests.exceptions.RequestException:
+        opener = urllib.request.build_opener()
+        opener.addheaders = [('Cookie', config.gtvcookie)]
+        params = urllib.parse.urlencode({'jsAction': 'rpcCall', 'dldemo': 'true'}).encode('UTF-8')
+        url = urllib.request.Request("https://www.gamestv.org/demos/" + str(demoId), params)
         response = opener.open(url).read().decode('iso-8859-1')
-        j = json.loads(response)
-        print(j)
-        parm = j['parm']
-    links = re.findall('\/download\/demos\/' + str(demoId) + '\/demo\d+.tv_84', j['parm'])
-    links = list(map(lambda x: 'https://www.gamestv.org' + x, links))
-    return links
+        pollId = json.loads(response)['pollID']
+        print(response)
+        print('pollid: ' + str(pollId))
+        params = urllib.parse.urlencode({'jsAction': 'rpcPoll', 'pollID': str(pollId)}).encode('UTF-8')
+        url = urllib.request.Request("https://www.gamestv.org/demos/" + str(demoId), params)
+        parm = None
+        while parm is None:
+            sleep(1)
+            response = opener.open(url).read().decode('iso-8859-1')
+            j = json.loads(response)
+            print(j)
+            parm = j['parm']
+        links = re.findall('\/download\/demos\/' + str(demoId) + '\/demo\d+.tv_84', j['parm'])
+        links = list(map(lambda x: 'https://www.gamestv.org' + x, links))
+        return links
 
 
 def getDemosDownloadLinks(matchId):
