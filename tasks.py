@@ -93,14 +93,14 @@ def render(render_id, demo_url, start, end, name=None, country=None, crf='23', e
     open(demo_file_path, 'wb').\
         write(requests.get(demo_url).content)
     if os.stat(demo_file_path).st_size == 0:
-        set_render_status(url_parsed, render_id, 'error: cutted demo was empty', 100)
-        return
+        set_render_status(url_parsed, render_id, 'error: cut demo was empty', 100)
+        raise RenderException('cut demo was empty')
     try:
         capture(start, end, etl)
     except subprocess.TimeoutExpired:
         # this prob wont work as intended
         set_render_status(url_parsed, render_id, 'error: game capture took too long', 100)
-        return
+        raise RenderException('game capture took too long')
 
     set_render_status(url_parsed, render_id, 'encoding video...', 40)
     if etl:
@@ -137,4 +137,8 @@ def render(render_id, demo_url, start, end, name=None, country=None, crf='23', e
         set_render_status(url_parsed, render_id, 'finished', 100)
     else:
         set_render_status(url_parsed, render_id, 'upload error', 100)
-        print('upload error:', r.status_code, r.content)
+        raise RenderException('Upload error: '+' '.join([r.status_code, r.content.decode('utf-8')]))
+
+
+class RenderException(Exception):
+    pass
