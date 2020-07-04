@@ -19,7 +19,7 @@ from app.export import parse_output
 from sqlalchemy.orm.exc import NoResultFound
 from time import strftime, gmtime
 from datetime import timedelta
-from glob import glob, iglob
+from glob import iglob
 from werkzeug.utils import secure_filename
 import tasks_config
 import random
@@ -40,11 +40,6 @@ except AttributeError:
 
 flask_app = Flask(__name__)
 flask_app.config.from_pyfile('config.cfg')
-
-
-def request_wants_json():
-    best = request.accept_mimetypes.best_match(['application/json', 'text/html'])
-    return best == 'application/json' and request.accept_mimetypes[best] > request.accept_mimetypes['text/html']
 
 
 @flask_app.route('/renders/<render_id>', methods=['GET'])
@@ -164,22 +159,10 @@ def renders_list():
             return render_template('renders.html', renders=renders)
 
 
-def spree_time_interval(spree):
-    return {'start': spree[0]['dwTime'], 'end': spree[len(spree) - 1]['dwTime']}
-
-
 @flask_app.teardown_appcontext
 def shutdown_session(exception=None):
     db_session.remove()
 
-
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1] in {'tv_84', 'dm_84'}
-
-
-# http://flask.pocoo.org/docs/0.11/patterns/fileuploads/
-# @flask_app.route('/uploads/<path:filename>')
 
 def upload(request):
     if 'file' in request.files:
@@ -192,19 +175,10 @@ def upload(request):
         filename = request.form['filepath']
     else:
         raise Exception("No filename selected for cut")
-    # if user does not select file, browser also
-    # submit a empty part without filename
-    # if file.filename == '':
-    #    return 'demo.tv_84'
-    # if not file or not allowed_file(file.filename):
-    #    return 'demo.tv_84'
     return filename
 
 
 def check_auth(username, password):
-    """This function is called to check if a username /
-    password combination is valid.
-    """
     return username == tasks_config.STREAMABLE_NAME and password == tasks_config.STREAMABLE_PW
 
 
@@ -500,4 +474,4 @@ def flash_errors(form):
 
 
 if __name__ == "__main__":
-    flask_app.run(port=5111, host='0.0.0.0', static_files={'/static': '/path/to/static'})
+    flask_app.run()
