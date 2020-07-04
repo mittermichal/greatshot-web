@@ -124,7 +124,7 @@ def renders_list():
                                    cut_form.data['cut_type'], cut_form.data['client_num'], form.data['title'],
                                    cut_form.data['gtv_match_id'], map_number,
                                    form.data['name'], form.data['country'], form.data['crf'])
-            return redirect(url_for('render_get', render_id=render_id))
+            return redirect(url_for('renders.render_get', render_id=render_id))
         else:
             flash_errors(form)
             flash_errors(cut_form)
