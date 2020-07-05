@@ -109,9 +109,6 @@ def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, 
 
 @renders.route('/renders', methods=['GET', 'POST'])
 def renders_list():
-    if request.method == 'GET':
-        renders = Render.query.order_by(desc(Render.id)).all()
-        return render_template('renders.html', renders=renders)
     if request.method == 'POST':
         form = RenderForm(request.form)
         cut_form = CutForm(request.form)
@@ -130,6 +127,10 @@ def renders_list():
             flash_errors(cut_form)
             renders = Render.query.order_by(desc(Render.id)).all()
             return render_template('renders.html', renders=renders)
+    else:
+        renders = Render.query.order_by(desc(Render.id)).all()
+        return render_template('renders.html', renders=renders)
+
 
 
 @renders.route('/renders', methods=['PUT'])
