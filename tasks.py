@@ -68,8 +68,9 @@ def delete_screenshots(mod='etpro'):
         os.remove(file)
 
 
-def ffmpeg_args(name, country, crf):
-    args = ['ffmpeg', '-hide_banner', '-y', '-framerate', '50', '-i', 'etpro/screenshots/shot%04d.tga']
+def ffmpeg_args(name, country, crf, fps=50):
+    args = ['ffmpeg', '-hide_banner', '-layouts', '-loglevel', 'warning', '-y', '-thread_queue_size', '256',
+            '-framerate', str(fps), '-i', 'etpro/screenshots/shot%04d.tga']
     if name != "":
         args += [
             '-filter_complex',
