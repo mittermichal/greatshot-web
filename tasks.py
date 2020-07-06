@@ -9,6 +9,9 @@ import requests
 import glob
 import sentry_sdk
 import sentry_dramatiq
+from time import sleep
+from threading import Thread
+
 
 sentry_sdk.init(
     tasks_config.SENTRY_DSN,
@@ -19,12 +22,23 @@ redis_broker = RedisBroker(url=tasks_config.REDIS, middleware=[], namespace=task
 dramatiq.set_broker(redis_broker)
 
 
+record_wav = """
+timescale 1
+com_maxfps 125
+timescale 1
+echo "^1oooooooooooooooooo ^5WAV_RECORD ^1ooooooooooooooooooooooooooo"
+//exec cameras\\runs\\1stPos
+wav_record synctest
+set nextdemo quit
+"""
+
+
 def get_worker_last_beat():
     return int(redis_broker.client.get('worker_last_beat').decode('utf-8'))
 
 
 def set_render_status(url_parsed, render_id, status_msg, progress=0):
-    print('render #{}: status: {} progress: {}'.format(render_id, status_msg, progress))
+    # print('render #{}: status: {} progress: {}'.format(render_id, status_msg, progress))
     requests.post(
         url_parsed.scheme + '://' + url_parsed.netloc + '/renders/'+str(render_id),
         json={'status_msg': status_msg, 'progress': progress},
@@ -32,7 +46,47 @@ def set_render_status(url_parsed, render_id, status_msg, progress=0):
     )
 
 
-def capture(start, end, etl=False, fps=50):
+def follow(file, p: subprocess.Popen):
+    # file.seek(0, 2)
+    while True and p.poll() is None:
+        line = file.readline()
+        if not line:
+            sleep(0.1)
+            continue
+        yield line
+
+
+def progress_capture(p: subprocess.Popen, callback):
+    while True and p.poll() is None:
+        try:
+            logfile = open(os.path.join(tasks_config.ETPATH, 'etpro', 'etconsole.log'), "r")
+        except FileNotFoundError:
+            sleep(1)
+        else:
+            callback(None, False, "Starting game and loading demo")
+            loglines = follow(logfile, p)
+            sound = False
+            for line in loglines:
+                find = re.findall(
+                    r'I will execute progress-(\d+) at (\d+), have a good flight o/',
+                    line
+                )
+                if len(find) > 0:
+                    try:
+                        callback(int(find[0][1]), sound)
+                    except IndexError:
+                        pass
+                elif re.search(r'execing preinit-wav', line) is not None:
+                    callback(None, sound, "Reloading demo for sound capture")
+                    sound = True
+                elif re.search(r'execing preinit-wav', line) is not None:
+                    callback(None, sound, "Reloading demo for sound capture")
+                    sound = True
+
+            break
+
+
+def capture(start, end, exec_at_time_callback, etl=False, fps=50):
     # http://stackoverflow.com/questions/5069224/handling-subprocess-crash-in-windows
     if etl:
         open(tasks_config.ETPATH + 'etmain\\init-tga.cfg', 'w').write(
@@ -40,16 +94,22 @@ def capture(start, end, etl=False, fps=50):
         p = subprocess.Popen(['render-etl.bat', tasks_config.ETPATH])
     else:
         delete_screenshots('etpro')
+        os.remove(os.path.join(tasks_config.ETPATH, 'etpro', 'etconsole.log'))
+        for i, time in enumerate(range(int(start), int(end), 1000)):
+            with open(os.path.join(tasks_config.ETPATH, 'etpro', 'progress-'+str(i)+'.cfg'), 'w') as file:
+                file.write('exec_at_time ' + str(time+1000) + ' progress-' + str(i+1))
         with open(os.path.join(tasks_config.ETPATH, 'etpro', 'record-tga.cfg'), 'w') as file:
-            file.write('cl_avidemo '+str(fps))
+            file.write('cl_avidemo '+str(fps)+'\n'+'exec_at_time '+str(int(start)+1000)+' progress-1')
         with open(os.path.join(tasks_config.ETPATH, 'etmain', 'init-tga.cfg'), 'w') as file:
             file.write('exec_at_time '+str(start)+' record-tga')
+        with open(os.path.join(tasks_config.ETPATH, 'etpro', 'record-wav.cfg'), 'w') as file:
+            file.write(record_wav+'\n'+'exec_at_time '+str(int(start)+1000)+' progress-1')
         with open(os.path.join(tasks_config.ETPATH, 'etmain', 'init-wav.cfg'), 'w') as file:
             file.write('exec_at_time '+str(start)+' record-wav')
         p = subprocess.Popen([os.path.join(tasks_config.ETPATH, 'ET.exe'),
                               '+set', 'cl_profile', 'merlin-stream',
                               '+set', 'com_ignorecrash', '1',
-                              '+viewlog', '1', '+logfile', 'render.log'
+                              '+viewlog', '1', '+logfile', '2',
                               '+set', 'fs_game', 'etpro', '+set com_maxfps 125',
                               '+timescale', '0', '+demo', 'demo-render',
                               '+timescale', '0', '+wait', '2',
@@ -58,6 +118,7 @@ def capture(start, end, etl=False, fps=50):
                               '+set', 'nextdemo', 'exec preinit-wav'
                               ], cwd=tasks_config.ETPATH)
     try:
+        Thread(target=progress_capture, args=(p, exec_at_time_callback)).start()
         p.communicate(timeout=60)
     except subprocess.TimeoutExpired as e:
         p.kill()
@@ -70,7 +131,7 @@ def delete_screenshots(mod='etpro'):
 
 
 def ffmpeg_args(name, country, crf, fps=50):
-    args = ['ffmpeg', '-hide_banner', '-loglevel', 'warning', '-y', '-thread_queue_size', '256',
+    args = ['ffmpeg', '-hide_banner', '-loglevel', 'warning', '-y', '-thread_queue_size', '1024',
             '-progress', 'pipe:1',
             '-framerate', str(fps), '-i', 'etpro/screenshots/shot%04d.tga']
     if name != "":
@@ -107,15 +168,31 @@ def render(render_id, demo_url, start, end, name=None, country=None, crf='23', e
         set_render_status(url_parsed, render_id, 'error: cut demo was empty', 100)
         raise RenderException('cut demo was empty')
 
-    set_render_status(url_parsed, render_id, 'capturing screenshots and sound...', 10)
+    set_render_status(url_parsed, render_id, 'capturing screenshots and sound...', 0)
+
+    def exec_at_time_callback(time, sound, status=None):
+        if time is not None:
+            time -= 1000
+            if sound:
+                capturing = 'sound'
+            else:
+                capturing = 'screenshots'
+            percent = int(100*(time - int(start)) / (int(end) - int(start)))
+            # print('capturing {} {}% {}'.format(capturing, int(percent), time))
+            set_render_status(url_parsed, render_id,
+                              'capturing {}'.format(capturing),
+                              int(percent))
+        elif status is not None:
+            set_render_status(url_parsed, render_id, status, 0)
+
     try:
-        capture(start, end, etl)
+        capture(start, end, exec_at_time_callback, etl)
     except subprocess.TimeoutExpired:
         # this prob wont work as intended
         set_render_status(url_parsed, render_id, 'error: game capture took too long', 100)
         raise RenderException('game capture took too long')
 
-    set_render_status(url_parsed, render_id, 'encoding video...', 40)
+    set_render_status(url_parsed, render_id, 'encoding video...', 0)
     if etl:
         args = ['ffmpeg', '-y', '-framerate', '60',
                 '-i', 'C:\\Users\\admin\\Documents\\ETLegacy\\uvMovieMod\\videos\\render.avi',
@@ -128,12 +205,12 @@ def render(render_id, demo_url, start, end, name=None, country=None, crf='23', e
     def frame_processed_callback(frame):
         set_render_status(url_parsed, render_id,
                           'encoding video {}/{} frame'.format(frame, frame_count),
-                          int((90-40)*frame/frame_count) + 40)
+                          int(frame/frame_count*100))
 
     if ffmpeg(args, frame_processed_callback):
         set_render_status(url_parsed, render_id, 'error: failed to encode video', 100)
         raise RenderException("failed to encode video")
-    set_render_status(url_parsed, render_id, 'uploading video', 90)
+    set_render_status(url_parsed, render_id, 'uploading video', 0)
     filename = str(render_id) + '.mp4'
     # print(filename)
     # netloc = url_parsed.netloc.replace('localhost','127.0.0.1')
@@ -161,11 +238,26 @@ def ffmpeg(args, frame_processed_callback):
 
 
 def test_progress(url_parsed, render_id):
-    from time import sleep
     for i in range(0, 100, 20):
         set_render_status(url_parsed, render_id, 'p ' + str(i), i)
         sleep(2)
     set_render_status(url_parsed, render_id, 'finished', 100)
+
+
+def test_capture_progress(start, end):
+    def exec_at_time_callback(time, sound, status=None):
+        if time is not None:
+            time -= 1000
+            if sound:
+                capturing = 'sound'
+            else:
+                capturing = 'screenshots'
+            percent = int(100*(time - int(start)) / (int(end) - int(start)))
+            print('capturing {} {}% {}'.format(capturing, int(percent), time))
+        elif status is not None:
+            print(status)
+
+    capture(start, end, exec_at_time_callback)
 
 
 class RenderException(Exception):
