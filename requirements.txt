@@ -14,3 +14,5 @@ Werkzeug
 blinker
 sentry_sdk
 sentry_dramatiq
+flask_socketio
+eventlet <= 0.24.1
