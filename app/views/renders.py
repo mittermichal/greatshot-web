@@ -32,7 +32,6 @@ def render_get(render_id):
             'msg': "last online: {} ago".format(str(timedelta(seconds=diff))) if not on else ''
         }
 
-
     return render_template(
         'render.html', render=render,
         video_url=video_url, video_exists=video_exists,
@@ -63,10 +62,11 @@ def render_post(render_id):
     auth = request.authorization
     if not auth or not check_auth(auth.username, auth.password):
         return authenticate()
-    db_session.query(Render).filter(Render.id == render_id).update(
-        {Render.status_msg: request.json['status_msg'], Render.progress: request.json['progress']}
-    )
-    db_session.commit()
+    if request.json['progress'] == 100:
+        db_session.query(Render).filter(Render.id == render_id).update(
+            {Render.status_msg: request.json['status_msg'], Render.progress: request.json['progress']}
+        )
+        db_session.commit()
     socketio.emit('status-'+str(render_id), request.json)
     if request.json['status_msg'] == 'finished' and 'RENDER_FINISHED_WEBHOOK' in current_app.config.keys():
         try:
