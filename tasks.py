@@ -1,4 +1,5 @@
 import os
+import re
 import subprocess
 from urllib.parse import urlparse
 import dramatiq
@@ -69,7 +70,8 @@ def delete_screenshots(mod='etpro'):
 
 
 def ffmpeg_args(name, country, crf, fps=50):
-    args = ['ffmpeg', '-hide_banner', '-layouts', '-loglevel', 'warning', '-y', '-thread_queue_size', '256',
+    args = ['ffmpeg', '-hide_banner', '-loglevel', 'warning', '-y', '-thread_queue_size', '256',
+            '-progress', 'pipe:1',
             '-framerate', str(fps), '-i', 'etpro/screenshots/shot%04d.tga']
     if name != "":
         args += [
@@ -121,8 +123,14 @@ def render(render_id, demo_url, start, end, name=None, country=None, crf='23', e
     else:
         args = ffmpeg_args(name, country, crf)
 
-    p = subprocess.Popen(args, cwd=tasks_config.ETPATH, shell=True)
-    p.communicate()
+    frame_count = len(glob.glob(os.path.join(tasks_config.ETPATH + 'etpro', 'screenshots', 'shot[0-9]*.tga')))
+
+    def frame_processed_callback(frame):
+        set_render_status(url_parsed, render_id, 'encoding video', int((90-40)*frame/frame_count) + 40)
+
+    if ffmpeg(args, frame_processed_callback):
+        set_render_status(url_parsed, render_id, 'error: failed to encode video', 100)
+        raise RenderException("failed to encode video")
     set_render_status(url_parsed, render_id, 'uploading video', 90)
     filename = str(render_id) + '.mp4'
     # print(filename)
@@ -138,6 +146,16 @@ def render(render_id, demo_url, start, end, name=None, country=None, crf='23', e
     else:
         set_render_status(url_parsed, render_id, 'upload error', 100)
         raise RenderException('Upload error: ' + str(r.status_code) + r.content.decode('utf-8'))
+
+
+def ffmpeg(args, frame_processed_callback):
+    p = subprocess.Popen(args, cwd=tasks_config.ETPATH, stdout=subprocess.PIPE, universal_newlines=True)
+    for stdout_line in iter(p.stdout.readline, ""):
+        find = re.findall(r'frame=(\d+)', stdout_line)
+        if len(find):
+            frame_processed_callback(int(find[0]))
+    p.stdout.close()
+    return p.wait(timeout=30)
 
 
 def test_progress(url_parsed, render_id):
