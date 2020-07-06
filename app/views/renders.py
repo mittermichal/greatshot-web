@@ -24,7 +24,7 @@ def render_get(render_id):
     return render_template(
         'render.html', render=render,
         video_url=video_url, video_exists=video_exists,
-        download_url=url_for('download_static', path='renders/' + str(render.id) + '.mp4', dl=1)
+        download_url=url_for('main.download_static', path='renders/' + str(render.id) + '.mp4', dl=1)
     )
 
 
@@ -81,12 +81,17 @@ def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, 
     if gtv_match_id == '':
         filename_orig = filename
     else:
-        filename_orig = 'upload/' + get_gtv_demo(gtv_match_id, map_number)
+        filename_orig = 'app/upload/' + get_gtv_demo(gtv_match_id, map_number)
     filename_cut = 'download/cuts/' + str(gtv_match_id) + '_' + str(map_number) + '_' + str(client_num) + '_' + str(
         start) + '_' + str(end) + '.dm_84'
 
-    app.Libtech3.cut(current_app.config['PARSERPATH'], filename_orig, filename_cut, int(start) - 2000, end, cut_type,
-                     client_num)
+    app.Libtech3.cut(
+        current_app.config['PARSERPATH'],
+        filename_orig,
+        os.path.join('app', filename_cut),
+        int(start) - 2000, end, cut_type,
+        client_num
+    )
     r = Render(
         title=title,
         status_msg='started', progress=1,
@@ -99,7 +104,7 @@ def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, 
     db_session.commit()
     tasks.render.send(
         r.id,
-        current_app.config['APPHOST'] + '/' + filename_cut,
+        current_app.config['APPHOST'] + url_for('static', filename=filename_cut),
         start, end,
         name, country,
         etl=False, crf=crf
@@ -132,7 +137,6 @@ def renders_list():
         return render_template('renders.html', renders=renders)
 
 
-
 @renders.route('/renders', methods=['PUT'])
 def render_upload():
     auth = request.authorization
@@ -141,9 +145,10 @@ def render_upload():
     try:
         for filename, file in request.files.items():
             name = secure_filename(request.files[filename].name)
-            file.save(os.path.join('download/renders', name))
+            file.save(os.path.join('app', 'download', 'renders', name))
             return name
         return jsonify({'error': 'no file'})
     except Exception as e:
         print(e)
-        return jsonify({'error': e})
+        raise e
+        # return jsonify({'error': str(e)})

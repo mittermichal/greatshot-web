@@ -9,9 +9,9 @@
 <table>
 {% for file in files %}
     <tr>
-        <td><a href="{{ url_for('download_static',path=file.path) }}">{{ file.name }}</a></td>
+        <td><a href="{{ url_for('main.download_static',path=file.path) }}">{{ file.name }}</a></td>
         <td>
-            <a href="{{ url_for('download_static',path=file.path, dl=1) }}">
+            <a href="{{ url_for('main.download_static',path=file.path, dl=1) }}">
                 <span class="oi oi-data-transfer-download"></span>
             </a>
         </td>

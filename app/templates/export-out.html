@@ -50,7 +50,7 @@
 
 			{#<td>
 				{% if player.name is defined and player.name!=None %}
-					<a href="{{ url_for('players',player_id=player.id) }}">{{ player.name }}</a><img src="http://www.gamestv.org/images/flags/{{ player.country }}.gif" />
+					<a href="{{ url_for('main.players',player_id=player.id) }}">{{ player.name }}</a><img src="http://www.gamestv.org/images/flags/{{ player.country }}.gif" />
 				{% else %}
 					{{ render_form(player.form) }}
 				{% endif %}

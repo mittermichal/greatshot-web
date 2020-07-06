@@ -22,7 +22,7 @@ def authenticate():
 
 def get_gtv_demo(gtv_match_id, map_num):
     filename = str(gtv_match_id) + '_' + str(map_num) + '.tv_84'
-    if not os.path.exists('upload/'+filename):
+    if not os.path.exists('app/upload/'+filename):
         try:
             demo_id = app.gamestv.getMatchDemosId(int(gtv_match_id))
         except HTTPError:
@@ -47,7 +47,7 @@ def get_gtv_demo(gtv_match_id, map_num):
                 error_message = "demos are probably private but possible to download"
                 raise Exception(error_message)
         try:
-            urllib.request.urlretrieve(demo_links, 'upload/' + filename)
+            urllib.request.urlretrieve(demo_links, 'app/upload/' + filename)
         except urllib.error.HTTPError:
             raise Exception("Download from gamestv.org failed - 404")
     return filename

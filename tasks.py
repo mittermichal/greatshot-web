@@ -47,6 +47,7 @@ def capture(start, end, etl=False, fps=50):
             file.write('exec_at_time '+str(start)+' record-wav')
         p = subprocess.Popen([os.path.join(tasks_config.ETPATH, 'ET.exe'),
                               '+set', 'cl_profile', 'merlin-stream',
+                              '+set', 'com_ignorecrash', '1',
                               '+viewlog', '1', '+logfile', 'render.log'
                               '+set', 'fs_game', 'etpro', '+set com_maxfps 125',
                               '+timescale', '0', '+demo', 'demo-render',
@@ -90,8 +91,13 @@ def render(render_id, demo_url, start, end, name=None, country=None, crf='23', e
     # set_render_status(render_id, 'downloading demo...', 5)
     set_render_status(url_parsed, render_id, 'capturing screenshots and sound...', 10)
     demo_file_path = os.path.join(tasks_config.ETPATH, 'etpro/demos/demo-render.dm_84')
-    open(demo_file_path, 'wb').\
-        write(requests.get(demo_url).content)
+    r = requests.get(demo_url)
+    if r.status_code == 200:
+        open(demo_file_path, 'wb').\
+            write(r.content)
+    else:
+        RenderException('error downloading cut demo')
+
     if os.stat(demo_file_path).st_size == 0:
         set_render_status(url_parsed, render_id, 'error: cut demo was empty', 100)
         raise RenderException('cut demo was empty')
@@ -137,7 +143,7 @@ def render(render_id, demo_url, start, end, name=None, country=None, crf='23', e
         set_render_status(url_parsed, render_id, 'finished', 100)
     else:
         set_render_status(url_parsed, render_id, 'upload error', 100)
-        raise RenderException('Upload error: '+' '.join([r.status_code, r.content.decode('utf-8')]))
+        raise RenderException('Upload error: ' + str(r.status_code) + r.content.decode('utf-8'))
 
 
 class RenderException(Exception):

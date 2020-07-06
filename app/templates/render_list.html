@@ -14,8 +14,8 @@
         <td><a href="{{ url_for('renders.render_get',render_id=render.id) }}">{{ render.id }} </a></td>
         <td><a href="{{ url_for('renders.render_get',render_id=render.id) }}">{{ render.title }} </a></td>
         {% if render.gtv_match_id!=None and render.gtv_match_id!='' %}
-            <td><a href="{{ url_for('export_get_match',export_id=render.gtv_match_id) }}"> {{ render.gtv_match_id }} </a></td>
-            <td><a href="{{ url_for('export_get',export_id=render.gtv_match_id,map_num=render.map_number+1) }}"> {{ render.map_number+1 }}</a></td>
+            <td><a href="{{ url_for('main.export_get_match',export_id=render.gtv_match_id) }}"> {{ render.gtv_match_id }} </a></td>
+            <td><a href="{{ url_for('main.export_get',export_id=render.gtv_match_id,map_num=render.map_number+1) }}"> {{ render.map_number+1 }}</a></td>
         {% else %}
             <td>{{ render.gtv_match_id }}</td>
             <td>{{ render.map_number }}</td>
