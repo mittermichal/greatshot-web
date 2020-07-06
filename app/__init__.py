@@ -1,7 +1,9 @@
-from flask import Flask
-from flask_socketio import SocketIO, emit
+from flask import Flask, config
+from flask_socketio import SocketIO
 
-socketio = SocketIO(async_mode="eventlet", engineio_logger=True, cors_allowed_origins="*")
+app_config = config.Config('.')
+app_config.from_pyfile('config.cfg')
+socketio = SocketIO(async_mode="eventlet", engineio_logger=True, cors_allowed_origins=app_config['APPHOST'])
 
 
 def create_app(debug=False):
