@@ -85,7 +85,6 @@ def cut():
                 'app/download/cuts/demo-out.dm_84',
                 request.form['start'], request.form['end'], request.form['cut_type'], request.form['client_num'])
         except Exception as e:
-            raise e
             flash(e)
             return render_template('cut.html', cut_form=cut_form, form1=form1, form2=form2)
         return send_from_directory(directory='download/cuts', filename='demo-out.dm_84', as_attachment=True,

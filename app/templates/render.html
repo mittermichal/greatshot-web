@@ -26,26 +26,17 @@ function get_worker_last_beat(element){
     });
 }
 
-function doPoll(firstPoll=false){
-
-  $.ajax({url: "{{ url_for('renders.render_status_get', render_id=render.id) }}", dataType: "json", success: function(task){
-        if (!firstPoll && task.status_msg=='started') {
-          $('.progress-bar').css({'width': 100 + '%'});
-          $('.progress-bar').html("No rendering worker available, reload page later");
-          setTimeout(doPoll,30000);
-          get_worker_last_beat($('#progress-info-more').html("Rendering is done on my PC. If there is no rendering worker available, that means I don't have it turned on, but your request is enqueued, so you don't have to send it again. It will get processed when I turn on the worker. You can PM me on discord if its OFF and you want to render something."));
-        }
-        else if (task.status_msg!='finished') {
-          $('.progress-bar').css({'width': task.progress + '%'});
-          $('.progress-bar').html(task.status_msg);
-          if (task.progress!=100) setTimeout(doPoll,3000);
-         } else {
-          $('#progress-info').hide();
-          $('#render-video video source').attr('src','{{ video_url }}');
-          $('#render-video video')[0].load();
-          $('#render-video').show();
-        }
-    }});
+function set_status(task) {
+    //get_worker_last_beat($('#progress-info-more').html("Rendering is done on my PC. If there is no rendering worker available, that means I don't have it turned on, but your request is enqueued, so you don't have to send it again. It will get processed when I turn on the worker. You can PM me on discord if its OFF and you want to render something."));
+    if (task.status_msg=='finished') {
+        $('#progress-info').hide();
+        $('#render-video video source').attr('src','{{ video_url }}');
+        $('#render-video video')[0].load();
+        $('#render-video').show();
+    } else {
+        $('.progress-bar').css({'width': task.progress + '%'});
+        $('.progress-bar').html(task.status_msg);
+    }
 }
 </script>
 
@@ -61,9 +52,19 @@ function doPoll(firstPoll=false){
 {% if not video_exists %}
     {% if render.progress!=100 %}
     <script>
-        $(function() {
-          setTimeout(function(){doPoll(true)},3000);
+    var socket;
+    $(document).ready(function(){
+        socket = io.connect();
+        socket.on('status-{{ render.id }}', function(task) {
+            set_status(task);
+            console.log(task);
         });
+        socket.on('connect', function() {
+            console.log('connect');
+            console.log('get_render_status', {{ render.id }});
+            socket.emit('get_render_status', {{ render.id }});
+        });
+    });
     </script>
     {% endif %}
     <div id="progress-info">

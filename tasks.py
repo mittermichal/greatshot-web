@@ -87,9 +87,11 @@ def render(render_id, demo_url, start, end, name=None, country=None, crf='23', e
     print(locals())
     url_parsed = urlparse(demo_url)
 
+    # test_progress(url_parsed, render_id)
+    # return
+
     # download is finished too fast to set status
-    # set_render_status(render_id, 'downloading demo...', 5)
-    set_render_status(url_parsed, render_id, 'capturing screenshots and sound...', 10)
+    set_render_status(url_parsed, render_id, 'downloading demo...', 5)
     demo_file_path = os.path.join(tasks_config.ETPATH, 'etpro/demos/demo-render.dm_84')
     r = requests.get(demo_url)
     if r.status_code == 200:
@@ -101,6 +103,8 @@ def render(render_id, demo_url, start, end, name=None, country=None, crf='23', e
     if os.stat(demo_file_path).st_size == 0:
         set_render_status(url_parsed, render_id, 'error: cut demo was empty', 100)
         raise RenderException('cut demo was empty')
+
+    set_render_status(url_parsed, render_id, 'capturing screenshots and sound...', 10)
     try:
         capture(start, end, etl)
     except subprocess.TimeoutExpired:
@@ -114,17 +118,6 @@ def render(render_id, demo_url, start, end, name=None, country=None, crf='23', e
                 '-i', 'C:\\Users\\admin\\Documents\\ETLegacy\\uvMovieMod\\videos\\render.avi',
                 '-shortest', 'render.mp4']
     else:
-        # p = subprocess.check_output(['sox', 'etpro/wav/synctest.wav', '-n', 'stat', '2>&1'],
-        #                             cwd=tasks_config.ETPATH, shell=True).decode()
-        # len_s = p.find('Length') + 22
-        # audio_len = float(p[len_s:len_s + p[len_s:].find('Scaled') - 2])
-        # video_len = len(glob.glob(tasks_config.ETPATH+'etpro\\screenshots\\shot[0-9]*.tga'))/50
-        # print("audio_len:",  audio_len, "video_len", video_len)
-        # if audio_len == 0 or video_len == 0:
-        #     set_render_status(render_id, 'error: captured game video or audio is empty', 30)
-        #     return None
-        # subprocess.check_output(['sox', 'etpro/wav/synctest.wav',
-        # 'etpro/wav/sync.wav', 'tempo', str(audio_len/video_len)], cwd=tasks_config.ETPATH,shell=True)
         args = ffmpeg_args(name, country, crf)
 
     p = subprocess.Popen(args, cwd=tasks_config.ETPATH, shell=True)
@@ -144,6 +137,14 @@ def render(render_id, demo_url, start, end, name=None, country=None, crf='23', e
     else:
         set_render_status(url_parsed, render_id, 'upload error', 100)
         raise RenderException('Upload error: ' + str(r.status_code) + r.content.decode('utf-8'))
+
+
+def test_progress(url_parsed, render_id):
+    from time import sleep
+    for i in range(0, 100, 20):
+        set_render_status(url_parsed, render_id, 'p ' + str(i), i)
+        sleep(2)
+    set_render_status(url_parsed, render_id, 'finished', 100)
 
 
 class RenderException(Exception):

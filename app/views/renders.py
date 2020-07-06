@@ -11,6 +11,7 @@ import tasks
 from datetime import timedelta
 import os
 import requests
+from .. import socketio
 
 renders = Blueprint('renders', __name__)
 
@@ -20,12 +21,21 @@ def render_get(render_id):
     render = Render.query.filter(Render.id == render_id).one()
     video_path = 'download/renders/' + str(render_id) + '.mp4'
     video_url = url_for('static', filename=video_path)
-    video_exists = os.path.isfile(video_path)
+    video_exists = os.path.isfile('app/' + video_path)
     return render_template(
         'render.html', render=render,
         video_url=video_url, video_exists=video_exists,
         download_url=url_for('main.download_static', path='renders/' + str(render.id) + '.mp4', dl=1)
     )
+
+
+@socketio.on('get_render_status')
+def on_render_status(render_id):
+    render = Render.query.filter(Render.id == render_id).one()
+    socketio.emit('status-'+str(render_id), {
+        'status_msg': render.status_msg,
+        'progress': render.progress
+    })
 
 
 @renders.route('/renders/<render_id>/status', methods=['GET'])
@@ -45,6 +55,7 @@ def render_post(render_id):
         {Render.status_msg: request.json['status_msg'], Render.progress: request.json['progress']}
     )
     db_session.commit()
+    socketio.emit('status-'+str(render_id), request.json)
     if request.json['status_msg'] == 'finished' and 'RENDER_FINISHED_WEBHOOK' in current_app.config.keys():
         try:
             requests.post(
@@ -150,5 +161,4 @@ def render_upload():
         return jsonify({'error': 'no file'})
     except Exception as e:
         print(e)
-        raise e
-        # return jsonify({'error': str(e)})
+        return jsonify({'error': str(e)})
