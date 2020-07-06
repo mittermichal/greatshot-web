@@ -27,7 +27,7 @@ function get_worker_last_beat(element){
 }
 
 function set_status(task) {
-    //get_worker_last_beat($('#progress-info-more').html("Rendering is done on my PC. If there is no rendering worker available, that means I don't have it turned on, but your request is enqueued, so you don't have to send it again. It will get processed when I turn on the worker. You can PM me on discord if its OFF and you want to render something."));
+    if (task.status_msg!="started") $('#progress-info-more').html("");
     if (task.status_msg=='finished') {
         $('#progress-info').hide();
         $('#render-video video source').attr('src','{{ video_url }}');
@@ -73,7 +73,21 @@ function set_status(task) {
               {{ render.status_msg }}
           </div>
         </div>
-        <div id="progress-info-more"></div>
+        <div id="progress-info-more">
+            {% if render_worker_status.msg != "" %}
+                <div class="alert alert-primary" role="alert">
+                    RENDER WORKER IS OFFLINE
+                </div>
+                Rendering is done on my PC.
+                If there is no rendering worker available, that means I don't have it turned on,
+                but your request is enqueued, so you don't have to send it again.
+                It will get processed when I turn on the worker.
+                You can PM me on discord if its OFF and you want to render something.
+                <div class="alert alert-info" role="alert">
+                    {{ render_worker_status.msg }}
+                </div>
+            {% endif %}
+        </div>
     </div>
 {% endif %}
 

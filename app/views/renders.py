@@ -22,10 +22,22 @@ def render_get(render_id):
     video_path = 'download/renders/' + str(render_id) + '.mp4'
     video_url = url_for('static', filename=video_path)
     video_exists = os.path.isfile('app/' + video_path)
+
+    if video_exists:
+        render_worker_status = {}
+    else:
+        diff = int(tasks.redis_broker.client.time()[0] - tasks.get_worker_last_beat())
+        on = diff <= 60
+        render_worker_status = {
+            'msg': "last online: {} ago".format(str(timedelta(seconds=diff))) if not on else ''
+        }
+
+
     return render_template(
         'render.html', render=render,
         video_url=video_url, video_exists=video_exists,
-        download_url=url_for('main.download_static', path='renders/' + str(render.id) + '.mp4', dl=1)
+        download_url=url_for('main.download_static', path='renders/' + str(render.id) + '.mp4', dl=1),
+        render_worker_status=render_worker_status
     )
 
 
