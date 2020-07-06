@@ -1,7 +1,7 @@
 from flask import Flask
 from flask_socketio import SocketIO, emit
 
-socketio = SocketIO(async_mode="eventlet", engineio_logger=True)
+socketio = SocketIO(async_mode="eventlet", engineio_logger=True, cors_allowed_origins="*")
 
 
 def create_app(debug=False):
