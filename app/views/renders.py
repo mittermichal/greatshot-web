@@ -144,7 +144,7 @@ def renders_list():
         #                              - start and end time
         if form.validate_on_submit() and cut_form.validate_on_submit():
             map_number = int(cut_form.data['map_number']) - 1 if cut_form.data['map_number'] != '' else None
-            filepath = ('upload/' + cut_form.data['filename'], request.form['filepath'])[request.form['filepath'] != '']
+            filepath = ('app/upload/' + cut_form.data['filename'], request.form['filepath'])[request.form['filepath'] != '']
             render_id = render_new(filepath, str(int(cut_form.data['start'])), cut_form.data['end'],
                                    cut_form.data['cut_type'], cut_form.data['client_num'], form.data['title'],
                                    cut_form.data['gtv_match_id'], map_number,
