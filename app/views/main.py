@@ -128,7 +128,7 @@ def export():
         # make gtv comment
         # retrieve clips that are from this demo
         return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form,
-                               out=open('download/exports/'+filename+'.txt',
+                               out=open('app/download/exports/'+filename+'.txt',
                                         'r', encoding='utf-8', errors='ignore').read(),
                                parser_out=parsed_output)
     try:
