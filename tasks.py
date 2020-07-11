@@ -119,7 +119,7 @@ def capture(start, end, exec_at_time_callback, etl=False, fps=50):
                               ], cwd=tasks_config.ETPATH)
     try:
         Thread(target=progress_capture, args=(p, exec_at_time_callback)).start()
-        p.communicate(timeout=60)
+        p.communicate(timeout=120)
     except subprocess.TimeoutExpired as e:
         p.kill()
         raise e
