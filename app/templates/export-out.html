@@ -9,7 +9,7 @@
 <h1>Export output</h1>
 
 {% if ((export_id is defined) and (map_num is defined)) %}
-<a href="/export/{{ export_id }}/{{map_num+2}}">next map</a>
+<a href="{{ url_for('main.export_get',gtv_match_id=export_id,map_num=map_num+2) }}">next map</a>
 {% endif %}
 {% if players|count %}
 	<h2>Highlights</h2>

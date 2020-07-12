@@ -101,36 +101,13 @@ def export():
         cut_form = CutForm(request.form)
         rndr_form = RenderForm(request.form)
         if request.form['gtv_match_id'] != '' and request.form['map_number'] != '':
-            try:
-                return redirect(url_for('main.export_get',
-                                        export_id=re.findall(r'(\d+)', request.form['gtv_match_id'])[0],
-                                        map_num=str(request.form['map_number']))
+            return redirect(url_for('main.export_get',
+                                    gtv_match_id=re.findall(r'(\d+)', request.form['gtv_match_id'])[0],
+                                    map_num=str(request.form['map_number']))
                                 )
-            #except HTTPError:
-            #    flash("Probably no demos available for this match")
-            except Exception as e:
-                flash(e)
-                return render_template('export.html', form1=form1, form2=form2)
 
         filename = upload(request)
-        export_out_file_path = 'app/download/exports/'+filename+'.txt'
-        if not os.path.isfile(export_out_file_path):
-            arg = current_app.config['INDEXER'] % (filename, filename)
-            subprocess.call([current_app.config['PARSERPATH'], 'indexer', arg])
-        if request.form['gtv_match_id'] != '' and request.form['map_number'] != '':
-            cut_form.gtv_match_id.data = re.findall(r'(\d+)', request.form['map_number'])[0]
-            cut_form.map_number.data = int(request.form['map_number'])-1
-        else:
-            cut_form.filename.data = filename
-        parsed_output = parse_output(open(export_out_file_path, 'r',
-                                          encoding='utf-8', errors='ignore').readlines(),
-                                     cut_form.gtv_match_id.data)
-        # make gtv comment
-        # retrieve clips that are from this demo
-        return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form,
-                               out=open('app/download/exports/'+filename+'.txt',
-                                        'r', encoding='utf-8', errors='ignore').read(),
-                               parser_out=parsed_output)
+        return redirect(url_for('main.export_demo_file', filename=filename))
     try:
         ettv_demos_path = current_app.config['ETTV_DEMOS_PATH']
         ettv_demos = [
@@ -174,31 +151,31 @@ def export_ettv(path):
                            parser_out=parsed_output)
 
 
-@flask_app.route('/export/<export_id>')
+@flask_app.route('/export/gtv/<export_id>')
 def export_get_match(export_id):
     renders = Render.query.order_by(desc(Render.id)).filter(Render.gtv_match_id == export_id)
     return render_template('renders.html', renders=renders, export_id=export_id)
 
 
-@flask_app.route('/export/<export_id>/<map_num>')
-def export_get(export_id, map_num, render=False, html=True):
-    export_id = int(export_id)
+@flask_app.route('/export/<gtv_match_id>/<map_num>')
+@flask_app.route('/export/gtv/<gtv_match_id>/<map_num>')
+def export_get(gtv_match_id, map_num, render=False, html=True):
+    gtv_match_id = int(gtv_match_id)
     map_num = int(map_num)-1
     if html:
         cut_form = CutForm()
         rndr_form = RenderForm()
-        cut_form.gtv_match_id.data = export_id
+        cut_form.gtv_match_id.data = gtv_match_id
         cut_form.map_number.data = map_num + 1
-    renders = Render.query.order_by(desc(Render.id)).filter(Render.gtv_match_id == export_id,
+    renders = Render.query.order_by(desc(Render.id)).filter(Render.gtv_match_id == gtv_match_id,
                                                             Render.map_number == map_num)
 
     form1, form2 = ExportFileForm(), ExportMatchLinkForm()
-    error_response = render_template('export.html', form1=form1, form2=form2)
     try:
-        filename = get_gtv_demo(export_id, map_num)
+        filename = get_gtv_demo(gtv_match_id, map_num)
     except Exception as e:
         flash(str(e))
-        return error_response
+        return render_template('export.html', form1=form1, form2=form2)
     else:
         export_out_file_path = 'app/download/exports/'+filename+'.txt'
         if not os.path.isfile(export_out_file_path):
@@ -210,24 +187,44 @@ def export_get(export_id, map_num, render=False, html=True):
         # os.remove('download/exports/'+filename+'.json')
         # return filename
 
-    parser_out = parse_output(out, export_id)
+    parser_out = parse_output(out, gtv_match_id)
     if render:
         for player in parser_out['players']:
             for spree in player['sprees']:
                 render_new(filename, spree[0]['dwTime'] - 2000,
                            2000 + spree[len(spree) - 1]['dwTime'], 1,
                            player['bClientNum'],
-                           player['szCleanName'] + 's ' + str(len(spree)) + '-man kill', export_id, map_num, None)
+                           player['szCleanName'] + 's ' + str(len(spree)) + '-man kill', gtv_match_id, map_num, None)
     if html:
         return render_template('export-out.html', renders=renders,
                                cut_form=cut_form, rndr_form=rndr_form,
                                out="".join(out),
                                parser_out=parser_out,
                                map_num=map_num,
-                               export_id=export_id
+                               export_id=gtv_match_id
                                )
     else:
         return parser_out
+
+
+@flask_app.route('/export/<filename>')
+def export_demo_file(filename):
+    if not os.path.isfile('app/upload/' + filename):
+        flash("Demo not found.")
+        return redirect(url_for('main.export'))
+    export_out_file_path = 'app/download/exports/' + filename + '.txt'
+    if not os.path.isfile(export_out_file_path):
+        arg = current_app.config['INDEXER'] % (filename, filename)
+        subprocess.call([current_app.config['PARSERPATH'], 'indexer', arg])
+    parsed_output = parse_output(open(export_out_file_path, 'r',
+                                      encoding='utf-8', errors='ignore').readlines())
+    cut_form = CutForm()
+    rndr_form = RenderForm()
+    # TODO: retrieve clips that are from this demo
+    return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form,
+                           out=open('app/download/exports/' + filename + '.txt',
+                                    'r', encoding='utf-8', errors='ignore').read(),
+                           parser_out=parsed_output)
 
 
 @flask_app.route('/')
@@ -260,5 +257,3 @@ def handle_no_result_exception(error):
 def page_not_found(e):
     flash(e)
     return render_template('layout.html'), 404
-
-
