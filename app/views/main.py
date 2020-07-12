@@ -220,6 +220,7 @@ def export_demo_file(filename):
                                       encoding='utf-8', errors='ignore').readlines())
     cut_form = CutForm()
     rndr_form = RenderForm()
+    cut_form.filename.data = filename
     # TODO: retrieve clips that are from this demo
     return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form,
                            out=open('app/download/exports/' + filename + '.txt',
