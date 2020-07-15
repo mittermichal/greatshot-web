@@ -27,7 +27,7 @@ function get_worker_last_beat(element){
 }
 
 function set_status(task) {
-    if (task.status_msg!="started") $('#progress-info-more').html("");
+    if (task.status_msg!="queued") $('#progress-info-more').html("");
     if (task.status_msg=='finished') {
         $('#progress-info').hide();
         $('#render-video video source').attr('src','{{ video_url }}');
@@ -57,11 +57,8 @@ function set_status(task) {
         socket = io.connect();
         socket.on('status-{{ render.id }}', function(task) {
             set_status(task);
-            console.log(task);
         });
         socket.on('connect', function() {
-            console.log('connect');
-            console.log('get_render_status', {{ render.id }});
             socket.emit('get_render_status', {{ render.id }});
         });
     });

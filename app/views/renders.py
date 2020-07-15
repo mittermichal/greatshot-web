@@ -117,7 +117,7 @@ def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, 
     )
     r = Render(
         title=title,
-        status_msg='started', progress=1,
+        status_msg='created', progress=1,
         gtv_match_id=gtv_match_id,
         map_number=map_number,
         client_num=client_num,
@@ -132,6 +132,8 @@ def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, 
         name, country,
         etl=False, crf=crf
     )
+    r.status_msg = 'queued'
+    db_session.commit()
     return r.id
 
 
