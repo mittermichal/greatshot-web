@@ -79,14 +79,10 @@ def progress_capture(p: subprocess.Popen, callback):
                 elif re.search(r'execing preinit-wav', line) is not None:
                     callback(None, sound, "Reloading demo for sound capture")
                     sound = True
-                elif re.search(r'execing preinit-wav', line) is not None:
-                    callback(None, sound, "Reloading demo for sound capture")
-                    sound = True
-
             break
 
 
-def capture(start, end, exec_at_time_callback, etl=False, fps=50):
+def capture(start, end, exec_at_time_callback=None, etl=False, fps=50):
     # http://stackoverflow.com/questions/5069224/handling-subprocess-crash-in-windows
     if etl:
         open(tasks_config.ETPATH + 'etmain\\init-tga.cfg', 'w').write(
@@ -118,7 +114,8 @@ def capture(start, end, exec_at_time_callback, etl=False, fps=50):
                               '+set', 'nextdemo', 'exec preinit-wav'
                               ], cwd=tasks_config.ETPATH)
     try:
-        Thread(target=progress_capture, args=(p, exec_at_time_callback)).start()
+        if exec_at_time_callback is not None:
+            Thread(target=progress_capture, args=(p, exec_at_time_callback)).start()
         p.communicate(timeout=120)
     except subprocess.TimeoutExpired as e:
         p.kill()
