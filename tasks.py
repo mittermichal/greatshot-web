@@ -56,12 +56,12 @@ def follow(file, p: subprocess.Popen):
         yield line
 
 
-def progress_capture(p: subprocess.Popen, callback):
+def progress_capture(p: subprocess.Popen, callback, error):
     while True and p.poll() is None:
         try:
             logfile = open(os.path.join(tasks_config.ETPATH, 'etpro', 'etconsole.log'), "r")
         except FileNotFoundError:
-            sleep(1)
+            sleep(0.1)
         else:
             callback(None, False, "Starting game and loading demo")
             loglines = follow(logfile, p)
@@ -79,6 +79,11 @@ def progress_capture(p: subprocess.Popen, callback):
                 elif re.search(r'execing preinit-wav', line) is not None:
                     callback(None, sound, "Reloading demo for sound capture")
                     sound = True
+                elif re.search(r'^ERROR: ', line) is not None:
+                    error[0] = line
+                    p.kill()
+                    loglines.close()
+            loglines.close()
             break
 
 
@@ -114,9 +119,13 @@ def capture(start, end, exec_at_time_callback=None, etl=False, fps=50):
                               '+set', 'nextdemo', 'exec preinit-wav'
                               ], cwd=tasks_config.ETPATH)
     try:
+        error = [None]
         if exec_at_time_callback is not None:
-            Thread(target=progress_capture, args=(p, exec_at_time_callback)).start()
+            Thread(target=progress_capture, args=(p, exec_at_time_callback, error)).start()
         p.communicate(timeout=120)
+        if error[0] is not None:
+            raise GameErrorException(error[0])
+
     except subprocess.TimeoutExpired as e:
         p.kill()
         raise e
@@ -188,6 +197,9 @@ def render(render_id, demo_url, start, end, name=None, country=None, crf='23', e
         # this prob wont work as intended
         set_render_status(url_parsed, render_id, 'error: game capture took too long', 100)
         raise RenderException('game capture took too long')
+    except GameErrorException as e:
+        set_render_status(url_parsed, render_id, str(e), 100)
+        raise e
 
     set_render_status(url_parsed, render_id, 'encoding video...', 0)
     if etl:
@@ -258,4 +270,8 @@ def test_capture_progress(start, end):
 
 
 class RenderException(Exception):
+    pass
+
+
+class GameErrorException(Exception):
     pass
