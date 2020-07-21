@@ -161,7 +161,7 @@ def export_get_match(export_id):
 @flask_app.route('/export/gtv/<gtv_match_id>/<map_num>')
 def export_get(gtv_match_id, map_num, render=False, html=True):
     gtv_match_id = int(gtv_match_id)
-    map_num = int(map_num)-1
+    map_num = max(int(map_num)-1, 0)
     if html:
         cut_form = CutForm()
         rndr_form = RenderForm()
