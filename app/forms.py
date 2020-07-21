@@ -41,3 +41,11 @@ class RenderForm(FlaskForm):
     name = StringField('Name')
     country = SelectField('Country', choices=[(x, x) for x in ["None"]+countries], default="None")
 
+
+class ExportEntitiesForm(FlaskForm):
+    start = IntegerField('Start', default=0, render_kw={"step": "50"})
+    end = IntegerField('End', default=2147483000, render_kw={"step": "50"})
+    length = StringField('Length', render_kw={"disabled": "disabled"})
+    entity_type = IntegerField('Entity Type', default=3)
+    event_type = IntegerField('Event Type', default=60)
+    filename = HiddenField('filename')

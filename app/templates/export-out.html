@@ -179,6 +179,15 @@ var g_players = {{ parser_out.g_players|tojson|safe }};
 		</label>
 	</div>
 </form>
+
+<form method="post" id="entities-form" action="{{ url_for('main.export_demo_entities') }}" enctype="multipart/form-data" class="form-horizontal card">
+    <div class="card-header">Export entities parameters</div>
+	<div class="card-body">
+		{{ render_form(entities_form) }}
+		{{ render_btn("Export entities") }}
+	</div>
+</form>
+
 <script src="{{ url_for('static', filename='input-spinner.js')}}"></script>
 <script>
 function validateRenderForm() {

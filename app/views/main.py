@@ -9,7 +9,7 @@ import app.gamestv
 from app.utils import get_gtv_demo
 import app.ftp
 import re
-from app.forms import ExportFileForm, ExportMatchLinkForm, CutForm, RenderForm
+from app.forms import ExportFileForm, ExportMatchLinkForm, CutForm, RenderForm, ExportEntitiesForm
 from markdown import markdown
 from app.models import Render
 from sqlalchemy import desc
@@ -130,11 +130,11 @@ def export():
 def export_ettv(path):
     ettv_demos_path = current_app.config['ETTV_DEMOS_PATH']
     path = os.path.join(os.path.normcase(ettv_demos_path), os.path.normcase(urllib.parse.unquote(path)))
-    print(path)
     cut_form = CutForm()
     rndr_form = RenderForm()
     filename = os.path.abspath(path)
-    print(filename)
+    entities_form = ExportEntitiesForm()
+    entities_form.filename.data = path
     cut_form.filepath.data = filename
     # cut_form.filename = 'aaa'
     indexer = 'indexTarget/%s/exportJsonFile/%s.txt/exportBulletEvents/1/exportDemo/1/exportChatMessages/1/exportRevives/1'
@@ -147,6 +147,7 @@ def export_ettv(path):
         open(path + '.txt', 'r', encoding='utf-8', errors='ignore').readlines(),
         cut_form.gtv_match_id.data)
     return render_template('export-out.html', cut_form=cut_form, rndr_form=rndr_form,
+                           entities_form=entities_form,
                            out=open(path + '.txt', 'r').read(),
                            parser_out=parsed_output)
 
@@ -159,14 +160,15 @@ def export_get_match(export_id):
 
 @flask_app.route('/export/<gtv_match_id>/<map_num>')
 @flask_app.route('/export/gtv/<gtv_match_id>/<map_num>')
-def export_get(gtv_match_id, map_num, render=False, html=True):
+def export_get(gtv_match_id, map_num):
     gtv_match_id = int(gtv_match_id)
-    map_num = int(map_num)-1
-    if html:
-        cut_form = CutForm()
-        rndr_form = RenderForm()
-        cut_form.gtv_match_id.data = gtv_match_id
-        cut_form.map_number.data = map_num + 1
+    map_num = max(int(map_num)-1, 0)
+    cut_form = CutForm()
+    rndr_form = RenderForm()
+    cut_form.gtv_match_id.data = gtv_match_id
+    cut_form.map_number.data = map_num + 1
+    entities_form = ExportEntitiesForm()
+
     renders = Render.query.order_by(desc(Render.id)).filter(Render.gtv_match_id == gtv_match_id,
                                                             Render.map_number == map_num)
 
@@ -184,27 +186,18 @@ def export_get(gtv_match_id, map_num, render=False, html=True):
         f = open(export_out_file_path, 'r', encoding='utf-8', errors='ignore')
         out = f.readlines()
         f.close()
+        entities_form.filename.data = filename
         # os.remove('download/exports/'+filename+'.json')
         # return filename
 
     parser_out = parse_output(out, gtv_match_id)
-    if render:
-        for player in parser_out['players']:
-            for spree in player['sprees']:
-                render_new(filename, spree[0]['dwTime'] - 2000,
-                           2000 + spree[len(spree) - 1]['dwTime'], 1,
-                           player['bClientNum'],
-                           player['szCleanName'] + 's ' + str(len(spree)) + '-man kill', gtv_match_id, map_num, None)
-    if html:
-        return render_template('export-out.html', renders=renders,
-                               cut_form=cut_form, rndr_form=rndr_form,
-                               out="".join(out),
-                               parser_out=parser_out,
-                               map_num=map_num,
-                               export_id=gtv_match_id
-                               )
-    else:
-        return parser_out
+    return render_template('export-out.html', renders=renders,
+                           cut_form=cut_form, rndr_form=rndr_form,
+                           entities_form=entities_form,
+                           out="".join(out),
+                           parser_out=parser_out,
+                           map_num=map_num,
+                           export_id=gtv_match_id)
 
 
 @flask_app.route('/export/<filename>')
@@ -223,9 +216,42 @@ def export_demo_file(filename):
     cut_form.filename.data = filename
     # TODO: retrieve clips that are from this demo
     return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form,
+                           entities_form=ExportEntitiesForm(),
                            out=open('app/download/exports/' + filename + '.txt',
                                     'r', encoding='utf-8', errors='ignore').read(),
                            parser_out=parsed_output)
+
+
+@flask_app.route('/exportEntities', methods=['POST'])
+def export_demo_entities():
+    form = ExportEntitiesForm(request.form)
+    filepath = form.filename.data
+    filename = os.path.split(filepath)[-1]
+    if not os.path.isfile(filepath):
+        flash("Demo not found.")
+        return redirect(url_for('main.export'))
+    export_out_file_path = os.path.normcase('app/download/exports/' + filename + '-ents.txt')
+    indexer = 'indexTarget/%s/'\
+              'exportJsonFile/%s/'\
+              'exportJson/1/'\
+              'exportPlayers/0/'\
+              'exportObituaries/0/'\
+              'exportEntityType/%d/'\
+              'exportEventType/%d/'\
+              'exportStart/%d/'\
+              'exportEnd/%d'
+    arg = indexer % (
+        filepath,
+        export_out_file_path,
+        form.entity_type.data,
+        form.event_type.data,
+        form.start.data,
+        form.end.data)
+    if os.name == 'posix':
+        arg = arg.replace('/', '\\')
+    subprocess.call([current_app.config['PARSERPATH'], 'indexer', arg])
+    parsed_output = open(export_out_file_path, 'r', encoding='utf-8', errors='ignore').read()
+    return render_template('layout.html', msg=parsed_output)
 
 
 @flask_app.route('/')
