@@ -249,7 +249,7 @@ def get_maps():
 
 
 @flask_app.errorhandler(NoResultFound)
-def handle_no_result_exception(error):
+def handle_no_result_exception(_):
     flash('Item not found')
     return render_template('layout.html'), 404
 

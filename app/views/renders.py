@@ -1,6 +1,6 @@
-from flask import Blueprint, render_template, request, url_for, jsonify, redirect, current_app
+from flask import Blueprint, render_template, request, url_for, jsonify, redirect, current_app, flash
 from werkzeug.utils import secure_filename
-
+from sqlalchemy.orm.exc import NoResultFound
 from app.models import Render
 from app.db import db_session
 from sqlalchemy import desc
@@ -176,3 +176,9 @@ def render_upload():
     except Exception as e:
         print(e)
         return jsonify({'error': str(e)})
+
+
+@renders.errorhandler(NoResultFound)
+def handle_no_result_exception(_):
+    flash('Item not found')
+    return render_template('layout.html'), 404
