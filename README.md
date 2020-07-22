@@ -5,7 +5,7 @@
 - cut demos (dm_84/tv_84) -> dm_84
 - export demos (dm_84/tv_84) to json and analyze it to output:
 	- hit regions (headshots) counter
-	- fast consecutive kills <img src="/static/excellent.png" height="25" width="25"/> [example](https://streamable.com/a5tx7)
+	- fast consecutive kills <img src="/app/static/excellent.png" height="25" width="25"/> [example](https://streamable.com/a5tx7)
 	- consecutive headshots - [example](https://streamable.com/e4ogi)
 	- revive stats
 - download ettv demo (tv_84) from [gamestv.org](http://gamestv.org)
