@@ -171,21 +171,21 @@ def export_get(gtv_match_id, map_num, render=False, html=True):
                                                             Render.map_number == map_num)
 
     form1, form2 = ExportFileForm(), ExportMatchLinkForm()
-    try:
-        filename = get_gtv_demo(gtv_match_id, map_num)
-    except Exception as e:
-        flash(str(e))
-        return render_template('export.html', form1=form1, form2=form2)
-    else:
-        export_out_file_path = 'app/download/exports/'+filename+'.txt'
-        if not os.path.isfile(export_out_file_path):
+
+    filename = str(gtv_match_id) + '_' + str(map_num) + '.tv_84'
+    export_out_file_path = 'app/download/exports/' + filename + '.txt'
+    if not os.path.isfile(export_out_file_path):
+        try:
+            filename = get_gtv_demo(gtv_match_id, map_num)
+        except Exception as e:
+            flash(str(e))
+            return render_template('export.html', form1=form1, form2=form2)
+        else:
             arg = current_app.config['INDEXER'] % (filename, filename)
             subprocess.call([current_app.config['PARSERPATH'], 'indexer', arg])
-        f = open(export_out_file_path, 'r', encoding='utf-8', errors='ignore')
-        out = f.readlines()
-        f.close()
-        # os.remove('download/exports/'+filename+'.json')
-        # return filename
+    f = open(export_out_file_path, 'r', encoding='utf-8', errors='ignore')
+    out = f.readlines()
+    f.close()
 
     parser_out = parse_output(out, gtv_match_id)
     if render:
