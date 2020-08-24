@@ -231,6 +231,7 @@ def render(render_id, demo_url, start, end, name=None, country=None, crf='23', e
     # print('upload r code:' + str(r.status_code))
     if r.status_code == 200:
         set_render_status(url_parsed, render_id, 'finished', 100)
+        print('finished')
     else:
         set_render_status(url_parsed, render_id, 'upload error', 100)
         raise RenderException('Upload error: ' + str(r.status_code) + r.content.decode('utf-8'))
