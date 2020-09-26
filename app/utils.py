@@ -4,7 +4,7 @@ import tasks_config
 import urllib.request
 from urllib.error import HTTPError
 import app.gamestv
-import requests
+from shutil import disk_usage
 
 
 def check_auth(username, password):
@@ -47,6 +47,7 @@ def get_gtv_demo(gtv_match_id, map_num):
                 error_message = "demos are probably private but possible to download"
                 raise Exception(error_message)
         try:
+            check_disk_space()
             urllib.request.urlretrieve(demo_links, 'app/upload/' + filename)
         except urllib.error.HTTPError:
             raise Exception("Download from gamestv.org failed - 404")
@@ -61,3 +62,13 @@ def flash_errors(form):
                 getattr(form, field).label.text,
                 error
             ), 'error')
+
+
+def check_disk_space():
+    if disk_usage('/')[2]/(2**30) < 0.5:
+        raise LowDiskSpaceException
+
+
+class LowDiskSpaceException(Exception):
+    def __str__(self):
+        return 'Server disk space is too low'

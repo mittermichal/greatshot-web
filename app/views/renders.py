@@ -5,7 +5,7 @@ from app.models import Render
 from app.db import db_session
 from sqlalchemy import desc
 from app.forms import RenderForm, CutForm
-from app.utils import check_auth, authenticate, get_gtv_demo, flash_errors
+from app.utils import check_auth, authenticate, get_gtv_demo, flash_errors, check_disk_space
 import app.Libtech3
 import tasks
 from datetime import timedelta
@@ -105,6 +105,7 @@ def status():
 
 
 def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, map_number, name=None, country=None, crf=23):
+    check_disk_space()
     if gtv_match_id == '':
         filename_orig = filename
     else:
@@ -182,17 +183,12 @@ def render_upload():
     if not auth or not check_auth(auth.username, auth.password):
         return authenticate()
     try:
+        check_disk_space()
         for filename, file in request.files.items():
             name = secure_filename(request.files[filename].name)
             file.save(os.path.join('app', 'download', 'renders', name))
             return name
-        return jsonify({'error': 'no file'})
+        return jsonify({'error': 'no file'}), 500
     except Exception as e:
         print(e)
-        return jsonify({'error': str(e)})
-
-
-@renders.errorhandler(NoResultFound)
-def handle_no_result_exception(_):
-    flash('Item not found')
-    return render_template('layout.html'), 404
+        return jsonify({'error': str(e)}), 500

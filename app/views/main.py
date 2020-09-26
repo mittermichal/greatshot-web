@@ -6,7 +6,7 @@ import urllib.request
 from urllib.error import HTTPError
 import urllib.parse
 import app.gamestv
-from app.utils import get_gtv_demo
+from app.utils import get_gtv_demo, check_disk_space, LowDiskSpaceException
 import app.ftp
 import re
 from app.forms import ExportFileForm, ExportMatchLinkForm, CutForm, RenderForm
@@ -26,6 +26,7 @@ flask_app = Blueprint('main', __name__)
 
 
 def upload(request):
+    check_disk_space()
     if 'file' in request.files:
         file = request.files['file']
         filename = ''.join(random.choices(string.ascii_uppercase + string.digits, k=6)) + file.filename
@@ -248,13 +249,19 @@ def get_maps():
         return jsonify({'count': -2})
 
 
-@flask_app.errorhandler(NoResultFound)
+@flask_app.app_errorhandler(NoResultFound)
 def handle_no_result_exception(_):
     flash('Item not found')
     return render_template('layout.html'), 404
 
 
-@flask_app.errorhandler(404)
+@flask_app.app_errorhandler(404)
 def page_not_found(e):
     flash(e)
     return render_template('layout.html'), 404
+
+
+@flask_app.app_errorhandler(LowDiskSpaceException)
+def handle_low_disk_space_exception(e):
+    flash(e)
+    return render_template('layout.html'), 500
