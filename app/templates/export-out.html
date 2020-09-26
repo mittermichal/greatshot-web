@@ -83,14 +83,12 @@
 </table>
 <sup>*</sup> with gibbing hits
 
-<h2>Sprees</h2>
-
-<script type="text/javascript">
+<script>
 function fillForm(e) {
 	$('form').show();
 	parameters=["title","start","end","client_num"];
 	for (i=0;i<parameters.length;i++) {
-		value=$(e).parent().attr('data-'+parameters[i]);
+		value=$(e).parent().parent().attr('data-'+parameters[i]);
 		$('form #'+parameters[i]).attr('value',value)
 		$('form #'+parameters[i]).val(value);
 		$('form #'+parameters[i]).change();
@@ -98,57 +96,100 @@ function fillForm(e) {
 }
 
 var g_players = {{ parser_out.g_players|tojson|safe }};
-
 </script>
 
-
+<div>
+<h2>Sprees</h2>
 {% for player in parser_out.players %}
 	{% for spree in player.sprees %}
-		<div class="shadow-sm p-3" data-title="{{ player['szCleanName'] }}'s {{ spree|length }}-man kill" data-client_num="{{ player['bClientNum'] }}" data-start="{{ spree[0]['dwTime']-2000 }}" data-end="{{ 2000+spree[spree|length - 1]['dwTime'] }}">
-			{% for kill in spree %}
-				<span{% if kill.bIsTeamkill %} style="color:red;"{% endif %}>{{ kill.bAttacker }} {{ kill.bTarget }} {{ kill.szTimeString }} {{ kill.szMessage }} {{ kill.dwTime }}</span><br/>
-			{% endfor %}
-			<a class="btn btn-outline-primary" href="#render-form" onclick="fillForm(this);">
-				<span style="width:20px" class="oi oi-video"></span> Render
-			</a>
-			<a class="btn btn-outline-primary" href="#cut-form" onclick="fillForm(this);">
-				<span style="width:20px" class="oi oi-resize-width"></span> Cut
-			</a>
+		<div class="shadow-sm p-3 row" data-title="{{ player['szCleanName'] }}'s {{ spree.size() }}-man kill" data-client_num="{{ player['bClientNum'] }}" data-start="{{ spree.render_start() }}" data-end="{{ spree.render_end() }}">
+			<div class="col">
+				{% for kill in spree.jsons %}
+					<span{% if kill.bIsTeamkill %} style="color:red;"{% endif %}>{{ kill.bAttacker }} {{ kill.bTarget }} {{ kill.szTimeString }} {{ kill.szMessage }} {{ kill.dwTime }}</span><br/>
+				{% endfor %}
+				<a class="btn btn-outline-primary" href="#render-form" onclick="fillForm(this);">
+					<span style="width:20px" class="oi oi-video"></span> Render
+				</a>
+				<a class="btn btn-outline-primary" href="#cut-form" onclick="fillForm(this);">
+					<span style="width:20px" class="oi oi-resize-width"></span> Cut
+				</a>
+			</div>
+			{% if spree.renders.count() %}
+			<div class="col">
+				<p>Renders:</p>
+				<ul>
+				{% for render in spree.renders %}
+					<li><a href="{{ url_for('renders.render_get',render_id=render.id) }}">{{ render.title }} ({{ render.status_msg }})</a></li>
+				{% endfor %}
+				</ul>
+			</div>
+			{% endif %}
 		</div>
 	{% endfor %}
 {% endfor %}
+</div>
 
+<div>
 <h2>Headshot Sprees</h2>
-
 {% for player in parser_out.players %}
 	{% for hs_spree in player.hs_sprees %}
-		<div class="hs-spree shadow-sm p-3" data-title="{{ player['szCleanName'] }}'s {{ hs_spree|length }}-headshots spree" data-client_num="{{ player['bClientNum'] }}" data-start="{{ hs_spree[0]['dwTime']-2000 }}" data-end="{{ 2000+hs_spree[hs_spree|length - 1]['dwTime'] }}">
-			{{ player.szCleanName }} HS Count: {{ hs_spree|length }} Length:{{ hs_spree[hs_spree|length - 1]['dwTime']-hs_spree[0]['dwTime'] }}<br/>
-			{% for hs in hs_spree %}
-				{{ hs.bAttacker }} {{ hs.bTarget }} {{ hs.dwTime }} {{ hs.eventNum }}<br/>
-			{% endfor %}
-			<a class="btn btn-outline-primary" href="#render-form" onclick="fillForm(this);">
-				<span style="width:20px" class="oi oi-video"></span> Render
-			</a>
-			<a class="btn btn-outline-primary" href="#cut-form" onclick="fillForm(this);">
-				<span style="width:20px" class="oi oi-resize-width"></span> Cut
-			</a>
+		<div class="hs-spree shadow-sm p-3 row" data-title="{{ player['szCleanName'] }}'s {{ hs_spree.size() }}-headshots spree" data-client_num="{{ player['bClientNum'] }}" data-start="{{ hs_spree.render_start() }}" data-end="{{ hs_spree.render_end() }}">
+			<div class="col">
+				{{ player.szCleanName }} HS Count: {{ hs_spree.size() }} Length:{{ hs_spree.length() }}<br/>
+				{% for hs in hs_spree.jsons %}
+					{{ hs.bAttacker }} {{ hs.bTarget }} {{ hs.dwTime }} {{ hs.eventNum }}<br/>
+				{% endfor %}
+				<a class="btn btn-outline-primary" href="#render-form" onclick="fillForm(this);">
+					<span style="width:20px" class="oi oi-video"></span> Render
+				</a>
+				<a class="btn btn-outline-primary" href="#cut-form" onclick="fillForm(this);">
+					<span style="width:20px" class="oi oi-resize-width"></span> Cut
+				</a>
+			</div>
+			{% if hs_spree.renders.count() %}
+			<div class="col">
+				<p>Renders:</p>
+				<ul>
+				{% for render in hs_spree.renders %}
+					<li><a href="{{ url_for('renders.render_get',render_id=render.id) }}">{{ render.title }} ({{ render.status_msg }})</a></li>
+				{% endfor %}
+				</ul>
+			</div>
+			{% endif %}
 		</div>
 	{% endfor %}
 {% endfor %}
+</div>
 
-
+<div>
+<h2>Rifle tricks</h2>
 {% for player in parser_out.players %}
 	{% for trick in player.rifletricks %}
-		<div class="rifletrick shadow-sm p-3" data-title="{{ player['szCleanName'] }}'s rifletrick" data-client_num="{{ player['bClientNum'] }}" data-start="{{ trick['dwTime']-6000 }}" data-end="{{ 2000+trick['dwTime'] }}">
-			{{ player.szCleanName }} From: To: Distance: {{ trick.distance }}<br/>
-				{{ trick.bAttacker }} {{ trick.bTarget }} {{ trick.szTimeString }} {{ trick.szMessage }} {{ trick.dwTime }} <br/>
-			<a class="btn btn-default btn-lg" href="#render-form" onclick="fillForm(this);">
-				<span style="width:20px" class="glyphicon glyphicon glyphicon-film"></span> Render
-			</a>
+		<div class="rifletrick shadow-sm p-3 row" data-title="{{ player['szCleanName'] }}'s rifletrick" data-client_num="{{ player['bClientNum'] }}" data-start="{{ trick.render_start() }}" data-end="{{ trick.render_end() }}">
+			<div class="col">
+				{{ player.szCleanName }} From: To: Distance: {{ trick.distance }}<br/>
+					{{ trick.jsons[0].bAttacker }} {{ trick.jsons[0].bTarget }} {{ trick.jsons[0].szTimeString }} {{ trick.jsons[0].szMessage }} {{ trick.jsons[0].dwTime }} <br/>
+				<a class="btn btn-outline-primary" href="#render-form" onclick="fillForm(this);">
+						<span style="width:20px" class="oi oi-video"></span> Render
+					</a>
+				<a class="btn btn-outline-primary" href="#cut-form" onclick="fillForm(this);">
+					<span style="width:20px" class="oi oi-resize-width"></span> Cut
+				</a>
+			</div>
+			{% if trick.renders.count() %}
+			<div class="col">
+				<p>Renders:</p>
+				<ul>
+				{% for render in trick.renders %}
+					<li><a href="{{ url_for('renders.render_get',render_id=render.id) }}">{{ render.title }} ({{ render.status_msg }})</a></li>
+				{% endfor %}
+				</ul>
+			</div>
+			{% endif %}
 		</div>
 	{% endfor %}
 {% endfor %}
+</div>
 
 <form method="post" id="render-form" action="/renders" onsubmit="return validateRenderForm()" enctype="multipart/form-data" class="form-horizontal card">
     <div class="card-header">Render parameters</div>

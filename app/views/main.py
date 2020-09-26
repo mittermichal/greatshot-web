@@ -188,7 +188,7 @@ def export_get(gtv_match_id, map_num, render=False, html=True):
     out = f.readlines()
     f.close()
 
-    parser_out = parse_output(out, gtv_match_id)
+    parser_out = parse_output(out, gtv_match_id, map_num)
     if render:
         for player in parser_out['players']:
             for spree in player['sprees']:
