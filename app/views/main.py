@@ -231,7 +231,7 @@ def export_demo_file(filename):
 
 @flask_app.route('/')
 def index():
-    return render_template('layout.html', msg=markdown(open('README.md', 'r').read()))
+    return render_template('layout.html', msg=markdown(open('README.md', 'r').read().replace('/app', '')))
 
 
 @flask_app.route('/get_maps', methods=['POST'])

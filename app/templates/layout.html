@@ -7,7 +7,7 @@
     <script src="{{ url_for('static', filename='node_modules/jquery/dist/jquery.min.js')}}"></script>
     <script src="{{ url_for('static', filename='node_modules/bootstrap/dist/js/bootstrap.min.js')}}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='node_modules/open-iconic/font/css/open-iconic-bootstrap.min.css')}}">
-    <link rel="stylesheet" href="/static/style.css" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
     <title>W:ET demo tools {% block title %}{% endblock %}</title>
     {% endblock %}
 </head>
@@ -15,7 +15,7 @@
     <div class="container">
         <nav class="navbar">
             <a class="navbar-brand align-middle" href="#">
-                <img src="/static/logo-plain.svg" width="160" class="d-inline-block" alt="" loading="lazy">
+                <img src="{{ url_for('static', filename='logo-plain.svg') }}" width="160" class="d-inline-block" alt="" loading="lazy">
                 W:ET demo tools
             </a>
             <ul class="nav nav-pills">
