@@ -249,6 +249,11 @@ def get_maps():
         return jsonify({'count': -2})
 
 
+@flask_app.route('/favicon.ico')
+def favicon():
+    return redirect(url_for('static', filename='favicon.ico'))
+
+
 @flask_app.app_errorhandler(NoResultFound)
 def handle_no_result_exception(_):
     flash('Item not found')
