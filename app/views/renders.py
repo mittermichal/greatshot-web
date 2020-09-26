@@ -13,6 +13,7 @@ import os
 import requests
 from .. import socketio
 from flask_paginate import Pagination, get_page_parameter, get_per_page_parameter
+from shutil import disk_usage
 
 renders = Blueprint('renders', __name__)
 
@@ -93,11 +94,13 @@ def r_get_worker_last_beat():
 @renders.route('/status')
 def status():
     diff = int(tasks.redis_broker.client.time()[0] - tasks.get_worker_last_beat())
-    msg = "Render worker is "
+    msg = "<p>Render worker is "
     if diff <= 60:
         msg += 'online.'
     else:
         msg += 'offline. last online: {} ago'.format(str(timedelta(seconds=diff)))
+    msg += "</p>"
+    msg += "<p>Free disk space: {:.2f} GiB</p>".format(disk_usage('/')[2]/(2**30))
     return render_template('layout.html', msg=msg)
 
 
