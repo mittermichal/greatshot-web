@@ -177,8 +177,8 @@ class Moment:
         self.renders = []
         self.gtv_match_id = gtv_match_id
         self.map_num = map_num
-        self.find_renders()
         self.renders_count = 0
+        self.find_renders()
 
     def find_renders(self):
         if self.gtv_match_id is not None and self.gtv_match_id != '':
