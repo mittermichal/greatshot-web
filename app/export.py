@@ -190,7 +190,7 @@ class Moment:
                     Render.start <= self.start(),
                     Render.end >= self.end(),
                 )
-            self.renders_count = self.renders.count('*')
+            self.renders_count = self.renders.count()
 
     def start(self):
         return self.jsons[0]['dwTime']
