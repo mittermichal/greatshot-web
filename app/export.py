@@ -178,6 +178,7 @@ class Moment:
         self.gtv_match_id = gtv_match_id
         self.map_num = map_num
         self.find_renders()
+        self.renders_count = 0
 
     def find_renders(self):
         if self.gtv_match_id is not None and self.gtv_match_id != '':
@@ -189,6 +190,7 @@ class Moment:
                     Render.start <= self.start(),
                     Render.end >= self.end(),
                 )
+            self.renders_count = self.renders.count('*')
 
     def start(self):
         return self.jsons[0]['dwTime']
