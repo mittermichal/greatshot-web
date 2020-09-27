@@ -43,10 +43,10 @@ def parse_output(lines, gtv_match_id=None, map_num=None):
     table.create_index("player")
     table.create_index("region")
 
-    if gtv_match_id is not None and gtv_match_id != '':
-        g_players = app.gamestv.getPlayers(gtv_match_id)
-    else:
-        g_players = []
+    # if gtv_match_id is not None and gtv_match_id != '':
+    #     g_players = app.gamestv.getPlayers(gtv_match_id)
+    # else:
+    #     g_players = []
 
     # exporter=eventexport.EventExport()
     # TODO: fix players[j['bAttacker']] out of bound
@@ -158,7 +158,7 @@ def parse_output(lines, gtv_match_id=None, map_num=None):
       else:
         player['name'] = None
   """
-    return {'hits': ret, 'players': players, 'demo': demo, 'rounds': rounds, 'g_players': g_players, 'chat': chat}
+    return {'hits': ret, 'players': players, 'demo': demo, 'rounds': rounds, 'chat': chat}
 
 
 class MomentBuilder:
