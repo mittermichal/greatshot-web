@@ -167,7 +167,7 @@ var g_players = {{ parser_out.g_players|tojson|safe }};
 	{% for trick in player.rifletricks %}
 		<div class="rifletrick shadow-sm p-3 row" data-title="{{ player['szCleanName'] }}'s rifletrick" data-client_num="{{ player['bClientNum'] }}" data-start="{{ trick.render_start() }}" data-end="{{ trick.render_end() }}">
 			<div class="col">
-				{{ player.szCleanName }} From: To: Distance: {{ trick.distance }}<br/>
+				{{ player.szCleanName }} From: To: Distance: {{ "%.2f"|format(trick.jsons[0].distance) }}<br/>
 					{{ trick.jsons[0].bAttacker }} {{ trick.jsons[0].bTarget }} {{ trick.jsons[0].szTimeString }} {{ trick.jsons[0].szMessage }} {{ trick.jsons[0].dwTime }} <br/>
 				<a class="btn btn-outline-primary" href="#render-form" onclick="fillForm(this);">
 						<span style="width:20px" class="oi oi-video"></span> Render
