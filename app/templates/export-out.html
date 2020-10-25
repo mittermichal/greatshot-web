@@ -84,15 +84,23 @@
 <sup>*</sup> with gibbing hits
 
 <script>
-function fillForm(e) {
+function fillForm(e, clientNum_target = false) {
 	$('form').show();
-	parameters=["title","start","end","client_num"];
+	let parameters=["title","start","end"];
+	if (!clientNum_target) {
+		parameters.push("client_num");
+	} else {
+		let value=$(e).parent().parent().attr('data-client_num_target');
+		$('form #client_num').attr('value',value);
+		$('form #client_num').val(value);
+	}
 	for (i=0;i<parameters.length;i++) {
-		value=$(e).parent().parent().attr('data-'+parameters[i]);
+		let value=$(e).parent().parent().attr('data-'+parameters[i]);
 		$('form #'+parameters[i]).attr('value',value)
 		$('form #'+parameters[i]).val(value);
-		$('form #'+parameters[i]).change();
+
 	}
+	$('form #'+parameters[i]).change();
 }
 
 //var g_players = {#{ parser_out.g_players|tojson|safe }#};
@@ -165,13 +173,16 @@ function fillForm(e) {
 <h2>Rifle tricks</h2>
 {% for player in parser_out.players %}
 	{% for trick in player.rifletricks %}
-		<div class="rifletrick shadow-sm p-3 row" data-title="{{ player['szCleanName'] }}'s rifletrick" data-client_num="{{ player['bClientNum'] }}" data-start="{{ trick.render_start() }}" data-end="{{ trick.render_end() }}">
+		<div class="rifletrick shadow-sm p-3 row" data-title="{{ player['szCleanName'] }}'s rifletrick" data-client_num="{{ player['bClientNum'] }}" data-client_num_target="{{ trick.jsons[0].bTarget }}" data-start="{{ trick.render_start() }}" data-end="{{ trick.render_end() }}">
 			<div class="col">
 				{{ player.szCleanName }} From: To: Distance: {{ "%.2f"|format(trick.jsons[0].distance) }}<br/>
 					{{ trick.jsons[0].bAttacker }} {{ trick.jsons[0].bTarget }} {{ trick.jsons[0].szTimeString }} {{ trick.jsons[0].szMessage }} {{ trick.jsons[0].dwTime }} <br/>
 				<a class="btn btn-outline-primary" href="#render-form" onclick="fillForm(this);">
 						<span style="width:20px" class="oi oi-video"></span> Render
-					</a>
+				</a>
+				<a class="btn btn-outline-primary" href="#render-form" onclick="fillForm(this,true);">
+						<span style="width:20px" class="oi oi-video"></span> Render target POV
+				</a>
 				<a class="btn btn-outline-primary" href="#cut-form" onclick="fillForm(this);">
 					<span style="width:20px" class="oi oi-resize-width"></span> Cut
 				</a>
