@@ -8,7 +8,7 @@ from shutil import disk_usage
 
 
 def check_auth(username, password):
-    return username == tasks_config.STREAMABLE_NAME and password == tasks_config.STREAMABLE_PW
+    return username == tasks_config.RENDER_UPLOAD_AUTH_NAME and password == tasks_config.RENDER_UPLOAD_AUTH_PW
 
 
 def authenticate():
