@@ -45,7 +45,7 @@ def set_render_status(url_parsed, render_id, status_msg, progress=0):
     requests.post(
         url_parsed.scheme + '://' + url_parsed.netloc + '/renders/'+str(render_id),
         json={'status_msg': status_msg, 'progress': progress},
-        auth=(tasks_config.STREAMABLE_NAME, tasks_config.STREAMABLE_PW)
+        auth=(tasks_config.RENDER_UPLOAD_AUTH_NAME, tasks_config.RENDER_UPLOAD_AUTH_PW)
     )
 
 
@@ -229,7 +229,7 @@ def render(render_id, demo_url, start, end, name=None, country=None, crf='23', e
     # print('upload url: ' + url_parsed.scheme + '://' + url_parsed.netloc + '/upload')
     r = requests.put(
         url_parsed.scheme + '://' + url_parsed.netloc + '/renders',
-        auth=(tasks_config.STREAMABLE_NAME, tasks_config.STREAMABLE_PW),
+        auth=(tasks_config.RENDER_UPLOAD_AUTH_NAME, tasks_config.RENDER_UPLOAD_AUTH_PW),
         files={filename: open(tasks_config.ETPATH + 'render.mp4', 'rb')})
     # print('upload r code:' + str(r.status_code))
     if r.status_code == 200:
