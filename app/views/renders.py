@@ -202,7 +202,7 @@ def on_render_status_update(render_id, status_msg):
             )
         except requests.RequestException:
             pass
-    elif 'error' in status_msg and 'RENDER_FAILED_WEBHOOK' in current_app.config.keys():
+    elif 'error' in status_msg.lower() and 'RENDER_FAILED_WEBHOOK' in current_app.config.keys():
         render = Render.query.filter(Render.id == render_id).one()
         try:
             requests.post(
