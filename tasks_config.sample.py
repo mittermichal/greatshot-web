@@ -1,5 +1,0 @@
-ETPATH = 'C:\\image-et\\'
-REDIS = 'redis://:localhost'
-RENDER_UPLOAD_AUTH_NAME = 'name'
-RENDER_UPLOAD_AUTH_PW = 'pw'
-DRAMATIQ_NS = 'local'

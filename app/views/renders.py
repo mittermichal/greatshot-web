@@ -7,7 +7,7 @@ from sqlalchemy import desc
 from app.forms import RenderForm, CutForm
 from app.utils import check_auth, authenticate, get_gtv_demo, flash_errors, check_disk_space
 import app.Libtech3
-import tasks
+from render_worker import tasks
 from datetime import timedelta
 import os
 import requests
