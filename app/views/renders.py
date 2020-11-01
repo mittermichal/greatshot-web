@@ -104,14 +104,18 @@ def status():
     return render_template('layout.html', msg=msg)
 
 
+def render_cut_filepath(gtv_match_id, map_number, client_num, start, end):
+    return 'download/cuts/' + str(gtv_match_id) + '_' + str(map_number) + '_' + str(client_num) + '_' + str(
+        start) + '_' + str(end) + '.dm_84'
+
+
 def render_new(filename, start, end, cut_type, client_num, title, gtv_match_id, map_number, name=None, country=None, crf=23):
     check_disk_space()
     if gtv_match_id == '':
         filename_orig = filename
     else:
         filename_orig = 'app/upload/' + get_gtv_demo(gtv_match_id, map_number)
-    filename_cut = 'download/cuts/' + str(gtv_match_id) + '_' + str(map_number) + '_' + str(client_num) + '_' + str(
-        start) + '_' + str(end) + '.dm_84'
+    filename_cut = render_cut_filepath(gtv_match_id, map_number, client_num, start, end)
 
     app.Libtech3.cut(
         current_app.config['PARSERPATH'],
