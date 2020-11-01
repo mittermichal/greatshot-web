@@ -70,18 +70,7 @@ def render_post(render_id):
         )
         db_session.commit()
     socketio.emit('status-'+str(render_id), request.json)
-    if request.json['status_msg'] == 'finished' and 'RENDER_FINISHED_WEBHOOK' in current_app.config.keys():
-        try:
-            requests.post(
-                current_app.config['RENDER_FINISHED_WEBHOOK'],
-                json={
-                    'content': current_app.config['APPHOST']+url_for(
-                        'static', filename='download/renders/' + render_id + '.mp4'
-                    )
-                }
-            )
-        except requests.RequestException:
-            pass
+    on_render_status_update(render_id, request.json['status_msg'])
     return "", 200
 
 
@@ -196,3 +185,35 @@ def render_upload():
     except Exception as e:
         print(e)
         return jsonify({'error': str(e)}), 500
+
+
+def on_render_status_update(render_id, status_msg):
+    if status_msg == 'finished' and 'RENDER_FINISHED_WEBHOOK' in current_app.config.keys():
+        render = Render.query.filter(Render.id == render_id).one()
+        try:
+            requests.post(
+                current_app.config['RENDER_FINISHED_WEBHOOK'],
+                json={
+                    'embeds': [{
+                        "title": render.title,
+                        "description": current_app.config['APPHOST']+url_for('renders.render_get', render_id=render.id)
+                    }]
+                }
+            )
+        except requests.RequestException:
+            pass
+    elif 'error' in status_msg and 'RENDER_FAILED_WEBHOOK' in current_app.config.keys():
+        render = Render.query.filter(Render.id == render_id).one()
+        try:
+            requests.post(
+                current_app.config['RENDER_FAILED_WEBHOOK'],
+                json={
+                    'embeds': [{
+                        "title": render.title,
+                        "description": current_app.config['APPHOST']+url_for('renders.render_get', render_id=render.id),
+                        "footer": status_msg
+                    }]
+                }
+            )
+        except requests.RequestException:
+            pass
