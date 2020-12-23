@@ -10,7 +10,7 @@ from app.utils import get_gtv_demo, check_disk_space, LowDiskSpaceException
 import app.ftp
 import re
 from app.forms import ExportFileForm, ExportMatchLinkForm, CutForm, RenderForm
-from markdown import markdown
+# from markdown import markdown
 from app.models import Render
 from sqlalchemy import desc
 from app.export import parse_output
@@ -231,7 +231,7 @@ def export_demo_file(filename):
 
 @flask_app.route('/')
 def index():
-    return render_template('layout.html', msg=markdown(open('README.md', 'r').read().replace('/app', '')))
+    return render_template('layout.html', msg='<a href="https://github.com/mittermichal/greatshot-web">github</a>')
 
 
 @flask_app.route('/get_maps', methods=['POST'])
