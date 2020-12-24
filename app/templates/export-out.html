@@ -29,18 +29,19 @@
 			<th>clientNum</th>
 			<th>nick</th>
 			{#<th>Player profile</th>#}
-			<th>Bodyshots<sup>*</sup></th>
-			<th>Headshots</th>
-			<th>Team-hits</th>
-			<th>Shield-hits</th>
+			{% for region in parser_out.hit_regions %}
+			<th>{{ region }}</th>
+			{% endfor %}
+			{% if parser_out.isETTV %}
 			<th>Revives</th>
 			<th>Got revived</th>
+			{% endif %}
 		</tr>
 	</thead>
 
 {% for player in parser_out.players %}
-	{% if player.hits[0]>0 or player.hits[1]>0 or player.hits[2]>0 or player.hits[3]>0 %}
-		<tr>
+	{% if player.has_hits %}
+		<tr{{ {"class":"table-primary"}|xmlattr if player.bClientNum==parser_out.demo.bPOVId }}>
 			<td>
 				{{ player.bClientNum }}
 			</td>
@@ -56,32 +57,32 @@
 				{% endif %}
 			</td>#}
 
+			{% for region in parser_out.hit_regions %}
 			<td>
-				{{ player.hits[2] }}
+				{{ player.hits[region] }}
 			</td>
-			<td>
-				{{ player.hits[1] }}
-			</td>
-			<td>
-				{{ player.hits[3] }}
-			</td>
-			<td>
-				{{ player.hits[0] }}
-			</td>
+			{% endfor %}
 
+			{% if parser_out.isETTV %}
 			<td>
 				{{ player.revives }}
 			</td>
 			<td>
 				{{ player.revived }}
 			</td>
+			{% endif %}
 
 		</tr>
 	{% endif %}
 {% endfor %}
 
 </table>
-<sup>*</sup> with gibbing hits
+
+{% if parser_out.mod=="etpro" %}
+<div class="alert alert-info" role="alert">
+  Body hits are also gibbing hits
+</div>
+{% endif %}
 
 <script>
 function fillForm(e, clientNum_target = false) {
