@@ -116,9 +116,11 @@ function fillForm(e, clientNum_target = false) {
 				{% for kill in spree.jsons %}
 					<span{% if kill.bIsTeamkill %} style="color:red;"{% endif %}>{{ kill.bAttacker }} {{ kill.bTarget }} {{ kill.szTimeString }} {{ kill.szMessage }} {{ kill.dwTime }}</span><br/>
 				{% endfor %}
+				{% if parser_out.mod=="etpro" %}
 				<a class="btn btn-outline-primary" href="#render-form" onclick="fillForm(this);">
 					<span style="width:20px" class="oi oi-video"></span> Render
 				</a>
+				{% endif %}
 				<a class="btn btn-outline-primary" href="#cut-form" onclick="fillForm(this);">
 					<span style="width:20px" class="oi oi-resize-width"></span> Cut
 				</a>
@@ -148,9 +150,11 @@ function fillForm(e, clientNum_target = false) {
 				{% for hs in hs_spree.jsons %}
 					{{ hs.bAttacker }} {{ hs.bTarget }} {{ hs.dwTime }} {{ hs.eventNum }}<br/>
 				{% endfor %}
+				{% if parser_out.mod=="etpro" %}
 				<a class="btn btn-outline-primary" href="#render-form" onclick="fillForm(this);">
 					<span style="width:20px" class="oi oi-video"></span> Render
 				</a>
+				{% endif %}
 				<a class="btn btn-outline-primary" href="#cut-form" onclick="fillForm(this);">
 					<span style="width:20px" class="oi oi-resize-width"></span> Cut
 				</a>
