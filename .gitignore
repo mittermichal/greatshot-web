@@ -9,7 +9,7 @@ flags/
 maps/
 venv/
 logs/
-static/node_modules/
-/static/package-lock.json
+app/static/node_modules/
+/app/static/package-lock.json
 /scripts/events/
 /scripts/elysium/

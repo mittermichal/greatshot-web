@@ -1,0 +1,103 @@
+{% extends "layout.html" %}
+{% block title %}Render output{% endblock %}
+
+{% macro render_streamable(shortcode) %}
+<div class="wrap">
+    <a href="https://streamable.com/{{ shortcode }}">streamable.com - HD version* </a>
+    <div style="width: 100%; height: 0px; position: relative; padding-bottom: 56.250%;">
+        <iframe src="https://streamable.com/e/{{ shortcode }}" frameborder="0" allowfullscreen webkitallowfullscreen mozallowfullscreen scrolling="no" style="width: 100%; height: 100%; position: absolute;"></iframe>
+    </div>
+    <p>*HD doesn't work with embeded video</p>
+</div>
+{% endmacro %}
+
+{% block content %}
+<h1>{{ render.title }}</h1>
+{% if render.streamable_short %}
+  {{ render_streamable(render.streamable_short) }}
+{% endif %} {# if render.streamable_short #}
+
+<script src="https://cdn.jsdelivr.net/npm/socket.io-client@2/dist/socket.io.js"></script>
+<script>
+
+function get_worker_last_beat(element){
+        $.ajax({url: "/get_worker_last_beat", dataType: "json", success: function(data){
+            element.append("</br>" + data);
+        }
+    });
+}
+
+function set_status(task) {
+    if (task.status_msg!="queued") $('#progress-info-more').html("");
+    if (task.status_msg=='finished') {
+        $('#progress-info').hide();
+        $('#render-video video source').attr('src','{{ video_url }}');
+        $('#render-video video')[0].load();
+        $('#render-video').show();
+    } else {
+        $('.progress-bar').css({'width': task.progress + '%'});
+        $('.progress-bar').html(task.status_msg);
+    }
+}
+</script>
+
+{% if render.progress %}
+    {% set progress = render.progress %}
+{% else %}
+    {% set progress = '100' %}
+{% endif %}
+
+
+
+
+{% if not video_exists %}
+    {% if render.progress!=100 %}
+    <script>
+    var socket;
+    $(document).ready(function(){
+        socket = io.connect();
+        socket.on('status-{{ render.id }}', function(task) {
+            set_status(task);
+        });
+        socket.on('connect', function() {
+            socket.emit('get_render_status', {{ render.id }});
+        });
+    });
+    </script>
+    {% endif %}
+    <div id="progress-info">
+        <div class="progress bg-dark">
+          <div class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width:{{ render.progress }}%; overflow: visible;">
+              {{ render.status_msg }}
+          </div>
+        </div>
+        <div id="progress-info-more">
+            {% if render_worker_status.msg != "" %}
+                <div class="alert alert-primary" role="alert">
+                    RENDER WORKER IS OFFLINE
+                </div>
+                Your request is enqueued, so you don't have to send it again.
+            <span style="font-weight:bold">Finished renders are automatically posted to <a href="https://discord.gg/p59kWdF"><img alt="discord" src="https://discord.com/assets/f8389ca1a741a115313bede9ac02e2c0.svg" style="height: 1.5em">Greatshot discord</a> channel #media</span>
+                <div class="alert alert-info" role="alert">
+                    {{ render_worker_status.msg }}
+                </div>
+            {% endif %}
+        </div>
+    </div>
+{% endif %}
+
+<div id="render-video"{% if not video_exists %} style="display:none;"{% endif %}>
+    <video controls>
+            <source src="{{ video_url }}" type="video/mp4">
+    </video>
+    {# <input type="text" class="form-control" value="{{ video_url }}" readonly> #}
+    <a href="{{ download_url }}">
+        <span class="oi oi-data-transfer-download m1" style="font-size:48px"></span>
+    </a>
+</div>
+
+{% from "model.html" import render_model_obj %}
+{{ render_model_obj(render) }}
+
+{% endblock %}
+

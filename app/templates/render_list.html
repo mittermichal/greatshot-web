@@ -1,0 +1,34 @@
+{% if pagination %}
+    {{ pagination.info }}
+    {{ pagination.links }}
+{% endif %}
+<table class="table">
+    <thead>
+        <tr>
+            <th>#</th>
+            <th>Title</th>
+            <th>gtv_match_id</th>
+            <th>map number</th>
+            <th>status</th>
+        </tr>
+    </thead>
+    <tbody>
+{% for render in renders %}
+    <tr>
+        <td><a href="{{ url_for('renders.render_get',render_id=render.id) }}">{{ render.id }} </a></td>
+        <td><a href="{{ url_for('renders.render_get',render_id=render.id) }}">{{ render.title }} </a></td>
+        {% if render.gtv_match_id!=None and render.gtv_match_id!='' %}
+            <td><a href="{{ url_for('main.export_get_match',export_id=render.gtv_match_id) }}"> {{ render.gtv_match_id }} </a></td>
+            <td><a href="{{ url_for('main.export_get',gtv_match_id=render.gtv_match_id,map_num=render.map_number+1) }}"> {{ render.map_number+1 }}</a></td>
+        {% else %}
+            <td>{{ render.gtv_match_id }}</td>
+            <td>{{ render.map_number }}</td>
+        {% endif %}
+        <td>{{ render.status_msg }}</td>
+    </tr>
+{% endfor %}
+    </tbody>
+</table>
+{% if pagination %}
+    {{ pagination.links }}
+{% endif %}

@@ -2,21 +2,21 @@
 <html lang="en">
 <head>
     {% block head %}
-    <link rel="shortcut icon" href="/static/favicon.ico">
+    <link rel="shortcut icon" href="{{ url_for('static', filename='favicon.ico') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='node_modules/bootstrap/dist/css/bootstrap.min.css')}}">
     <script src="{{ url_for('static', filename='node_modules/jquery/dist/jquery.min.js')}}"></script>
     <script src="{{ url_for('static', filename='node_modules/bootstrap/dist/js/bootstrap.min.js')}}"></script>
     <link rel="stylesheet" href="{{ url_for('static', filename='node_modules/open-iconic/font/css/open-iconic-bootstrap.min.css')}}">
-    <link rel="stylesheet" href="/static/style.css" />
-    <title>W:ET demo tools {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <title>Greatshot {% block title %}{% endblock %}</title>
     {% endblock %}
 </head>
 <body>
     <div class="container">
         <nav class="navbar">
             <a class="navbar-brand align-middle" href="#">
-                <img src="/static/logo-plain.svg" width="160" class="d-inline-block" alt="" loading="lazy">
-                W:ET demo tools
+                <img src="{{ url_for('static', filename='logo-plain.svg') }}" width="160" class="d-inline-block" alt="" loading="lazy">
+                Greatshot
             </a>
             <ul class="nav nav-pills">
                 <li class="nav-item"><a class="nav-link" href="/"><span class="oi oi-info"></span> README</a></li>
@@ -27,9 +27,14 @@
                     <li><a href="/players"><span class="oi oi-"></span> Players</a></li>
                 #}
                 <li class="nav-item"><a class="nav-link" href="/renders"><span class="oi oi-video"></span> Renders</a></li>
-                <li class="nav-item"><a class="nav-link" href="{{ url_for('download_static', path='') }}"><span class="oi oi-arrow-thick-bottom"></span> Download</a></li>
+                <li class="nav-item"><a class="nav-link" href="{{ url_for('main.download_static', path='') }}"><span class="oi oi-arrow-thick-bottom"></span> Download</a></li>
                 <li class="nav-item"><a class="nav-link" href="/status"><span class="oi oi-pulse"></span> Status</a></li>
-                <li class="nav-item"><a class="nav-link" href="https://discord.gg/p59kWdF"><img src="https://discord.com/assets/f8389ca1a741a115313bede9ac02e2c0.svg" style="height: 1.5em">Discord</a></li>
+                <li class="nav-item"><a class="nav-link" href="https://discord.gg/p59kWdF"><img alt="discord" src="https://discord.com/assets/f8389ca1a741a115313bede9ac02e2c0.svg" style="height: 1.5em">Discord</a></li>
+                <li class="nav-item">
+                    <a class="nav-link" href="https://www.paypal.com/cgi-bin/webscr?cmd=_donations&amp;business=BRRRFPT7N9NP6&amp;currency_code=EUR&amp;source=url">
+                        <img alt="Donate" src="https://img.shields.io/badge/Donate-PayPal-green.svg">
+                    </a>
+                </li>
             </ul>
 
         </nav>
@@ -49,7 +54,7 @@
             <hr/>
             {% block footer %}
             created by <a href="https://github.com/mittermichal">Michal 'Kimi' Mitter</a>.
-            <a class="btn btn-outline-primary" href="https://github.com/mittermichal/advanced-gamestv-stats"><img width="16" height="16" src="/static/mark-github.svg"/> View on Github</a>
+            <a class="btn btn-outline-primary" href="https://github.com/mittermichal/advanced-gamestv-stats"><img alt="github" width="16" height="16" src="/static/mark-github.svg"/> View on Github</a>
             {% endblock %}
         </div>
     </div>

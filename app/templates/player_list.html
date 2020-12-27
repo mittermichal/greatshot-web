@@ -9,8 +9,8 @@
   <tbody>
 {% for player in players %}
     <tr>
-        <td><a href="{{ url_for('player_get',player_id=player.id) }}">{{ player.id }} </a></td>
-        <td><a href="{{ url_for('player_get',player_id=player.id) }}">{{ player.name }} </a></td>
+        <td><a href="{{ url_for('main.player_get',player_id=player.id) }}">{{ player.id }} </a></td>
+        <td><a href="{{ url_for('main.player_get',player_id=player.id) }}">{{ player.name }} </a></td>
         <td><img alt="{{ player.country }}" src="http://www.gamestv.org/images/flags/{{ player.country }}.gif"/></td>
     <tr/>
 {% endfor %}

@@ -1,0 +1,3 @@
+[submodule "render_worker"]
+	path = render_worker
+	url = https://github.com/mittermichal/greatshot-render-worker.git

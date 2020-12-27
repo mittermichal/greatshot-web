@@ -1,0 +1,16 @@
+name: update webapp
+
+on: push
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: run the update script
+        uses: garygrossgarten/github-action-ssh@release
+        with:
+          command: cd ~/wolf-demo-tools && bin/update.sh
+          host: ${{ secrets.HOST }}
+          username: agtv
+          privateKey: ${{ secrets.PRIVATE_KEY}}

@@ -1,0 +1,12 @@
+{% macro render_model_obj(model_obj) %}
+<table class="table table-bordered table-striped">
+    {% for attr in model_obj.__dict__ %}
+        {% if attr != "_sa_instance_state" %}
+            <tr>
+              <td>{{ attr }}</td>
+              <td>{{ model_obj[attr] }}</td>
+            </tr>
+        {% endif %}
+    {% endfor %}
+</table>
+{% endmacro %}
