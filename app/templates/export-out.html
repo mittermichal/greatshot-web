@@ -306,14 +306,27 @@ function validateRenderForm() {
 </div>
 
 <h2>Chat</h2>
-<table>
+<table class="table">
+	<thead>
+		<tr>
+			<th>nick</th>
+			<th>time string</th>
+			<th>server time</th>
+			<th>message</th>
+		</tr>
+	</thead>
 {% for chat in parser_out.chat %}
 	<tr>
 		<td>
 			{% for player in parser_out.players if player.bClientNum==chat.bPlayer %}
 				{{ player.szCleanName }}
 			{% endfor %}
-			 [{{ chat.szTimeString }}]:
+		</td>
+		<td>
+			 {{ chat.szTimeString }}
+		</td>
+		<td>
+			 {{ chat.dwTime }}
 		</td>
 		<td>
 			{{ chat.szMessage }}
