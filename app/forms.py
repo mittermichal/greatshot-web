@@ -43,7 +43,7 @@ class RenderForm(FlaskForm):
     crf = IntegerField(
         'encode quality **',
         [validators.NumberRange(min=18, max=51)],
-        default=23,
+        default=24,
         render_kw={"min": 18, "max": 51}
     )
     name = StringField('Name')
