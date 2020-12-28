@@ -111,7 +111,7 @@ def parse_output(lines, spree_timeout, hs_spree_timeout, gtv_match_id=None, map_
                 spree.append(j)
             else:
                 if len(spree) >= 3:
-                    sprees.append(moment_builder.build('rifletrick', spree))
+                    sprees.append(moment_builder.build('spree', spree))
                 spree = [j]
             attacker['spree'] = spree
             attacker['sprees'] = sprees
@@ -225,7 +225,7 @@ class Moment:
         if self.type == 'rifletrick':
             margin = 6000
         else:
-            margin = 2000
+            margin = 3000
         return self.start() - margin
 
     def render_end(self):
