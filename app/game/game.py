@@ -1,4 +1,5 @@
 from enum import Enum
+from app import Libtech3
 
 
 class Regions(Enum):
@@ -26,31 +27,31 @@ class Game:
     def __init__(self):
         self.regions = None
         self.regions_dict = None
-
-    def init_regions_dict(self):
-        self.regions_dict = {region.value: region.name for region in self.regions}
+        self.weapons = None
 
     def is_headshot(self, region: int) -> bool:
         return self.regions.HEAD.value == region
 
     @staticmethod
     def by_mod(mod):
+        mod = mod.split(' ')[0]
         switcher = {
             'etpro': Etpro,
-            'osp': Osp
+            'osp': Osp,
+            'RtcwPro': Osp
         }
-        return switcher.get(mod, Game)
+        return switcher.get(mod, Etpro)
 
 
 class Etpro(Game):
     def __init__(self):
         super().__init__()
         self.regions = EtproRegions
-        self.init_regions_dict()
+        self.weapons = Libtech3.Weapon
 
 
 class Osp(Game):
     def __init__(self):
         super().__init__()
         self.regions = OspRegions
-        self.init_regions_dict()
+        self.weapons = Libtech3.RtcwWeapon

@@ -64,6 +64,7 @@ def parse_output(lines, gtv_match_id=None, map_num=None):
         if type(line) is bytes:
             line = line.decode('utf-8', 'replace')
         j = json.loads(line.replace('\1', ''), strict=False)
+
         if 'szType' in j and j['szType'] == 'demo':
             demo = j
             config_string = parse_config_string(demo['szServerConfig'])
@@ -116,6 +117,7 @@ def parse_output(lines, gtv_match_id=None, map_num=None):
             attacker['sprees'] = sprees
 
         elif 'szType' in j and j['szType'] == 'bulletevent':
+            j['weapon'] = game.weapons(j['bWeapon']).name
             attacker = get_player(players, j['bAttacker'])
             if game.is_headshot(j['bRegion']):
                 hs_spree = attacker['hs_spree']
@@ -130,7 +132,7 @@ def parse_output(lines, gtv_match_id=None, map_num=None):
                 attacker['hs_sprees'] = hs_sprees
 
             # table.insert(int(j['bAttacker']), j['bRegion'])
-            attacker['hits'][game.regions_dict[j['bRegion']]] += 1
+            attacker['hits'][game.regions(j['bRegion']).name] += 1
         elif 'szType' in j and j['szType'] == 'revive':
             try:
                 reviver = get_player(players, j['bReviver'])

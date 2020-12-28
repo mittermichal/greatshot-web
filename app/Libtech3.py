@@ -340,3 +340,54 @@ class MethodOfDamage(Enum):
             MethodOfDamage.MOD_SWITCHTEAM.value: Weapon.WP_NONE,
         }
         return switcher.get(mod_number, Weapon.WP_NONE)
+
+
+class RtcwWeapon(Enum):
+    WP_NONE = 0
+    WP_KNIFE = 1
+    WP_LUGER = 2
+    WP_MP40 = 3
+    WP_MAUSER = 4
+    WP_FG42 = 5
+    WP_GRENADE_LAUNCHER = 6
+    WP_PANZERFAUST = 7
+    WP_VENOM = 8
+    WP_FLAMETHROWER = 9
+    WP_TESLA = 10
+    WP_SPEARGUN = 11
+    WP_KNIFE2 = 12
+    WP_COLT = 13
+    WP_THOMPSON = 14
+    WP_GARAND = 15
+    WP_BAR = 16
+    WP_GRENADE_PINEAPPLE = 17
+    WP_ROCKET_LAUNCHER = 18
+    WP_SNIPERRIFLE = 19
+    WP_SNOOPERSCOPE = 20
+    WP_VENOM_FULL = 21
+    WP_SPEARGUN_CO2 = 22
+    WP_FG42SCOPE = 23
+    WP_BAR2 = 24
+    WP_STEN = 25
+    WP_MEDIC_SYRINGE = 26
+    WP_AMMO = 27
+    WP_ARTY = 28
+    WP_SILENCER = 29
+    WP_AKIMBO = 30
+    WP_CROSS = 31
+    WP_DYNAMITE = 32
+    WP_DYNAMITE2 = 33
+    WP_PROX = 34
+    WP_MONSTER_ATTACK1 = 35
+    WP_MONSTER_ATTACK2 = 36
+    WP_MONSTER_ATTACK3 = 37
+    WP_SMOKETRAIL = 38
+    WP_GAUNTLET = 39
+    WP_SNIPER = 40
+    WP_MORTAR = 41
+    VERYBIGEXPLOSION = 42
+    WP_MEDKIT = 43
+    WP_PLIERS = 44
+    WP_SMOKE_GRENADE = 45
+    WP_BINOCULARS = 46
+    WP_NUM_WEAPONS = 47
