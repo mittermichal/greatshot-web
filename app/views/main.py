@@ -25,7 +25,7 @@ from flask import Blueprint
 flask_app = Blueprint('main', __name__)
 
 
-def upload(request):
+def upload():
     check_disk_space()
     if 'file' in request.files:
         file = request.files['file']
@@ -79,7 +79,7 @@ def cut():
                     int(request.form['map_number'])-1
                 )
             else:
-                filename = upload(request)
+                filename = upload()
             app.Libtech3.cut(
                 current_app.config['PARSERPATH'],
                 ('app/upload/' + filename, request.form['filepath'])[request.form['filepath'] != ''],
@@ -107,7 +107,7 @@ def export():
                                     map_num=str(request.form['map_number']))
                                 )
 
-        filename = upload(request)
+        filename = upload()
         return redirect(url_for('main.export_demo_file', filename=filename))
     try:
         ettv_demos_path = current_app.config['ETTV_DEMOS_PATH']
