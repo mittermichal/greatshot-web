@@ -144,12 +144,21 @@ def export_ettv(path):
     arg = indexer % (filename, filename)
     if not os.path.isfile(path + '.txt') or request.args.get('live', False):
         subprocess.call([current_app.config['PARSERPATH'], 'indexer', arg])
+
+    spree_timeout, hs_spree_timeout = parse_timeouts()
     parsed_output = parse_output(
         open(path + '.txt', 'r', encoding='utf-8', errors='ignore').readlines(),
-        cut_form.gtv_match_id.data)
-    return render_template('export-out.html', cut_form=cut_form, rndr_form=rndr_form,
-                           out=open(path + '.txt', 'r').read(),
-                           parser_out=parsed_output)
+        spree_timeout,
+        hs_spree_timeout,
+        cut_form.gtv_match_id.data
+    )
+    return render_template(
+        'export-out.html', cut_form=cut_form, rndr_form=rndr_form,
+        out=open(path + '.txt', 'r').read(),
+        parser_out=parsed_output,
+        spree_timeout=spree_timeout,
+        hs_spree_timeout=hs_spree_timeout
+    )
 
 
 @flask_app.route('/export/gtv/<export_id>')
@@ -189,7 +198,8 @@ def export_get(gtv_match_id, map_num, render=False, html=True):
     out = f.readlines()
     f.close()
 
-    parser_out = parse_output(out, gtv_match_id, map_num)
+    spree_timeout, hs_spree_timeout = parse_timeouts()
+    parser_out = parse_output(out, spree_timeout, hs_spree_timeout, gtv_match_id, map_num)
     if render:
         for player in parser_out['players']:
             for spree in player['sprees']:
@@ -198,13 +208,18 @@ def export_get(gtv_match_id, map_num, render=False, html=True):
                            player['bClientNum'],
                            player['szCleanName'] + 's ' + str(len(spree)) + '-man kill', gtv_match_id, map_num, None)
     if html:
-        return render_template('export-out.html', renders=renders,
-                               cut_form=cut_form, rndr_form=rndr_form,
-                               raw_out_path=export_out_file_path.replace('app/download/', ''),
-                               parser_out=parser_out,
-                               map_num=map_num,
-                               export_id=gtv_match_id
-                               )
+        return render_template(
+            'export-out.html',
+            renders=renders,
+            cut_form=cut_form,
+            rndr_form=rndr_form,
+            raw_out_path=export_out_file_path.replace('app/download/', ''),
+            spree_timeout=spree_timeout,
+            hs_spree_timeout=hs_spree_timeout,
+            parser_out=parser_out,
+            map_num=map_num,
+            export_id=gtv_match_id
+        )
     else:
         return parser_out
 
@@ -218,15 +233,23 @@ def export_demo_file(filename):
     if not os.path.isfile(export_out_file_path):
         arg = current_app.config['INDEXER'] % (filename, filename)
         subprocess.call([current_app.config['PARSERPATH'], 'indexer', arg])
-    parsed_output = parse_output(open(export_out_file_path, 'r',
-                                      encoding='utf-8', errors='ignore').readlines())
+
+    spree_timeout, hs_spree_timeout = parse_timeouts()
+    parsed_output = parse_output(
+        open(export_out_file_path, 'r', encoding='utf-8', errors='ignore').readlines(),
+        spree_timeout, hs_spree_timeout
+    )
     cut_form = CutForm()
     rndr_form = RenderForm()
     cut_form.filename.data = filename
     # TODO: retrieve clips that are from this demo
-    return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form,
-                           raw_out_path=export_out_file_path.replace('app/download/', ''),
-                           parser_out=parsed_output)
+    return render_template(
+        'export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form,
+        raw_out_path=export_out_file_path.replace('app/download/', ''),
+        spree_timeout=spree_timeout,
+        hs_spree_timeout=hs_spree_timeout,
+        parser_out=parsed_output
+    )
 
 
 @flask_app.route('/')
@@ -247,6 +270,16 @@ def get_maps():
         return jsonify({'count': len(app.gamestv.getDemosLinks(demo_id))})
     except HTTPError:
         return jsonify({'count': -2})
+
+
+def parse_timeouts():
+    spree = int(request.args.get('spree-timeout', 6000))
+    hs_spree = int(request.args.get('hs-spree-timeout', 5000))
+    if spree <= 0 or hs_spree <= 0:
+        spree = 6000
+        hs_spree = 5000
+        flash("Timeout has to be positive integer")
+    return spree, hs_spree
 
 
 @flask_app.route('/favicon.ico')

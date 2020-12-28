@@ -33,7 +33,7 @@ def dist(x1, y1, x2, y2):
 # 130 - head
 # 0 - target has spawnshield
 # 132 teammate hit
-def parse_output(lines, gtv_match_id=None, map_num=None):
+def parse_output(lines, spree_timeout, hs_spree_timeout, gtv_match_id=None, map_num=None):
     players = []
     rounds = []
     chat = []
@@ -107,7 +107,7 @@ def parse_output(lines, gtv_match_id=None, map_num=None):
 
             spree = attacker['spree']
             sprees = attacker['sprees']
-            if (not len(spree)) or (j['dwTime'] - spree[len(spree) - 1]['dwTime'] <= 6000):
+            if (not len(spree)) or (j['dwTime'] - spree[len(spree) - 1]['dwTime'] <= spree_timeout):
                 spree.append(j)
             else:
                 if len(spree) >= 3:
@@ -122,7 +122,7 @@ def parse_output(lines, gtv_match_id=None, map_num=None):
             if game.is_headshot(j['bRegion']):
                 hs_spree = attacker['hs_spree']
                 hs_sprees = attacker['hs_sprees']
-                if (not len(hs_spree)) or (j['dwTime'] - hs_spree[len(hs_spree) - 1]['dwTime'] <= 5000):
+                if (not len(hs_spree)) or (j['dwTime'] - hs_spree[len(hs_spree) - 1]['dwTime'] <= hs_spree_timeout):
                     hs_spree.append(j)
                 else:
                     if len(hs_spree) >= 3:

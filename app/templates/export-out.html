@@ -1,6 +1,6 @@
 {% extends "layout.html" %}
 
-{% from "form.html" import render_form, render_btn %}
+{% from "form.html" import render_form, render_btn, plus_minus_wrap %}
 
 {% block title %} - Export output{% endblock %}
 
@@ -11,6 +11,7 @@
 {% if ((export_id is defined) and (map_num is defined)) %}
 <a href="{{ url_for('main.export_get',gtv_match_id=export_id,map_num=map_num+2) }}">next map</a>
 {% endif %}
+
 {% if players|count %}
 	<h2>Highlights</h2>
 	{% include 'render_list.html' %}
@@ -113,6 +114,33 @@ function fillForm(e, clientNum_target = false) {
 
 //var g_players = {#{ parser_out.g_players|tojson|safe }#};
 </script>
+
+{% set spree_timeout_input %}
+	<input type="number" name="spree-timeout" id="spree-timeout" value="{{ spree_timeout }}"/>
+{% endset %}
+
+{% set hs_spree_timeout_input %}
+	<input type="number" name="hs-spree-timeout" id="hs-spree-timeout" value="{{ hs_spree_timeout }}"/>
+{% endset %}
+
+<div class="card">
+	<div class="card-header">Modify minimum time between frags and headshots for sprees</div>
+	<form class="m-2" method="get">
+		<div class="form-row">
+			<div class="col">
+				<label for="spree-timeout">Minimum time between frags</label>
+				{{ plus_minus_wrap(spree_timeout_input) }}
+			</div>
+			<div class="col">
+				<label for="hs-spree-timeout">Minimum time between headshots</label>
+				{{ plus_minus_wrap(hs_spree_timeout_input) }}
+			</div>
+		</div>
+		<div class="form-row">
+			<button type="submit" class="btn btn-secondary m-2">Submit</button>
+		</div>
+	</form>
+</div>
 
 <div>
 <h2>Sprees</h2>
