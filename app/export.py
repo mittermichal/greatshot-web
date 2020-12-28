@@ -1,8 +1,7 @@
-# from pydblite.sqlite import Database, Table
+import sqlite3
 import json
 from math import sqrt
 from sqlalchemy import desc
-import app.gamestv
 from app.models import Render
 from app.game import game as game_module
 
@@ -40,10 +39,14 @@ def parse_output(lines, spree_timeout, hs_spree_timeout, gtv_match_id=None, map_
     demo = {}
     moment_builder = MomentBuilder(gtv_match_id, map_num)
 
-    # db = Database(":memory:")
-    # table = db.create('hits', ("player", 'INTEGER'), ("region", 'INTEGER'))
-    # table.create_index("player")
-    # table.create_index("region")
+    db = sqlite3.connect(':memory:')
+    db.execute('''CREATE TABLE hits
+                 (player INTEGER, region INTEGER, time INTEGER, weapon INTEGER)''')
+    db.execute("CREATE INDEX p ON hits(player)")
+    db.execute("CREATE INDEX r ON hits(region)")
+    db.execute("CREATE INDEX w ON hits(weapon)")
+    db.execute("CREATE INDEX t ON hits(time)")
+
 
     # if gtv_match_id is not None and gtv_match_id != '':
     #     g_players = app.gamestv.getPlayers(gtv_match_id)
@@ -131,7 +134,8 @@ def parse_output(lines, spree_timeout, hs_spree_timeout, gtv_match_id=None, map_
                 attacker['hs_spree'] = hs_spree
                 attacker['hs_sprees'] = hs_sprees
 
-            # table.insert(int(j['bAttacker']), j['bRegion'])
+            # table.insert(int(j['bAttacker']), j['bRegion'], j['dwTime'], j['bWeapon'])
+            db.execute("INSERT INTO hits VALUES (?,?,?,?)", (int(j['bAttacker']), j['bRegion'], j['dwTime'], j['bWeapon']))
             attacker['hits'][game.regions(j['bRegion']).name] += 1
         elif 'szType' in j and j['szType'] == 'revive':
             try:
@@ -149,16 +153,24 @@ def parse_output(lines, spree_timeout, hs_spree_timeout, gtv_match_id=None, map_
             player['sprees'].append(moment_builder.build('kill_spree', player['spree']))
         if len(player['hs_spree']) >= 3:
             player['hs_sprees'].append(moment_builder.build('hs_spree', player['hs_spree']))
-        player['has_hits'] = any(player['hits'][region]>0 for region in player['hits'])
+        player['has_hits'] = any(player['hits'][region] > 0 for region in player['hits'])
+
+        for spree in player['sprees']:
+            sql = '''SELECT region,weapon,count(*) as c FROM hits 
+            WHERE player=? and time>? and time<? group by region,weapon
+            '''
+            rows = db.execute(sql, (
+                player['bClientNum'],
+                spree.render_start(),
+                spree.render_end()
+            ))
+            spree.hit_summary = {'{}-{}'.format(game.regions(row[0]).name, game.weapons(row[1]).name): row[2]
+                                 for row in rows}
+
         # if j['bAttacker']==int(player) and j['bRegion']!=130 and j['bRegion']!=131 and j['bRegion']!=0:
         # filter(lambda p: p['bClientNum'] == j['bTarget'], players)
         # exporter.add_event(j['dwTime'],'^2BULLETEVENT      ' +str(j['bRegion']) + '^7 ' + players[j['bTarget']]['szName'])
     # exporter.export()
-    # table.cursor.execute('SELECT player,region,count(*) FROM hits group by player,region')
-    # ret = []
-    # result = db.cursor.fetchall()
-    # for row in result:
-    #     ret.append(list(row))
     """
   TODO: player db
   if gtv_match_id!=None:
@@ -202,6 +214,7 @@ class Moment:
         self.map_num = map_num
         self.renders_count = 0
         self.find_renders()
+        self.hit_summary = {}
 
     def find_renders(self):
         if self.gtv_match_id is not None and self.gtv_match_id != '':

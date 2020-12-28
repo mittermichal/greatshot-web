@@ -147,7 +147,7 @@ function fillForm(e, clientNum_target = false) {
 {% for player in parser_out.players %}
 	{% for spree in player.sprees %}
 		<div class="shadow-sm p-3 row" data-title="{{ player['szCleanName'] }}'s {{ spree.size() }}-man kill" data-client_num="{{ player['bClientNum'] }}" data-start="{{ spree.render_start() }}" data-end="{{ spree.render_end() }}">
-			<div class="col">
+			<div class="col col-md-7">
 				{% for kill in spree.jsons %}
 					<span{% if kill.bIsTeamkill %} style="color:red;"{% endif %}>{{ kill.bAttacker }} {{ kill.bTarget }} {{ kill.szTimeString }} {{ kill.szMessage }} {{ kill.dwTime }}</span><br/>
 				{% endfor %}
@@ -160,6 +160,18 @@ function fillForm(e, clientNum_target = false) {
 					<span style="width:20px" class="oi oi-resize-width"></span> Cut
 				</a>
 			</div>
+
+			{% if spree.hit_summary.keys()|length %}
+			<div class="col">
+				<p>Hits:</p>
+				<ul>
+				{% for region_weapon in spree.hit_summary %}
+					<li>{{ region_weapon }}: {{ spree.hit_summary[region_weapon] }}</li>
+				{% endfor %}
+				</ul>
+			</div>
+			{% endif %}
+
 			{% if spree.renders_count %}
 			<div class="col">
 				<p>Renders:</p>
@@ -180,7 +192,7 @@ function fillForm(e, clientNum_target = false) {
 {% for player in parser_out.players %}
 	{% for hs_spree in player.hs_sprees %}
 		<div class="hs-spree shadow-sm p-3 row" data-title="{{ player['szCleanName'] }}'s {{ hs_spree.size() }}-headshots spree" data-client_num="{{ player['bClientNum'] }}" data-start="{{ hs_spree.render_start() }}" data-end="{{ hs_spree.render_end() }}">
-			<div class="col">
+			<div class="col col-md-8">
 				{{ player.szCleanName }} HS Count: {{ hs_spree.size() }} Length:{{ hs_spree.length() }}<br/>
 				{% for hs in hs_spree.jsons %}
 					{{ hs.bAttacker }} {{ hs.bTarget }} {{ hs.dwTime }} {{ hs.weapon }} {#{ hs.bWeapon }#} {#{ hs.eventNum }#}<br/>
