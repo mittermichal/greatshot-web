@@ -334,8 +334,16 @@ function validateRenderForm() {
 	</tr>
 {% endfor %}
 </table>
+
+{% if raw_out_path is defined %}
+<div class="alert alert-info">
+  <a href="{{ url_for('main.download_static',path=raw_out_path) }}">Raw LibTech3 json output</a>
+</div>
+{% elif out is defined %}
 <div class="card overflow-auto">
-	<div class="card-header">Raw output</div>
+    <div class="card-header">Raw output</div>
 	<pre class="card-body">{{ out }}</pre>
 </div>
+{% endif %}
+
 {% endblock %}

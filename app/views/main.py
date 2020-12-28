@@ -184,6 +184,7 @@ def export_get(gtv_match_id, map_num, render=False, html=True):
         else:
             arg = current_app.config['INDEXER'] % (filename, filename)
             subprocess.call([current_app.config['PARSERPATH'], 'indexer', arg])
+    # request.args.get('spree_timeout', 6000)
     f = open(export_out_file_path, 'r', encoding='utf-8', errors='ignore')
     out = f.readlines()
     f.close()
@@ -199,7 +200,7 @@ def export_get(gtv_match_id, map_num, render=False, html=True):
     if html:
         return render_template('export-out.html', renders=renders,
                                cut_form=cut_form, rndr_form=rndr_form,
-                               out="".join(out),
+                               raw_out_path=export_out_file_path.replace('app/download/', ''),
                                parser_out=parser_out,
                                map_num=map_num,
                                export_id=gtv_match_id
@@ -224,8 +225,7 @@ def export_demo_file(filename):
     cut_form.filename.data = filename
     # TODO: retrieve clips that are from this demo
     return render_template('export-out.html', filename=filename, cut_form=cut_form, rndr_form=rndr_form,
-                           out=open('app/download/exports/' + filename + '.txt',
-                                    'r', encoding='utf-8', errors='ignore').read(),
+                           raw_out_path=export_out_file_path.replace('app/download/', ''),
                            parser_out=parsed_output)
 
 
