@@ -1,6 +1,5 @@
 Flask
 Flask_WTF
-Markdown
 requests
 SQLAlchemy
 WTForms
