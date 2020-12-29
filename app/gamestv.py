@@ -60,7 +60,7 @@ def getMatchDemosId(match_id):
 def getDemosLinks(demoId):
     try:
         if hasattr(config, 'demo_storage_url'):
-            r = requests.get(config.demo_storage_url + str(demoId))
+            r = requests.get(config.demo_storage_url + str(demoId), timeout=1)
             if r.status_code != 200:
                 raise requests.exceptions.RequestException
             else:
