@@ -89,7 +89,7 @@ class Weapon(Enum):
     # wolfet src bg_public.h
     # ^\s(\w+),\s*// (\d+)
     # \t\1 = \2
-
+    WP_UNKNOWN = -1
     WP_NONE = 0
     WP_KNIFE = 1
     WP_LUGER = 2
@@ -343,6 +343,7 @@ class MethodOfDamage(Enum):
 
 
 class RtcwWeapon(Enum):
+    WP_UNKNOWN = -1
     WP_NONE = 0
     WP_KNIFE = 1
     WP_LUGER = 2
