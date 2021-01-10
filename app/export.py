@@ -101,12 +101,12 @@ def parse_output(lines, spree_timeout, hs_spree_timeout, gtv_match_id=None, map_
             # print(players[j['bAttacker']])
 
             attacker = get_player(players, j['bAttacker'])
-            j['distance'] = dist(j['kx'], j['ky'], j['tx'], j['ty'])
-
-            # riflenade
-            if mod == 'etpro':
-                if (j['bWeapon'] == 43 or j['bWeapon'] == 44) and j['distance'] > 2000:
-                    attacker['rifletricks'].append(moment_builder.build('rifletrick', [j]))
+            if all([key in j for key in ['kx', 'ky', 'tx', 'ty']]):
+                j['distance'] = dist(j['kx'], j['ky'], j['tx'], j['ty'])
+                # riflenade
+                if mod == 'etpro':
+                    if (j['bWeapon'] == 43 or j['bWeapon'] == 44) and j['distance'] > 2000:
+                        attacker['rifletricks'].append(moment_builder.build('rifletrick', [j]))
 
             spree = attacker['spree']
             sprees = attacker['sprees']
