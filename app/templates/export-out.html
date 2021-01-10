@@ -87,7 +87,7 @@
 
 {% if parser_out.mod=="osp" or "RtcwPro" in parser_out.mod %}
 <div class="alert alert-info" role="alert">
-  Headshots are calculated using <a href="https://github.com/jellegrammens/wolfcam-rtcw/blob/4675e31576958db475a24d88500370bb01d7c1c8/MP/src/cgame/wolfcam_weapons.c#L13">this</a> formula: Hit event entity position is compared with position of player entity's head. Entity positions are rounded and client side, so this should not be 100% accurate.
+  Headshots are calculated using <a href="https://github.com/jellegrammens/wolfcam-rtcw/blob/4675e31576958db475a24d88500370bb01d7c1c8/MP/src/cgame/wolfcam_weapons.c#L13">this</a> formula: Hit event entity position is compared with position of player entity's head. Entity position floats are rounded on client side, so this should not be 100% accurate.
 </div>
 {% endif %}
 
