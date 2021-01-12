@@ -1,6 +1,3 @@
-project link: https://github.com/mittermichal/advanced-gamestv-stats
-website: http://178.62.235.156:5111/
-
 GOAL:
 
 save Name and Country of player to DB to show it in video render like: 
