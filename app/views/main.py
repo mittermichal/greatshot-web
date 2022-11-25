@@ -47,7 +47,7 @@ def download_static(path=''):
     if os.path.isfile(full_path):
         as_attachment = request.args.get('dl', '0') == '1'
         # http://stackoverflow.com/questions/24612366/flask-deleting-uploads-after-they-have-been-downloaded
-        return send_from_directory(directory='download', filename=path, as_attachment=as_attachment)
+        return send_from_directory(directory='download', path=path, as_attachment=as_attachment)
     elif os.path.isdir(full_path):
         lst = sorted(
             [{
@@ -88,8 +88,8 @@ def cut():
         except Exception as e:
             flash(e)
             return render_template('cut.html', cut_form=cut_form, form1=form1, form2=form2)
-        return send_from_directory(directory='download/cuts', filename='demo-out.dm_84', as_attachment=True,
-                                   attachment_filename='demo-out.dm_84')
+        return send_from_directory(directory='download/cuts', path='demo-out.dm_84', as_attachment=True,
+                                   download_name='demo-out.dm_84')
     else:
         return render_template('cut.html', cut_form=cut_form, form1=form1, form2=form2)
 
