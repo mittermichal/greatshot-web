@@ -23,3 +23,13 @@ Demo analysis, cutting, video rendering for IdTech3 games mainly Wolfenstein: En
 
 This project uses  [hannes's](http://www.crossfire.nu/user/view/id/6710) modified [Tech3 Demo API - 0.1](http://www.crossfire.nu/news/4632/tech3-demo-api-01) to cut and export demos.
 It was modified to be able to cut [ETTV](http://wolfwiki.anime.net/index.php/ETTV:Viewer%27s_Guide) demo with selected player's POV. My modification: [Tech3 Demo API](https://github.com/mittermichal/Anders.Gaming.LibTech3)
+
+## Self-hosting
+
+with python3:
+- `pip install -r requirements.txt`
+- download parsing application from https://github.com/mittermichal/Anders.Gaming.LibTech3/releases its path is then referenced in `PARSERPATH` in `config.cfg` in the next step
+- create `config.cfg` and `config.py` from `config.sample.cfg` and `config.sample.py`
+- run `python init_db.py` ... this should create sqlite database
+- run `python web.py`
+- open `localhost:5111` in browser
