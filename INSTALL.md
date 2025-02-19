@@ -1,0 +1,11 @@
+Without render-worker:
+- run redis server
+- clone repository
+- `git submodule init`
+- `git submodule update`
+- `pip install -r requirements.txt`
+- `mkdir tmp`
+- `python init_db.py`
+- `cp render_worker/tasks_config.sample.py tasks_config.py`
+- `cd app/static && npm install && cd ../..`
+- `python web.py`

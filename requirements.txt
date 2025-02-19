@@ -2,7 +2,7 @@ Flask
 Flask_WTF
 requests
 SQLAlchemy
-WTForms
+WTForms==2.3.3
 lxml
 dramatiq[redis]
 redis
