@@ -1,26 +1,35 @@
-from flask import Flask, config
-from flask_socketio import SocketIO
+import os
+import secrets
+from flask import Flask
 
-app_config = config.Config('.')
-app_config.from_pyfile('config.cfg')
-socketio = SocketIO(async_mode="eventlet", engineio_logger=True, cors_allowed_origins=app_config['APPHOST'])
+config_path = 'config.cfg'
 
 
-def create_app(debug=False):
+def create_app():
     """Create an application."""
     app = Flask(__name__)
-    app.config.from_pyfile('../config.cfg')
-    from app.views.renders import renders
-    app.register_blueprint(renders)
-
+    app.config.from_pyfile(f'../{config_path}')
+    if 'INDEXER' not in app.config:
+        if os.name == 'nt':  # windows
+            app.config['INDEXER'] = r'indexTarget/app\upload\%s/exportJsonFile/app\download\exports\%s.txt/exportBulletEvents/1/exportDemo/1/exportChatMessages/1/exportRevives/1'
+        else:
+            app.config['INDEXER'] = r'indexTarget\\app/upload/%s\\exportJsonFile\\app/download/exports/%s.txt\\exportBulletEvents\\1\\exportDemo\\1\\exportChatMessages\\1\\exportRevives\\1'
     from app.views.main import flask_app as main_blueprint
     app.register_blueprint(main_blueprint)
-
-    socketio.init_app(app, cookie=None)
     return app
 
-# flask_app = Flask(__name__)
-# flask_app.config.from_pyfile('config.cfg')
-# flask_app.register_blueprint(renders)
-# socketio = SocketIO(flask_app, cookie=None)
 
+def init_config():
+    if not os.path.exists(config_path):
+        print(f'{config_path} not found, creating one with default values')
+        if os.name == 'nt':  # windows
+            parser_path = 'Anders.Gaming.LibTech3.exe'
+        else:
+            parser_path = 'LibTech3-linux-x86-64'
+        with open(config_path, 'w') as f:
+            f.write(
+                f"SECRET_KEY='{secrets.token_hex()}'\n"
+                f"PARSERPATH='{parser_path}'\n"
+                f"MAX_CONTENT_LENGTH = 50 * 1024 * 1024"
+                f"DEBUG=True  # set to false for production"
+            )

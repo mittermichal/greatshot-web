@@ -1,17 +1,10 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, FileField, SelectField, HiddenField, validators
-from wtforms.fields.html5 import IntegerField
-from app.countries import countries
+from wtforms import StringField, FileField, SelectField, HiddenField, IntegerField
+# from wtforms.fields.html5 import IntegerField
 
 
 class ExportFileForm(FlaskForm):
     file = FileField('Demo')
-
-
-class ExportMatchLinkForm(FlaskForm):
-    gtv_match_id = StringField('Match link',
-                               render_kw={"placeholder": "http://www.gamestv.org/event/56051-tag-vs-elysium/"})
-    map_number = IntegerField('Map number', [validators.NumberRange(min=1)], default=1, render_kw={"min": 1})
 
 
 class CutForm(FlaskForm):
@@ -36,16 +29,4 @@ class CutForm(FlaskForm):
             return False
         else:
             return True
-
-
-class RenderForm(FlaskForm):
-    title = StringField('Title')
-    crf = IntegerField(
-        'encode quality **',
-        [validators.NumberRange(min=18, max=51)],
-        default=24,
-        render_kw={"min": 18, "max": 51}
-    )
-    name = StringField('Name')
-    country = SelectField('Country', choices=[(x, x) for x in ["None"]+countries], default="None")
 

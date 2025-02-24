@@ -38,7 +38,8 @@ class Game:
         switcher = {
             'etpro': Etpro,
             'osp': Osp,
-            'RtcwPro': Osp
+            'RtcwPro': Osp,
+            'legacy': Etpro
         }
         return switcher.get(mod, Etpro)
 
@@ -48,6 +49,12 @@ class Etpro(Game):
         super().__init__()
         self.regions = EtproRegions
         self.weapons = Libtech3.Weapon
+
+class Legacy(Game):
+    def __init__(self):
+        super().__init__()
+        self.regions = EtproRegions
+        self.weapons = Libtech3.LegacyWeapon
 
 
 class Osp(Game):

@@ -1,0 +1,24 @@
+[tool.poetry]
+name = "greatshot_web"
+version = "0.1.0"
+description = ""
+authors = ["Michal 'Kimi' Mitter"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.12"
+Flask = "^3.0.3"
+Flask-WTF = "^1.2.1"
+WTForms = "2.1"
+requests = "^2.32.2"
+SQLAlchemy = "^2.0.30"
+lxml = "^5.2.2"
+alembic = "^1.13.1"
+Werkzeug = "^3.0.3"
+
+[tool.poetry.scripts]
+serve = "greatshot_web:main"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

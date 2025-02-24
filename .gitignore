@@ -1,15 +1,8 @@
-config.py
 config.cfg
 __pycache__/
 *.py[cod]
 .idea
-tasks_config.py
-tmp/
-flags/
-maps/
 venv/
 logs/
-app/static/node_modules/
-/app/static/package-lock.json
-/scripts/events/
-/scripts/elysium/
+tmp/
+Anders.Gaming.LibTech3.exe

@@ -8,28 +8,12 @@
 {% block content %}
 <h1>Export output</h1>
 
-{% if ((export_id is defined) and (map_num is defined)) %}
-<a href="{{ url_for('main.export_get',gtv_match_id=export_id,map_num=map_num+2) }}">next map</a>
-{% endif %}
-
-{% if players|count %}
-	<h2>Highlights</h2>
-	{% include 'render_list.html' %}
-{% endif %}
-
-{#
-{% for g_player in parser_out.g_players %}
-	<p>{{ g_player.name }}{{ g_player.country }}</p>
-{% endfor %}
-#}
-
 <h2>Hit regions & revives</h2>
 <table class="table">
 	<thead>
 		<tr>
 			<th>clientNum</th>
 			<th>nick</th>
-			{#<th>Player profile</th>#}
 			{% for region in parser_out.hit_regions %}
 			<th>{{ region }}</th>
 			{% endfor %}
@@ -49,14 +33,6 @@
 			<td>
 				{{ player.szCleanName }}
 			</td>
-
-			{#<td>
-				{% if player.name is defined and player.name!=None %}
-					<a href="{{ url_for('main.players',player_id=player.id) }}">{{ player.name }}</a><img src="http://www.gamestv.org/images/flags/{{ player.country }}.gif" />
-				{% else %}
-					{{ render_form(player.form) }}
-				{% endif %}
-			</td>#}
 
 			{% for region in parser_out.hit_regions %}
 			<td>
@@ -151,13 +127,8 @@ function fillForm(e, clientNum_target = false) {
 				{% for kill in spree.jsons %}
 					<span{% if kill.bIsTeamkill %} style="color:red;"{% endif %}>{{ kill.bAttacker }} {{ kill.bTarget }} {{ kill.szTimeString }} {{ kill.szMessage }} {{ kill.dwTime }}</span><br/>
 				{% endfor %}
-				{% if parser_out.mod=="etpro" %}
-				<a class="btn btn-outline-primary" href="#render-form" onclick="fillForm(this);">
-					<span style="width:20px" class="oi oi-video"></span> Render
-				</a>
-				{% endif %}
 				<a class="btn btn-outline-primary" href="#cut-form" onclick="fillForm(this);">
-					<span style="width:20px" class="oi oi-resize-width"></span> Cut
+					<span style="width:20px">✂</span> Cut
 				</a>
 			</div>
 
@@ -167,17 +138,6 @@ function fillForm(e, clientNum_target = false) {
 				<ul>
 				{% for region_weapon in spree.hit_summary %}
 					<li>{{ region_weapon }}: {{ spree.hit_summary[region_weapon] }}</li>
-				{% endfor %}
-				</ul>
-			</div>
-			{% endif %}
-
-			{% if spree.renders_count %}
-			<div class="col">
-				<p>Renders:</p>
-				<ul>
-				{% for render in spree.renders %}
-					<li><a href="{{ url_for('renders.render_get',render_id=render.id) }}">{{ render.title }} ({{ render.status_msg }})</a></li>
 				{% endfor %}
 				</ul>
 			</div>
@@ -197,25 +157,10 @@ function fillForm(e, clientNum_target = false) {
 				{% for hs in hs_spree.jsons %}
 					{{ hs.bAttacker }} {{ hs.bTarget }} {{ hs.dwTime }} {{ hs.weapon }} {#{ hs.bWeapon }#} {#{ hs.eventNum }#}<br/>
 				{% endfor %}
-				{% if parser_out.mod=="etpro" %}
-				<a class="btn btn-outline-primary" href="#render-form" onclick="fillForm(this);">
-					<span style="width:20px" class="oi oi-video"></span> Render
-				</a>
-				{% endif %}
 				<a class="btn btn-outline-primary" href="#cut-form" onclick="fillForm(this);">
-					<span style="width:20px" class="oi oi-resize-width"></span> Cut
+					<span style="width:20px">✂</span> Cut
 				</a>
 			</div>
-			{% if hs_spree.renders_count %}
-			<div class="col">
-				<p>Renders:</p>
-				<ul>
-				{% for render in hs_spree.renders %}
-					<li><a href="{{ url_for('renders.render_get',render_id=render.id) }}">{{ render.title }} ({{ render.status_msg }})</a></li>
-				{% endfor %}
-				</ul>
-			</div>
-			{% endif %}
 		</div>
 	{% endfor %}
 {% endfor %}
@@ -229,48 +174,14 @@ function fillForm(e, clientNum_target = false) {
 			<div class="col">
 				{{ player.szCleanName }} From: To: Distance: {{ "%.2f"|format(trick.jsons[0].distance) }}<br/>
 					{{ trick.jsons[0].bAttacker }} {{ trick.jsons[0].bTarget }} {{ trick.jsons[0].szTimeString }} {{ trick.jsons[0].szMessage }} {{ trick.jsons[0].dwTime }} <br/>
-				<a class="btn btn-outline-primary" href="#render-form" onclick="fillForm(this);">
-						<span style="width:20px" class="oi oi-video"></span> Render
-				</a>
-				<a class="btn btn-outline-primary" href="#render-form" onclick="fillForm(this,true);">
-						<span style="width:20px" class="oi oi-video"></span> Render target POV
-				</a>
 				<a class="btn btn-outline-primary" href="#cut-form" onclick="fillForm(this);">
-					<span style="width:20px" class="oi oi-resize-width"></span> Cut
+					<span style="width:20px">✂</span> Cut
 				</a>
 			</div>
-			{% if trick.renders_count %}
-			<div class="col">
-				<p>Renders:</p>
-				<ul>
-				{% for render in trick.renders %}
-					<li><a href="{{ url_for('renders.render_get',render_id=render.id) }}">{{ render.title }} ({{ render.status_msg }})</a></li>
-				{% endfor %}
-				</ul>
-			</div>
-			{% endif %}
 		</div>
 	{% endfor %}
 {% endfor %}
 </div>
-
-<form method="post" id="render-form" action="/renders" onsubmit="return validateRenderForm()" enctype="multipart/form-data" class="form-horizontal card">
-    <div class="card-header">Render parameters</div>
-	<div class="card-body">
-		{{ render_form(rndr_form) }}
-		{{ render_form(cut_form) }}
-		{{ render_btn("Render") }}
-		<hr/>
-		<label for="client_num" class="col-sm-offset-2">
-			<sup>*</sup> Client number only needed for ETTV demo to choose POV
-		</label>
-		<label for="crf" class="col-sm-offset-2">
-			<sup>**</sup>
-			<a href="https://trac.ffmpeg.org/wiki/Encode/H.264#crf">ffmpeg's crf</a>
-			lower value - higher quality
-		</label>
-	</div>
-</form>
 
 <form method="post" id="cut-form" action="/cut" enctype="multipart/form-data" class="form-horizontal card">
     <div class="card-header">Cut parameters</div>
@@ -284,19 +195,6 @@ function fillForm(e, clientNum_target = false) {
 	</div>
 </form>
 <script src="{{ url_for('static', filename='input-spinner.js')}}"></script>
-<script>
-function validateRenderForm() {
-	var demo = {{ parser_out.demo|tojson|safe }}
-	var form = $("#render-form");
-    var start = parseInt(form.find("input[name='start']").val());
-    var end = parseInt(form.find("input[name='end']").val());
-    var length = end-start;
-	if (length < 4000) {alert("render must be atleast 4 seconds long");return false;}
-	if (length > 40000) {alert("render cant be longer than 40 seconds");return false;}
-	if (demo.dwStartTime+2000 > start) {alert("render start time must be atleast 2 seconds after demo start time");return false;}
-	if (demo.dwEndTime < end) {alert("render end time must be before demo end time");return false;}
-}
-</script>
 
 {#
 <div style="">

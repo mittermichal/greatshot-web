@@ -1,0 +1,12 @@
+{% extends "layout.html" %}
+
+
+{% block title %} - Parsing export error{% endblock %}
+
+{% block content %}
+<h1>Parsing export error:</h1>
+<pre>{{ error }}</pre>
+<div class="alert alert-info">
+  <a href="{{ url_for('main.download_static',path=raw_out_path) }}">Raw LibTech3 json output</a>
+</div>
+{% endblock %}

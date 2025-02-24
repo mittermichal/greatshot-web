@@ -1,5 +1,4 @@
 import subprocess
-import sys
 import os
 from enum import Enum
 from sqlalchemy import Column, Integer, String, ForeignKey, SmallInteger
@@ -392,3 +391,8 @@ class RtcwWeapon(Enum):
     WP_SMOKE_GRENADE = 45
     WP_BINOCULARS = 46
     WP_NUM_WEAPONS = 47
+
+
+class LegacyWeapon(Enum):
+    # TODO rewrite
+    pass
